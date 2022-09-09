@@ -1,0 +1,9 @@
+streamlit
+pandas
+numpy
+plotly_express
+json5==0.9.6
+jsonschema==4.4.0
+sqlalchemy
+psycopg2
+datetime
