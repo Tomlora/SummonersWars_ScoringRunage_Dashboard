@@ -27,6 +27,15 @@ def transformation_stats(nom_table):
     df_actuel = df_actuel[df_actuel['Joueur'] == pseudo]
     df_actuel.drop(['Joueur'], axis=1, inplace=True)
     
+
+    
+    if nom_table == 'sw':
+        df_actuel = pd.melt(df_actuel, id_vars=['date', 'Set'], value_vars=['100', '110', '120'], var_name='Palier', value_name='Nombre')
+        df_actuel.sort_values(by=['date', 'Set', 'Palier'], inplace=True)
+    else:
+        df_actuel = pd.pivot_table(df_actuel, 'score', index='date')
+        df_actuel['score'] = df_actuel['score'].astype('int')
+    
     return df_actuel
 
 # Supprime les Future Warnings sur les copies
@@ -39,6 +48,7 @@ category_selected = ['Violent', 'Will', 'Destroy', 'Despair']
 # CSS
 
 st.markdown("<h1 style='text-align: center; color: white;'>Scoring runes SW </h1>", unsafe_allow_html=True )
+
 
 with open('style.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
@@ -319,7 +329,7 @@ if file is not None and submitted:
     
     tcd_value.loc['Total'] = [total_100, total_110, total_120]
 
-    st.write(pseudo)
+    st.title(pseudo)
     
     
     tcd_column, score_column = st.columns(2)
@@ -348,7 +358,7 @@ if file is not None and submitted:
     data_scoring = transformation_stats('sw_score')
     
     
-    st.write('Evolution')
+    st.subheader('Evolution')
     
     detail, scoring_total = st.columns(2)
     
@@ -357,6 +367,25 @@ if file is not None and submitted:
         
     with scoring_total:    
         st.dataframe(data_scoring)
+        
+    fig = px.line(data_scoring, x=data_scoring.index, y='score')
+    st.plotly_chart(fig)
+    
+    data_100 = data_detail[data_detail['Palier'] == '100']
+    data_110 = data_detail[data_detail['Palier'] == '110']
+    data_120 = data_detail[data_detail['Palier'] == '120']
+    
+    st.write('Palier 100')
+    fig1 = px.line(data_100, x="date", y="Nombre", color="Set")
+    st.plotly_chart(fig1)
+
+    st.write('Palier 110')
+    fig2 = px.line(data_110, x="date", y="Nombre", color="Set")
+    st.plotly_chart(fig2)
+
+    st.write('Palier 120')
+    fig3 = px.line(data_120, x="date", y="Nombre", color="Set")
+    st.plotly_chart(fig3)
     
     
     
