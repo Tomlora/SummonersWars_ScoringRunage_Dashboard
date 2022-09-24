@@ -7,3 +7,4 @@ jsonschema==4.4.0
 sqlalchemy
 psycopg2
 datetime
+streamlit_option_menu
