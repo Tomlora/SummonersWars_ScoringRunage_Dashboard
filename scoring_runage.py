@@ -38,6 +38,17 @@ def transformation_stats(nom_table):
     
     return df_actuel
 
+
+def plotline_evol_rune(df):
+    fig = px.line(df, x="date", y="Nombre", color="Set")
+    fig.update_layout({
+                'plot_bgcolor': 'rgb(255, 255, 255)',
+                'paper_bgcolor': 'rgba(0, 0, 0,0)'
+    })
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
+    fig.update_yaxes(showgrid=False)
+    return fig
+
 # Supprime les Future Warnings sur les copies
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -360,31 +371,40 @@ if file is not None and submitted:
     
     st.subheader('Evolution')
     
-    detail, scoring_total = st.columns(2)
+    # detail, scoring_total = st.columns(2)
     
-    with detail:
-        st.dataframe(data_detail)
+    # with detail:
+    #     st.dataframe(data_detail)
         
-    with scoring_total:    
-        st.dataframe(data_scoring)
+    # with scoring_total:    
+    st.dataframe(data_scoring)
         
     fig = px.line(data_scoring, x=data_scoring.index, y='score')
+    fig.update_layout({
+                'plot_bgcolor': 'rgb(255, 255, 255)',
+                'paper_bgcolor': 'rgba(0, 0, 0,0)'
+    })
+
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
+    fig.update_yaxes(showgrid=False)
     st.plotly_chart(fig)
     
     data_100 = data_detail[data_detail['Palier'] == '100']
     data_110 = data_detail[data_detail['Palier'] == '110']
     data_120 = data_detail[data_detail['Palier'] == '120']
     
+    
+    
     st.write('Palier 100')
-    fig1 = px.line(data_100, x="date", y="Nombre", color="Set")
+    fig1 = plotline_evol_rune(data_100)
     st.plotly_chart(fig1)
 
     st.write('Palier 110')
-    fig2 = px.line(data_110, x="date", y="Nombre", color="Set")
+    fig2 = plotline_evol_rune(data_110)
     st.plotly_chart(fig2)
 
     st.write('Palier 120')
-    fig3 = px.line(data_120, x="date", y="Nombre", color="Set")
+    fig3 = plotline_evol_rune(data_120)
     st.plotly_chart(fig3)
     
     
