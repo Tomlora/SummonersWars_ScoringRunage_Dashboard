@@ -157,6 +157,7 @@ def upload_json(category_selected):
                             fourth_sub_value = rune['sec_eff'][3][1]
                             fourth_gemme_bool = rune['sec_eff'][3][2]
                             fourth_sub_grinded_value = rune['sec_eff'][3][3]
+                            
                         player_runes[rune_id] =  [rune_set, rune_slot, rune_equiped, stars, level, efficiency, max_efficiency,
                                     max_efficiency_reachable, gain, main_type, main_value, innate_type, innate_value,
                                     first_sub, first_sub_value, first_gemme_bool, first_sub_grinded_value, second_sub, second_sub_value, second_gemme_bool,
@@ -185,7 +186,7 @@ def upload_json(category_selected):
         # # Efficiency
 
 
-
+        # Valeur max
         sub = {1: (375 * 5) * 2, # PV flat
             2: 8 * 5,  # PV%
             3: (20 * 5) * 2, #ATQ FLAT 
@@ -198,7 +199,7 @@ def upload_json(category_selected):
             11: 8 * 5, # RES
             12: 8 * 5} # ACC
 
-        # Value max :
+        # On map les valeurs max
         data['first_sub_value_max'] = data['first_sub'].map(sub)
         data['second_sub_value_max'] = data['second_sub'].map(sub)
         data['third_sub_value_max'] = data['third_sub'].map(sub)
@@ -206,15 +207,26 @@ def upload_json(category_selected):
         data['innate_value_max'] = data['innate_type'].replace(sub)
 
 
-        # Value stats de base + meule
+        # Value des runes du joueur ( stats de base + meule )
 
         data['first_sub_value_total'] = (data['first_sub_value'] + data['first_sub_grinded_value'])
         data['second_sub_value_total'] = (data['second_sub_value'] + data['second_sub_grinded_value'])
         data['third_sub_value_total'] = (data['third_sub_value'] + data['third_sub_grinded_value'])
         data['fourth_sub_value_total'] = (data['fourth_sub_value'] + data['fourth_sub_grinded_value'])
+        
+        # calcul de l'efficiency (stat de la rune / stat max possible)
 
-        data['efficiency'] = np.where(data['innate_type'] != 0, round(((1+data['innate_value'] / data['innate_value_max'] + data['first_sub_value_total'] / data['first_sub_value_max'] + data['second_sub_value_total'] / data['second_sub_value_max'] + data['third_sub_value_total'] / data['third_sub_value_max'] + data['fourth_sub_value_total'] / data['fourth_sub_value_max']) / 2.8)*100,2),
-                                    round(((1 + data['first_sub_value_total'] / data['first_sub_value_max'] + data['second_sub_value_total'] / data['second_sub_value_max'] + data['third_sub_value_total'] / data['third_sub_value_max'] + data['fourth_sub_value_total'] / data['fourth_sub_value_max']) / 2.8)*100,2))
+        data['efficiency'] = np.where(data['innate_type'] != 0, round(((1+data['innate_value'] / data['innate_value_max']
+                                                                        + data['first_sub_value_total'] / data['first_sub_value_max']
+                                                                        + data['second_sub_value_total'] / data['second_sub_value_max']
+                                                                        + data['third_sub_value_total'] / data['third_sub_value_max']
+                                                                        + data['fourth_sub_value_total'] / data['fourth_sub_value_max'])
+                                                                       / 2.8)*100,2),
+                                    round(((1 + data['first_sub_value_total'] / data['first_sub_value_max']
+                                            + data['second_sub_value_total'] / data['second_sub_value_max']
+                                            + data['third_sub_value_total'] / data['third_sub_value_max']
+                                            + data['fourth_sub_value_total'] / data['fourth_sub_value_max'])
+                                           / 2.8)*100,2))
 
 
         # on retient ce dont on a besoin
