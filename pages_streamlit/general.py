@@ -8,10 +8,11 @@ def general_page():
         tcd_column, score_column = st.columns(2)
             
         with tcd_column:
-            st.dataframe(st.session_state.tcd)
+            st.dataframe(st.session_state.tcd[[100, 110, 120]])
             
         with score_column:
             st.metric('Score', st.session_state['score'])
+            st.metric('Date', st.session_state.tcd.iloc[0]['date'])
     
     except:
         st.subheader('Erreur')

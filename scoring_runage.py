@@ -8,6 +8,8 @@ from streamlit_option_menu import option_menu
 from pages_streamlit.general import general_page
 from pages_streamlit.palier import palier_page
 from pages_streamlit.upload import upload_json
+from pages_streamlit.visualisation_joueur import visu_page
+from pages_streamlit.options import params
 
 
 
@@ -18,6 +20,7 @@ pd.options.mode.chained_assignment = None  # default='warn'
 # set ++ importance
 
 category_selected = ['Violent', 'Will', 'Destroy', 'Despair']
+category_value = ", ".join(category_selected)
 
 # CSS
 
@@ -38,8 +41,17 @@ if st.session_state['submitted'] == False: # PAs de json initialisé. Donc menu 
     menu_selected = ['Upload JSON', 'General', 'Evolution']
     icons_selected = ["gear", "gear", 'kanban']
 else: # Json upload, la première page n'est plus utile
-    menu_selected = ['General', 'Evolution']
-    icons_selected = ["gear", 'kanban']
+    if 'guildeid' in st.session_state:
+        # if st.session_state['guildeid'] == 116424:  # si c'est l'id d'Endless, on peut ouvrir le suivi
+        if st.session_state['pseudo'] == 'Tømløra':
+            menu_selected = ['General', 'Evolution', 'Suivi', 'Parametres']
+            icons_selected = ["gear", 'kanban', 'kanban', 'gear']
+        else:
+            menu_selected = ['General', 'Evolution', 'Parametres']
+            icons_selected = ["gear", 'kanban', 'gear']
+    else:    
+        menu_selected = ['General', 'Evolution', 'Parametres']
+        icons_selected = ["gear", 'kanban', 'gear']
 
 with st.sidebar:
         selected = option_menu("Menu", menu_selected,
@@ -50,9 +62,11 @@ with st.sidebar:
             "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#FFFFFF"},
             "nav-link-selected": {"background-color": "#2C3845"},
         })
+        st.write(f'Sets importants : {category_value}' )
         
         if 'pseudo' in st.session_state: # si on a le pseudo du joueur, on l'affiche.
-            st.subheader(f'Joueur : {st.session_state["pseudo"]}') 
+            st.subheader(f'Joueur : {st.session_state["pseudo"]}')
+            st.subheader(f'Guilde : {st.session_state["guilde"]}') 
         
 
 if selected == "Upload JSON":
@@ -64,7 +78,11 @@ elif selected == 'General':
 elif selected == 'Evolution':
     palier_page()
 
+elif selected == 'Suivi':
+    visu_page()
     
-    
-    
+elif selected == 'Parametres':
+    params()
+
+
 st.markdown("<h6 style='text-align: right; color: white;'>by Tomlora </h6>", unsafe_allow_html=True )

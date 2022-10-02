@@ -5,6 +5,8 @@ from sqlalchemy import *
 
 import os
 
+# https://betterprogramming.pub/how-to-execute-plain-sql-queries-with-sqlalchemy-627a3741fdb1
+
 DB = os.environ.get('API_SQL')
 engine = create_engine(DB, echo=False)
 
@@ -62,3 +64,11 @@ def supprimer_bdd(nom_table):
     conn.execute(sql)
     conn.close()
     
+def supprimer_data(Joueur, date):
+    conn = engine.connect()
+    params_sql = {'joueur' : Joueur, 'date' : date}
+    sql1 = text(f'DELETE FROM sw WHERE "Joueur" = :joueur AND date = :date')  # :var_name
+    sql2 = text(f'DELETE FROM sw_score WHERE "Joueur" = :joueur AND date = :date')
+    conn.execute(sql1, params_sql)
+    conn.execute(sql2, params_sql)
+    conn.close

@@ -32,9 +32,10 @@ def upload_json(category_selected):
         # pseudo 
 
         st.session_state.pseudo = data_json['wizard_info']['wizard_name']
+        st.session_state.guildeid = data_json['guild']['guild_info']['guild_id']
+        st.session_state.guilde = data_json['guild']['guild_info']['name']
 
         # rune
-
         # Rune pas équipé
         for rune in data_json['runes']:
             first_sub = 0
@@ -48,6 +49,14 @@ def upload_json(category_selected):
             third_sub_grinded_value = 0
             fourth_sub = 0
             fourth_sub_value = 0
+            fourth_sub_grinded_value = 0
+            first_gemme_bool = 0
+            first_sub_grinded_value = 0
+            second_gemme_bool = 0
+            second_sub_grinded_value = 0
+            third_gemme_bool = 0
+            third_sub_grinded_value = 0
+            fourth_gemme_bool = 0
             fourth_sub_grinded_value = 0
 
             rune_id = rune['rune_id']
@@ -85,12 +94,15 @@ def upload_json(category_selected):
                 fourth_sub_value = rune['sec_eff'][3][1]
                 fourth_gemme_bool = rune['sec_eff'][3][2]
                 fourth_sub_grinded_value = rune['sec_eff'][3][3]
-            player_runes[rune_id] =  [rune_set, rune_slot, rune_equiped, stars, level, efficiency, max_efficiency,
+
+            try:
+                player_runes[rune_id] =  [rune_set, rune_slot, rune_equiped, stars, level, efficiency, max_efficiency,
                                     max_efficiency_reachable, gain, main_type, main_value, innate_type, innate_value,
                                     first_sub, first_sub_value, first_gemme_bool,  first_sub_grinded_value, second_sub, second_sub_value, second_gemme_bool,
                                     second_sub_grinded_value, third_sub, third_sub_value, third_gemme_bool, third_sub_grinded_value, fourth_sub,
                                     fourth_sub_value, fourth_gemme_bool, fourth_sub_grinded_value]
-
+            except:
+                print(f'Erreur : {rune_id}')
 
         # Rune équipée
         for unit in data_json['unit_list']:
