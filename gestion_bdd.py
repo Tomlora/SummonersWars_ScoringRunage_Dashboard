@@ -72,3 +72,12 @@ def supprimer_data(Joueur, date):
     conn.execute(sql1, params_sql)
     conn.execute(sql2, params_sql)
     conn.close
+    
+def update_guilde(joueur, guilde):
+    conn = engine.connect()
+    params_sql = {'joueur' : joueur, 'guilde' : guilde}
+    sql1 = text('UPDATE sw_score SET guilde = :guilde WHERE "Joueur" = :joueur')
+    conn.execute(sql1, params_sql)
+    conn.close()
+    
+    

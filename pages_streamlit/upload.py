@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from streamlit_option_menu import option_menu
 
-from gestion_bdd import sauvegarde_bdd, lire_bdd
+from gestion_bdd import sauvegarde_bdd, lire_bdd, update_guilde
 
 def date_du_jour():
     currentMonth = str(datetime.now().month)
@@ -322,10 +322,15 @@ def upload_json(category_selected):
         
         sauvegarde_bdd(tcd_value, 'sw', 'append')
         
-        df_scoring = pd.DataFrame({'Joueur' : [st.session_state['pseudo']], 'score' : [st.session_state['score']], 'date' : [date_du_jour()]})
+        df_scoring = pd.DataFrame({'Joueur' : [st.session_state['pseudo']], 'score' : [st.session_state['score']],
+                                   'date' : [date_du_jour()], 'guilde' : [st.session_state['guilde']]})
         df_scoring.set_index('Joueur', inplace=True)
         
         sauvegarde_bdd(df_scoring, 'sw_score', 'append')
+        
+        # MAJ guilde
+        
+        update_guilde(st.session_state['pseudo'], st.session_state['guilde'])
         
         st.subheader(f'Validé pour le joueur {st.session_state["pseudo"]} !')
         st.write('Tu peux désormais aller sur les autres onglets disponibles')
