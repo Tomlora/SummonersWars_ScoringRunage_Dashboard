@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from streamlit_option_menu import option_menu
 
-from gestion_bdd import sauvegarde_bdd, lire_bdd, update_guilde
+from gestion_bdd import sauvegarde_bdd, lire_bdd, update_guilde, get_user, requete_perso_bdd
 
 def date_du_jour():
     currentMonth = str(datetime.now().month)
@@ -311,20 +311,29 @@ def upload_json(category_selected):
         
         tcd_value.loc['Total'] = [total_100, total_110, total_120]
 
-
+        try:
+            st.session_state.id_joueur, guilde, st.session_state.visibility = get_user(st.session_state['pseudo'])
+        except IndexError: #le joueur n'existe pas
+            requete_perso_bdd('INSERT INTO sw_user(joueur, guilde, visibility) VALUES (:joueur, :guilde, 0);', {'joueur' : st.session_state['pseudo'],
+                                                                                                                'guilde' : st.session_state['guilde']})
+            st.session_state.id_joueur, guilde, st.session_state.visibility = get_user(st.session_state['pseudo'])
         
         # Enregistrement SQL
         
-        tcd_value['Joueur'] = st.session_state['pseudo']
+        tcd_value['id'] = st.session_state['id_joueur']
         tcd_value['date'] = date_du_jour()
         
         st.session_state.tcd = tcd_value
         
         sauvegarde_bdd(tcd_value, 'sw', 'append')
         
-        df_scoring = pd.DataFrame({'Joueur' : [st.session_state['pseudo']], 'score' : [st.session_state['score']],
-                                   'date' : [date_du_jour()], 'guilde' : [st.session_state['guilde']]})
-        df_scoring.set_index('Joueur', inplace=True)
+        # df_scoring = pd.DataFrame({'Joueur' : [st.session_state['pseudo']], 'score' : [st.session_state['score']],
+        #                            'date' : [date_du_jour()], 'guilde' : [st.session_state['guilde']]})
+        # df_scoring.set_index('Joueur', inplace=True)
+        
+        df_scoring = pd.DataFrame({'id' : [st.session_state['id_joueur']], 'score' : [st.session_state['score']],
+                                   'date' : [date_du_jour()]})
+        df_scoring.set_index('id', inplace=True)
         
         sauvegarde_bdd(df_scoring, 'sw_score', 'append')
         

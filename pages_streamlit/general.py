@@ -2,22 +2,35 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 import plotly.graph_objects as go
+import os
 
-from gestion_bdd import lire_bdd
+from gestion_bdd import lire_bdd, lire_bdd_perso
 
 def comparaison():
-    df_actuel = lire_bdd('sw_score')
+    # Lire la BDD
+    df_actuel = lire_bdd_perso('SELECT * from sw_user, sw_score WHERE sw_user.id = sw_score.id')
     df_actuel = df_actuel.transpose()
     df_actuel.reset_index(inplace=True)
-    df_max = df_actuel.groupby('Joueur').max()
+    df_actuel.drop(['id'], axis=1, inplace=True)
+    
+    # On regroupe les scores max de tous les joueurs enregistrés
+    df_max = df_actuel.groupby('joueur').max()
+    
+    # On trie du plus grand au plus petit
     df_max['rank'] = df_max['score'].rank(ascending=False, method='min')
+    
+    # Nb joueurs
     size_general = len(df_max)
+    
+    # Score moyen
     avg_score_general = int(round(df_max['score'].mean(),0))
+    
+    # Meilleur score
     max_general = int(df_max['score'].max())
     
-    
+    # On refait les mêmes étapes pour la guilde Endless
     df_endless = df_actuel[df_actuel['guilde'] == '[Endless]']
-    df_endless_max = df_endless.groupby('Joueur').max()
+    df_endless_max = df_endless.groupby('joueur').max()
     size_endless = len(df_endless_max)
     avg_score_endless = int(round(df_endless_max['score'].mean(),0))
     max_endless = int(df_endless_max['score'].max())
@@ -57,16 +70,21 @@ def general_page():
         tcd_column, score_column = st.columns(2)
             
         with tcd_column:
+            # Stat du joueur
             st.dataframe(st.session_state.tcd[[100, 110, 120]])
             
         with score_column:
+            # Score du joueur
             st.metric('Score', st.session_state['score'])
             st.metric('Date', st.session_state.tcd.iloc[0]['date'])
             
         size_general, avg_score_general, max_general, size_endless, avg_score_endless, max_endless, df_max, df_endless = comparaison()
             
         st.title('Comparaison')
+        
+        # Par rapport à tous les joueurs
         st.subheader('General')
+        
         
         comparaison1_1, comparaison1_2, comparaison1_3 = st.columns(3)
         
@@ -91,7 +109,8 @@ def general_page():
         fig_general = comparaison_graph(df_max, 'General')
         st.write(fig_general)
             
-        if st.session_state["guilde"] == '[Endless]':
+        if int(st.session_state["guildeid"]) == int(os.environ['ID_ENDLESS']):
+            # Par rapport à Endless
             st.subheader('Endless')
         
             comparaison2_1, comparaison2_2, comparaison2_3 = st.columns(3)

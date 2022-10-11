@@ -8,11 +8,12 @@ import os
 # https://betterprogramming.pub/how-to-execute-plain-sql-queries-with-sqlalchemy-627a3741fdb1
 
 DB = os.environ.get('API_SQL')
+
 engine = create_engine(DB, echo=False)
 
 
 
-def lire_bdd(nom_table, format:str="df"):
+def lire_bdd(nom_table, format:str="df", index=None):
     """Lire la BDD
 
     Parameters
@@ -24,13 +25,38 @@ def lire_bdd(nom_table, format:str="df"):
     """
     conn = engine.connect()
     try:
-        df = pd.read_sql(f'SELECT * FROM {nom_table}', con=conn, index_col='index')
+        df = pd.read_sql(f'SELECT * FROM {nom_table}', con=conn, index_col=index)
     except KeyError:
         nom_table = nom_table.lower()
         df = pd.read_sql(f'SELECT * FROM {nom_table}', con=conn, index_col='Joueur')
     except:
         nom_table = nom_table.lower()
-        df = pd.read_sql(f'SELECT * FROM {nom_table}', con=conn, index_col='index')
+        df = pd.read_sql(f'SELECT * FROM {nom_table}', con=conn, index_col=index)
+    df = df.transpose()
+    if format == "dict":
+        df = df.to_dict()
+    conn.close()
+    return df
+
+def lire_bdd_perso(requests, format:str="df", index=None):
+    """Lire la BDD
+
+    Parameters
+    -----------
+    nom_table: :class:`str`
+            Le nom de la table
+    format: :class:`str`
+            Choix entre 'dict' ou 'df'
+    """
+    conn = engine.connect()
+    try:
+        df = pd.read_sql(requests, con=conn, index_col=index)
+    except KeyError:
+        nom_table = nom_table.lower()
+        df = pd.read_sql(requests, con=conn, index_col='Joueur')
+    except:
+        nom_table = nom_table.lower()
+        df = pd.read_sql(requests, con=conn, index_col=index)
     df = df.transpose()
     if format == "dict":
         df = df.to_dict()
@@ -67,17 +93,53 @@ def supprimer_bdd(nom_table):
 def supprimer_data(Joueur, date):
     conn = engine.connect()
     params_sql = {'joueur' : Joueur, 'date' : date}
-    sql1 = text(f'DELETE FROM sw WHERE "Joueur" = :joueur AND date = :date')  # :var_name
-    sql2 = text(f'DELETE FROM sw_score WHERE "Joueur" = :joueur AND date = :date')
+    sql1 = text(f'''DELETE FROM sw WHERE "id" = :joueur AND date = :date;
+                    DELETE FROM sw_score WHERE "id" = :joueur AND date = :date''')  # :var_name
     conn.execute(sql1, params_sql)
-    conn.execute(sql2, params_sql)
+
     conn.close
     
 def update_guilde(joueur, guilde):
     conn = engine.connect()
     params_sql = {'joueur' : joueur, 'guilde' : guilde}
-    sql1 = text('UPDATE sw_score SET guilde = :guilde WHERE "Joueur" = :joueur')
+    # sql1 = text('UPDATE sw_score SET guilde = :guilde WHERE "Joueur" = :joueur')
+    sql1 = text('UPDATE sw_user SET guilde = :guilde WHERE joueur = :joueur')
     conn.execute(sql1, params_sql)
     conn.close()
+    
+def get_data_bdd(request:text, dict_params = None):
+    conn = engine.connect()
+    sql = text(request)
+    if dict_params == None:
+        data = conn.execute(sql)
+    else:
+        data = conn.execute(sql, dict_params)
+    conn.close()
+    
+    return data
+    
+def requete_perso_bdd(request:text, dict_params:dict):
+    """
+    request : requête sql au format text
+    
+    dict_params : dictionnaire {variable : valeur}
+    
+    Rappel
+    -------
+    Dans la requête sql, une variable = :variable """
+    conn = engine.connect()
+    sql = text(request)
+    conn.execute(sql, dict_params)
+    conn.close
+    
+def get_user(joueur):
+    conn = engine.connect()
+    sql = text('SELECT * FROM sw_user WHERE joueur = :joueur ')
+    data = conn.execute(sql, {'joueur' : joueur})
+    data = data.mappings().all()
+    id_joueur = data[0]['id']
+    guilde = data[0]['guilde']
+    visibility = data[0]['visibility']   
+    return id_joueur, guilde, visibility
     
     

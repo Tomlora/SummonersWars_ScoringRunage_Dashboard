@@ -12,7 +12,7 @@ from pages_streamlit.visualisation_joueur import visu_page
 from pages_streamlit.options import params
 
 
-
+# https://stackoverflow.com/questions/7869592/how-to-do-an-update-join-in-postgresql SQL Join
 
 # Supprime les Future Warnings sur les copies
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -30,7 +30,6 @@ st.markdown("<h1 style='text-align: center; color: white;'>Scoring runes SW </h1
 with open('style.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
     
-
 
 # import streamlit upload st.session_state.file (data)
 

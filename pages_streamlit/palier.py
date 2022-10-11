@@ -2,64 +2,26 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 import plotly.express as px
+import plotly.graph_objects as go
 
 from gestion_bdd import lire_bdd
-
-def transformation_stats(nom_table):
-    df_actuel = lire_bdd(nom_table)
-    df_actuel = df_actuel.transpose()
-    df_actuel.reset_index(inplace=True)
-    df_actuel['date'] = pd.to_datetime(df_actuel['date'], format='%d/%m/%Y')
-    df_actuel['date'] = df_actuel['date'].dt.strftime('%d/%m/%Y') # on supprime les heures
-    
-    if nom_table == 'sw':
-        df_actuel.sort_values(by=['date','Set'], inplace=True)
-    else:
-        df_actuel.sort_values(by='date', inplace=True)
-    df_actuel = df_actuel[df_actuel['Joueur'] == st.session_state['pseudo']]
-    df_actuel.drop(['Joueur'], axis=1, inplace=True)
-    
-
-    
-    if nom_table == 'sw':
-        df_actuel = pd.melt(df_actuel, id_vars=['date', 'Set'], value_vars=['100', '110', '120'], var_name='Palier', value_name='Nombre')
-        df_actuel['datetime'] = pd.to_datetime(df_actuel['date'], format='%d/%m/%Y')
-        df_actuel.sort_values(by=['datetime', 'Set', 'Palier'], inplace=True)
-
-        df_actuel.drop(['datetime'], axis=1, inplace=True)
-    else:
-        df_actuel = pd.pivot_table(df_actuel, 'score', index='date')
-        df_actuel['score'] = df_actuel['score'].astype('int')
-        df_actuel['datetime'] = pd.to_datetime(df_actuel.index, format='%d/%m/%Y')
-        df_actuel.sort_values(by=['datetime'], inplace=True)
-        df_actuel.drop(['datetime'], axis=1, inplace=True)
-
-    
-    return df_actuel
-
-
-def plotline_evol_rune(df):
-    fig = px.line(df, x="date", y="Nombre", color="Set")
-    fig.update_layout({
-                'plot_bgcolor': 'rgb(255, 255, 255)',
-                'paper_bgcolor': 'rgba(0, 0, 0,0)'
-    })
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
-    fig.update_yaxes(showgrid=False)
-    return fig
-
+from visualisation import transformation_stats_visu, plotline_evol_rune_visu
 
 def palier_page():
-    try:
-        data_detail = transformation_stats('sw')
-        data_scoring = transformation_stats('sw_score')
+    # try:
+        # data_detail = transformation_stats_visu('sw', st.session_state['pseudo'])
+        # data_scoring = transformation_stats_visu('sw_score', st.session_state['pseudo'])
+
+        data_detail = transformation_stats_visu('sw', st.session_state['id_joueur'])
+        data_scoring = transformation_stats_visu('sw_score', st.session_state['id_joueur'])
         
         
         st.subheader('Evolution')
            
-        st.dataframe(data_scoring)
+        st.dataframe(data_scoring.set_index('date'))
             
-        fig = px.line(data_scoring, x=data_scoring.index, y='score')
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=data_scoring['date'], y=data_scoring['score'], mode='lines+markers'))
         fig.update_layout({
                     'plot_bgcolor': 'rgb(255, 255, 255)',
                     'paper_bgcolor': 'rgba(0, 0, 0,0)'
@@ -76,17 +38,17 @@ def palier_page():
         
         
         st.write('Palier 100')
-        fig1 = plotline_evol_rune(data_100)
+        fig1 = plotline_evol_rune_visu(data_100)
         st.plotly_chart(fig1)
 
         st.write('Palier 110')
-        fig2 = plotline_evol_rune(data_110)
+        fig2 = plotline_evol_rune_visu(data_110)
         st.plotly_chart(fig2)
 
         st.write('Palier 120')
-        fig3 = plotline_evol_rune(data_120)
+        fig3 = plotline_evol_rune_visu(data_120)
         st.plotly_chart(fig3)
     
-    except:
+    # except:
         st.subheader('Erreur')
         st.write('Pas de JSON chargé')
