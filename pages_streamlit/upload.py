@@ -24,6 +24,7 @@ def upload_json(category_selected):
 
         # On charge le json
         data_json = json.load(st.session_state['file'])
+        st.session_state.data_json = data_json
 
 
         player_runes = {}
@@ -228,7 +229,8 @@ def upload_json(category_selected):
                                             + data['fourth_sub_value_total'] / data['fourth_sub_value_max'])
                                            / 2.8)*100,2))
 
-
+        st.session_state.data_grind = data.copy()
+        
         # on retient ce dont on a besoin
         data = data[['rune_set', 'efficiency']]
 

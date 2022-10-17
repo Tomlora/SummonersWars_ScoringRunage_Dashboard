@@ -10,6 +10,7 @@ from pages_streamlit.palier import palier_page
 from pages_streamlit.upload import upload_json
 from pages_streamlit.visualisation_joueur import visu_page
 from pages_streamlit.options import params
+from pages_streamlit.grind_runes import optimisation_rune
 
 
 # https://stackoverflow.com/questions/7869592/how-to-do-an-update-join-in-postgresql SQL Join
@@ -38,19 +39,19 @@ if 'submitted' not in st.session_state: # si submitted n'est pas initialisé, c'
 
 if st.session_state['submitted'] == False: # PAs de json initialisé. Donc menu avec Upload json
     menu_selected = ['Upload JSON', 'General', 'Evolution']
-    icons_selected = ["gear", "gear", 'kanban']
+    icons_selected = ["gear", 'info', 'kanban']
 else: # Json upload, la première page n'est plus utile
     if 'guildeid' in st.session_state:
         # if st.session_state['guildeid'] == 116424:  # si c'est l'id d'Endless, on peut ouvrir le suivi
         if st.session_state['pseudo'] == 'Tømløra':
-            menu_selected = ['General', 'Evolution', 'Suivi', 'Parametres']
-            icons_selected = ["gear", 'kanban', 'kanban', 'gear']
+            menu_selected = ['General', 'Evolution', 'Suivi', 'Runes', 'Parametres']
+            icons_selected = ["info", 'kanban', 'kanban', 'bag-check-fill', 'gear']
         else:
-            menu_selected = ['General', 'Evolution', 'Parametres']
-            icons_selected = ["gear", 'kanban', 'gear']
+            menu_selected = ['General', 'Evolution', 'Runes', 'Parametres']
+            icons_selected = ["info", 'kanban', 'bag-check-fill', 'gear']
     else:    
-        menu_selected = ['General', 'Evolution', 'Parametres']
-        icons_selected = ["gear", 'kanban', 'gear']
+        menu_selected = ['General', 'Evolution', 'Runes', 'Parametres']
+        icons_selected = ["info", 'kanban', 'bag-check-fill', 'gear']
 
 with st.sidebar:
         selected = option_menu("Menu", menu_selected,
@@ -79,6 +80,9 @@ elif selected == 'Evolution':
 
 elif selected == 'Suivi':
     visu_page()
+
+elif selected == 'Runes':
+    optimisation_rune()
     
 elif selected == 'Parametres':
     params()
