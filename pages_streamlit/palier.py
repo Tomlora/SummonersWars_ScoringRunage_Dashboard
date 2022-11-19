@@ -8,12 +8,10 @@ from gestion_bdd import lire_bdd
 from visualisation import transformation_stats_visu, plotline_evol_rune_visu
 
 def palier_page():
-    # try:
-        # data_detail = transformation_stats_visu('sw', st.session_state['pseudo'])
-        # data_scoring = transformation_stats_visu('sw_score', st.session_state['pseudo'])
+    try:
 
-        data_detail = transformation_stats_visu('sw', st.session_state['id_joueur'])
-        data_scoring = transformation_stats_visu('sw_score', st.session_state['id_joueur'])
+        data_detail = transformation_stats_visu('sw', st.session_state['id_joueur'], distinct=True)
+        data_scoring = transformation_stats_visu('sw_score', st.session_state['id_joueur'], distinct=True)
         
         
         st.subheader('Evolution')
@@ -49,6 +47,6 @@ def palier_page():
         fig3 = plotline_evol_rune_visu(data_120)
         st.plotly_chart(fig3)
     
-    # except:
+    except:
         st.subheader('Erreur')
         st.write('Pas de JSON chargé')

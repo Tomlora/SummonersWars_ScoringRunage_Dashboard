@@ -6,7 +6,7 @@ import os
 
 from gestion_bdd import lire_bdd, lire_bdd_perso
 
-def comparaison():
+def comparaison(guilde_id): # à changer par guilde_id
     # Lire la BDD
     df_actuel = lire_bdd_perso('SELECT * from sw_user, sw_score WHERE sw_user.id = sw_score.id')
     df_actuel = df_actuel.transpose()
@@ -29,14 +29,15 @@ def comparaison():
     max_general = int(df_max['score'].max())
     
     # On refait les mêmes étapes pour la guilde Endless
-    df_endless = df_actuel[df_actuel['guilde'] == '[Endless]']
-    df_endless_max = df_endless.groupby('joueur').max()
-    size_endless = len(df_endless_max)
-    avg_score_endless = int(round(df_endless_max['score'].mean(),0))
-    max_endless = int(df_endless_max['score'].max())
-    df_endless_max['rank'] = df_endless_max['score'].rank(ascending=False, method='min')
+    df_guilde = df_actuel[df_actuel['guilde_id'] == guilde_id]
+    # df_guilde = df_actuel[df_actuel['guilde'] == guilde]
+    df_guilde_max = df_guilde.groupby('joueur').max()
+    size_guilde = len(df_guilde_max)
+    avg_score_guilde = int(round(df_guilde_max['score'].mean(),0))
+    max_guilde = int(df_guilde_max['score'].max())
+    df_guilde_max['rank'] = df_guilde_max['score'].rank(ascending=False, method='min')
     
-    return size_general, avg_score_general, max_general, size_endless, avg_score_endless, max_endless, df_max, df_endless_max
+    return size_general, avg_score_general, max_general, size_guilde, avg_score_guilde, max_guilde, df_max, df_guilde_max
 
 
 def comparaison_graph(df, name):
@@ -66,6 +67,7 @@ def comparaison_graph(df, name):
 
 
 def general_page():
+    # -------------- Scoring du compte
     try:
         tcd_column, score_column = st.columns(2)
             
@@ -78,7 +80,23 @@ def general_page():
             st.metric('Score', st.session_state['score'])
             st.metric('Date', st.session_state.tcd.iloc[0]['date'])
             
-        size_general, avg_score_general, max_general, size_endless, avg_score_endless, max_endless, df_max, df_endless = comparaison()
+        size_general, avg_score_general, max_general, size_guilde, avg_score_guilde, max_guilde, df_max, df_guilde = comparaison(st.session_state['guildeid'])
+        
+        
+        # ---------------- Scoring speed
+        
+        
+        with st.expander('Scoring speed'):
+            
+            tcd_column_spd, score_column_spd = st.columns(2)
+                         
+            with tcd_column_spd:
+                st.dataframe(st.session_state['tcd_spd'])
+            
+            with score_column_spd:
+                st.metric('Score speed', st.session_state['score_spd'])
+                
+        # ---------------- Comparaison
             
         st.title('Comparaison')
         
@@ -109,32 +127,32 @@ def general_page():
         fig_general = comparaison_graph(df_max, 'General')
         st.write(fig_general)
             
-        if int(st.session_state["guildeid"]) == int(os.environ['ID_ENDLESS']):
-            # Par rapport à Endless
-            st.subheader('Endless')
+
+        # Par rapport à sa guilde
+        st.subheader(st.session_state['guilde'])
         
-            comparaison2_1, comparaison2_2, comparaison2_3 = st.columns(3)
+        comparaison2_1, comparaison2_2, comparaison2_3 = st.columns(3)
             
-            with comparaison2_1:
-                st.metric('Joueurs', size_endless)
+        with comparaison2_1:
+            st.metric('Joueurs', size_guilde)
             
-            with comparaison2_2:
-                delta2_2 = int(st.session_state['score']) - avg_score_endless
-                st.metric('Moyenne Score', avg_score_endless, delta2_2)
+        with comparaison2_2:
+            delta2_2 = int(st.session_state['score']) - avg_score_guilde
+            st.metric('Moyenne Score', avg_score_guilde, delta2_2)
                 
-            with comparaison2_3:
-                delta2_3 = int(st.session_state['score']) - max_endless
-                st.metric('Record score', max_endless, delta2_3)
+        with comparaison2_3:
+            delta2_3 = int(st.session_state['score']) - max_guilde
+            st.metric('Record score', max_guilde, delta2_3)
                 
-            rank2_1, rank2_2 = st.columns(2)
+        rank2_1, rank2_2 = st.columns(2)
             
-            with rank2_1:
-                rank_endless = int(df_endless.loc[st.session_state['pseudo']]['rank'])
-                st.metric('Classement', rank_endless)
+        with rank2_1:
+            rank_guilde = int(df_guilde.loc[st.session_state['pseudo']]['rank'])
+            st.metric('Classement', rank_guilde)
                 
-            # with rank2_2:    
-            fig_endless = comparaison_graph(df_endless, 'Endless')
-            st.write(fig_endless)
+        # with rank2_2:    
+        fig_guilde = comparaison_graph(df_guilde, st.session_state['guilde'])
+        st.write(fig_guilde)
             
     
     except:

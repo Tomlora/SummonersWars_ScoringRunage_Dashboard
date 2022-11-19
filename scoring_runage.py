@@ -11,6 +11,7 @@ from pages_streamlit.upload import upload_json
 from pages_streamlit.visualisation_joueur import visu_page
 from pages_streamlit.options import params
 from pages_streamlit.grind_runes import optimisation_rune
+from pages_streamlit.monster import find_monsters
 
 
 # https://stackoverflow.com/questions/7869592/how-to-do-an-update-join-in-postgresql SQL Join
@@ -22,6 +23,20 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 category_selected = ['Violent', 'Will', 'Destroy', 'Despair']
 category_value = ", ".join(category_selected)
+
+coef_set = {'Violent' : 3,
+            'Will' : 3,
+            'Destroy' : 2,
+            'Despair' : 2}
+
+category_selected_spd = ['Violent', 'Will', 'Destroy', 'Despair', 'Swift']
+category_value_spd = ", ".join(category_selected)
+
+coef_set_spd = {'Violent' : 3,
+            'Will' : 3,
+            'Destroy' : 2,
+            'Despair' : 2,
+            'Swift' : 3}
 
 # CSS
 
@@ -41,18 +56,19 @@ if st.session_state['submitted'] == False: # PAs de json initialisé. Donc menu 
     menu_selected = ['Upload JSON', 'General', 'Evolution']
     icons_selected = ["gear", 'info', 'kanban']
 else: # Json upload, la première page n'est plus utile
-    if 'guildeid' in st.session_state:
+    if 'guildeid' in st.session_state: # Si on a l'info sur la guilde
         # if st.session_state['guildeid'] == 116424:  # si c'est l'id d'Endless, on peut ouvrir le suivi
-        if st.session_state['pseudo'] == 'Tømløra':
-            menu_selected = ['General', 'Evolution', 'Suivi', 'Runes', 'Parametres']
-            icons_selected = ["info", 'kanban', 'kanban', 'bag-check-fill', 'gear']
-        else:
-            menu_selected = ['General', 'Evolution', 'Runes', 'Parametres']
-            icons_selected = ["info", 'kanban', 'bag-check-fill', 'gear']
-    else:    
+        if st.session_state['pseudo'] == 'Tømløra': # si c'est l'admin
+            menu_selected = ['General', 'Evolution', 'Suivi', 'Runes', 'Bestiaire', 'Parametres']
+            icons_selected = ["info", 'kanban', 'kanban', 'bag-check-fill', 'book', 'gear']
+        else: # si c'est pas l'admin
+            menu_selected = ['General', 'Evolution', 'Runes', 'Bestiaire', 'Parametres']
+            icons_selected = ["info", 'kanban', 'bag-check-fill', 'book', 'gear']
+    else: # si on a pas l'info sur la guilde
         menu_selected = ['General', 'Evolution', 'Runes', 'Parametres']
         icons_selected = ["info", 'kanban', 'bag-check-fill', 'gear']
 
+# Menu
 with st.sidebar:
         selected = option_menu("Menu", menu_selected,
                             icons=icons_selected, menu_icon='list', default_index=0,
@@ -69,11 +85,15 @@ with st.sidebar:
             st.subheader(f'Guilde : {st.session_state["guilde"]}') 
         
 
+# Pages :
 if selected == "Upload JSON":
-    upload_json(category_selected)
+    upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd)
     
 elif selected == 'General':
     general_page()
+
+elif selected == 'Bestiaire':
+    find_monsters()
     
 elif selected == 'Evolution':
     palier_page()

@@ -13,17 +13,17 @@ def visu_page():
         df = lire_bdd_perso('SELECT * from sw_user, sw_score WHERE sw_user.id = sw_score.id')
         df = df.transpose()
         df.set_index('joueur', inplace=True)
-        df.drop(['id'], axis=1, inplace=True)
+        df.drop(['id', 'guilde_id'], axis=1, inplace=True)
         df.sort_index(axis=0, inplace=True) # sort l'index : Majuscule -> Minuscule -> caractères spéciaux
         liste_joueurs = df.index.unique().values.tolist()
         joueur_target = st.selectbox('Joueur', liste_joueurs)
-        id_joueur, guilde, visibility = get_user(joueur_target)
+        id_joueur, guilde, visibility, guildeid = get_user(joueur_target)
         
         submitted_joueur = st.form_submit_button('Valider')
         
     if submitted_joueur:    
-        data_detail = transformation_stats_visu('sw', id_joueur)
-        data_scoring = transformation_stats_visu('sw_score', id_joueur)
+        data_detail = transformation_stats_visu('sw', id_joueur, distinct=True)
+        data_scoring = transformation_stats_visu('sw_score', id_joueur, distinct=True)
             
             
         st.subheader('Evolution')

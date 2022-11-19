@@ -145,14 +145,32 @@ def optimisation_rune():
     data['fourth_sub_value_total_max_hero'] = (data['fourth_sub_value'] + data['fourth_grind_value_max_hero'])
 
 
-    # In[123]:
+                
+    data['efficiency_max_lgd'] = np.where(data['innate_type'] != 0,
+                                        round(((1+data['innate_value'] / data['innate_value_max']
+                                                + data['first_sub_value_total_max_lgd'] / data['first_sub_value_max']
+                                                + data['second_sub_value_total_max_lgd'] / data['second_sub_value_max']
+                                                + data['third_sub_value_total_max_lgd'] / data['third_sub_value_max']
+                                                + data['fourth_sub_value_total_max_lgd'] / data['fourth_sub_value_max'])
+                                               / 2.8)*100,2),
+                                        round(((1 + data['first_sub_value_total_max_lgd'] / data['first_sub_value_max']
+                                                + data['second_sub_value_total_max_lgd'] / data['second_sub_value_max']
+                                                + data['third_sub_value_total_max_lgd'] / data['third_sub_value_max']
+                                                + data['fourth_sub_value_total_max_lgd'] / data['fourth_sub_value_max'])
+                                               / 2.8)*100,2))
 
-
-    data['efficiency_max_lgd'] = np.where(data['innate_type'] != 0, round(((1+data['innate_value'] / data['innate_value_max'] + data['first_sub_value_total_max_lgd'] / data['first_sub_value_max'] + data['second_sub_value_total_max_lgd'] / data['second_sub_value_max'] + data['third_sub_value_total_max_lgd'] / data['third_sub_value_max'] + data['fourth_sub_value_total_max_lgd'] / data['fourth_sub_value_max']) / 2.8)*100,2),
-                                round(((1 + data['first_sub_value_total_max_lgd'] / data['first_sub_value_max'] + data['second_sub_value_total_max_lgd'] / data['second_sub_value_max'] + data['third_sub_value_total_max_lgd'] / data['third_sub_value_max'] + data['fourth_sub_value_total_max_lgd'] / data['fourth_sub_value_max']) / 2.8)*100,2))
-
-    data['efficiency_max_hero'] = np.where(data['innate_type'] != 0, round(((1+data['innate_value'] / data['innate_value_max'] + data['first_sub_value_total_max_hero'] / data['first_sub_value_max'] + data['second_sub_value_total_max_hero'] / data['second_sub_value_max'] + data['third_sub_value_total_max_hero'] / data['third_sub_value_max'] + data['fourth_sub_value_total_max_hero'] / data['fourth_sub_value_max']) / 2.8)*100,2),
-                                round(((1 + data['first_sub_value_total_max_hero'] / data['first_sub_value_max'] + data['second_sub_value_total_max_hero'] / data['second_sub_value_max'] + data['third_sub_value_total_max_hero'] / data['third_sub_value_max'] + data['fourth_sub_value_total_max_hero'] / data['fourth_sub_value_max']) / 2.8)*100,2))
+    data['efficiency_max_hero'] = np.where(data['innate_type'] != 0, 
+                                        round(((1+data['innate_value'] / data['innate_value_max']
+                                                + data['first_sub_value_total_max_hero'] / data['first_sub_value_max']
+                                                + data['second_sub_value_total_max_hero'] / data['second_sub_value_max']
+                                                + data['third_sub_value_total_max_hero'] / data['third_sub_value_max']
+                                                + data['fourth_sub_value_total_max_hero'] / data['fourth_sub_value_max'])
+                                               / 2.8)*100,2),
+                                        round(((1 + data['first_sub_value_total_max_hero'] / data['first_sub_value_max']
+                                                + data['second_sub_value_total_max_hero'] / data['second_sub_value_max']
+                                                + data['third_sub_value_total_max_hero'] / data['third_sub_value_max']
+                                                + data['fourth_sub_value_total_max_hero'] / data['fourth_sub_value_max'])
+                                               / 2.8)*100,2))
 
     data['potentiel_max'] = data['efficiency_max_lgd'] - data['efficiency']
 
@@ -322,9 +340,18 @@ def optimisation_rune():
             condition_lgd =  calcul_lgd > 0 # s'il y a un écart, ce n'est pas la stat max
             condition_hero = calcul_hero > 0
 
-            data['Grind_lgd'] = np.where(condition, np.where(condition_lgd, data['Grind_lgd'] + "Gemme : " + data[sub] + "(" + calcul_lgd.astype('str') + ")", data['Grind_lgd']), data['Grind_lgd'] )
-            data['Grind_hero'] = np.where(condition, np.where(condition_hero, data['Grind_hero'] + "Gemme : " + data[sub] + "(" + calcul_hero.astype('str') + ")", data['Grind_hero']), data['Grind_hero'] )  
+            data['Grind_lgd'] = np.where(condition, 
+                                         np.where(condition_lgd,
+                                                  data['Grind_lgd'] + "Gemme : " + data[sub] + "(" + calcul_lgd.astype('str') + ")",
+                                                  data['Grind_lgd']),
+                                         data['Grind_lgd'] )
+            data['Grind_hero'] = np.where(condition,
+                                          np.where(condition_hero,
+                                                   data['Grind_hero'] + "Gemme : " + data[sub] + "(" + calcul_hero.astype('str') + ")",
+                                                   data['Grind_hero']),
+                                          data['Grind_hero'] )
 
+            
     st.success('Ajout des observations pour chaque rune effectué !')
 
 

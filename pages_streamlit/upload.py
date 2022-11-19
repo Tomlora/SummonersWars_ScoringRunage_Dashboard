@@ -14,7 +14,7 @@ def date_du_jour():
     return f'{currentDay}/{currentMonth}/{currentYear}'
 
 
-def upload_json(category_selected):
+def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd):
     with st.form('Data du compte'):
         st.session_state.file = st.file_uploader('Choisis un json', type=['json'], help='Json SW Exporter')
         st.session_state['submitted'] = st.form_submit_button('Calcule mon score')
@@ -30,11 +30,12 @@ def upload_json(category_selected):
         player_runes = {}
 
 
-        # pseudo 
+        # infos du compte 
 
         st.session_state.pseudo = data_json['wizard_info']['wizard_name']
         st.session_state.guildeid = data_json['guild']['guild_info']['guild_id']
         st.session_state.guilde = data_json['guild']['guild_info']['name']
+        st.session_state.compteid = data_json['wizard_info']['wizard_id']
 
         # rune
         # Rune pas équipé
@@ -231,6 +232,10 @@ def upload_json(category_selected):
 
         st.session_state.data_grind = data.copy()
         
+        data_spd = data.copy()
+        
+        # --------------------- calcul score
+        
         # on retient ce dont on a besoin
         data = data[['rune_set', 'efficiency']]
 
@@ -245,6 +250,7 @@ def upload_json(category_selected):
         result = data.groupby(['rune_set', 'efficiency_binned']).count()
         # pas besoin d'un multiindex
         result.reset_index(inplace=True)
+
 
         # palier
         palier_1 = result['efficiency_binned'].unique()[0] # '[100.0, 110.0)'
@@ -270,10 +276,7 @@ def upload_json(category_selected):
 
         value_selected.drop(['factor'], axis=1, inplace=True)
 
-        coef_set = {'Violent' : 3,
-                'Will' : 3,
-                'Destroy' : 2,
-                'Despair' : 2}
+
 
         # on ajoute les poids des sets 
 
@@ -312,13 +315,113 @@ def upload_json(category_selected):
         total_120 = tcd_value[120].sum()
         
         tcd_value.loc['Total'] = [total_100, total_110, total_120]
+        
+        # -------------------------- calcul score spd
+        
+        def detect_speed(df):
+            for sub in ['first_sub', 'second_sub', 'third_sub', 'fourth_sub']:
+                if df[sub] == 8:
+                    df['spd'] = df[f'{sub}_value_total']
+                
+            return df    
+            # stat speed = 8
+
+
+        data_spd['spd'] = 0
+        
+        data_spd = data_spd.apply(detect_speed, axis=1)
+        
+        data_spd = data_spd[['rune_set', 'spd']]
+
+        data_spd['spd_binned'] = pd.cut(data_spd['spd'],bins=(23, 26, 29, 32, 36, 40), right=False)
+
+        data_spd.dropna()
+
+        result_spd = data_spd.groupby(['rune_set', 'spd_binned']).count()
+
+        result_spd.reset_index(inplace=True)
+
+        palier_1 = result_spd['spd_binned'].unique()[0] # 23-26
+        palier_2 = result_spd['spd_binned'].unique()[1] # 26-29
+        palier_3 = result_spd['spd_binned'].unique()[2] # 29-32
+        palier_4 = result_spd['spd_binned'].unique()[3] # 32-36
+        palier_5 = result_spd['spd_binned'].unique()[4] # 36+
+
+
+
+        poids_palier_1 = 1
+        poids_palier_2 = 2
+        poids_palier_3 = 3
+        poids_palier_4 = 4
+        poids_palier_5 = 5
+
+
+        result_spd['factor_spd'] = 0
+        result_spd['factor_spd'] = np.where(result_spd['spd_binned'] == palier_1, poids_palier_1, result_spd['factor_spd'])
+        result_spd['factor_spd'] = np.where(result_spd['spd_binned'] == palier_2, poids_palier_2, result_spd['factor_spd'])
+        result_spd['factor_spd'] = np.where(result_spd['spd_binned'] == palier_3, poids_palier_3, result_spd['factor_spd'])
+        result_spd['factor_spd'] = np.where(result_spd['spd_binned'] == palier_4, poids_palier_4, result_spd['factor_spd'])
+        result_spd['factor_spd'] = np.where(result_spd['spd_binned'] == palier_5, poids_palier_5, result_spd['factor_spd'])
+        result_spd['points_spd'] = result_spd['spd'] * result_spd['factor_spd']
+
+        # on sépare les dataset à mettre en évidence et les autres
+
+        value_selected_spd = result_spd[result_spd['rune_set'].isin(category_selected_spd)]
+        value_autres_spd = result_spd[~result_spd['rune_set'].isin(category_selected_spd)]
+
+        value_selected_spd.drop(['factor_spd'], axis=1, inplace=True)
+
+        for set in category_selected_spd:
+            value_selected_spd['points_spd'] = np.where(value_selected_spd['rune_set'] == set, value_selected_spd['points_spd'] * coef_set_spd[set], value_selected_spd['points_spd'])
+
+        value_autres_spd = value_autres_spd.groupby('spd_binned').sum()
+        value_autres_spd.reset_index(inplace=True)
+        value_autres_spd.insert(0, 'rune_set', 'Autre')
+        value_autres_spd.drop(['factor_spd'], axis=1, inplace=True)
+        
+        df_value_spd = pd.concat([value_selected_spd, value_autres_spd])
+
+        # on replace pour plus de lisibilité
+
+        df_value_spd['spd_binned'] = df_value_spd['spd_binned'].replace({palier_1 : '23-26',
+                                                                            palier_2 : '26-29',
+                                                                            palier_3 : '29-32',
+                                                                            palier_4 : '32-36',
+                                                                            palier_5 : '36+'})
+
+        score_spd = df_value_spd['points_spd'].sum()
+        
+        st.session_state.score_spd = score_spd
+        
+        tcd_value_spd = df_value_spd.pivot_table(df_value_spd, 'rune_set', 'spd_binned', 'sum')['spd']
+        
+        # pas besoin du multiindex
+        tcd_value_spd.columns.name = "spd"
+        tcd_value_spd.index.name = 'Set'
+        
+        total_23_spd = tcd_value_spd['23-26'].sum()
+        total_26_spd = tcd_value_spd['26-29'].sum()
+        total_29_spd = tcd_value_spd['29-32'].sum()
+        total_32_spd = tcd_value_spd['32-36'].sum()
+        total_36_spd = tcd_value_spd['36+'].sum()
+        
+        tcd_value_spd.loc['Total'] = [total_23_spd, total_26_spd, total_29_spd, total_32_spd, total_36_spd]
+        
+        st.session_state.tcd_spd = tcd_value_spd
+        
+        
+        # -------------------------- on enregistre
 
         try:
-            st.session_state.id_joueur, guilde, st.session_state.visibility = get_user(st.session_state['pseudo'])
+            st.session_state.id_joueur, guilde, st.session_state.visibility, guilde_id = get_user(st.session_state['pseudo'])
         except IndexError: #le joueur n'existe pas
-            requete_perso_bdd('INSERT INTO sw_user(joueur, guilde, visibility) VALUES (:joueur, :guilde, 0);', {'joueur' : st.session_state['pseudo'],
-                                                                                                                'guilde' : st.session_state['guilde']})
-            st.session_state.id_joueur, guilde, st.session_state.visibility = get_user(st.session_state['pseudo'])
+            requete_perso_bdd('''INSERT INTO sw_user(joueur, guilde, visibility, guilde_id, joueur_id) VALUES (:joueur, :guilde, 0, :guilde_id, :joueur_id);''',
+                            {'joueur' : st.session_state['pseudo'],
+                            'guilde' : st.session_state['guilde'],
+                            'guilde_id' : st.session_state['guildeid'],
+                            'joueur_id' : st.session_state['compteid']})
+            
+            st.session_state.id_joueur, guilde, st.session_state.visibility, guilde_id = get_user(st.session_state['pseudo'])
         
         # Enregistrement SQL
         
@@ -329,10 +432,7 @@ def upload_json(category_selected):
         
         sauvegarde_bdd(tcd_value, 'sw', 'append')
         
-        # df_scoring = pd.DataFrame({'Joueur' : [st.session_state['pseudo']], 'score' : [st.session_state['score']],
-        #                            'date' : [date_du_jour()], 'guilde' : [st.session_state['guilde']]})
-        # df_scoring.set_index('Joueur', inplace=True)
-        
+       
         df_scoring = pd.DataFrame({'id' : [st.session_state['id_joueur']], 'score' : [st.session_state['score']],
                                    'date' : [date_du_jour()]})
         df_scoring.set_index('id', inplace=True)
@@ -341,7 +441,7 @@ def upload_json(category_selected):
         
         # MAJ guilde
         
-        update_guilde(st.session_state['pseudo'], st.session_state['guilde'])
+        update_guilde(st.session_state['pseudo'], st.session_state['guilde'], st.session_state['guildeid'], st.session_state['compteid']) # on update le compteid le temps d'avoir les infos de tout le monde
         
         st.subheader(f'Validé pour le joueur {st.session_state["pseudo"]} !')
         st.write('Tu peux désormais aller sur les autres onglets disponibles')
