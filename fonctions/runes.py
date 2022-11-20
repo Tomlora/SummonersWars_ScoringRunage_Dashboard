@@ -137,7 +137,7 @@ class Rune():
                 # on crée un df avec la data
 
         self.data = pd.DataFrame.from_dict(self.player_runes, orient="index", columns=['rune_set', 'rune_slot', 'rune_equiped', 'stars', 'level', 'efficiency', 'max_efficiency', 'max_efficiency_reachable', 'gain', 'main_type', 'main_value', 'innate_type',
-                                                                                    'innate_value','first_sub', 'first_sub_value', 'first_gemme_bool', 'first_sub_grinded_value', 'second_sub', 'second_sub_value', 'second_gemme_bool',
+                                            'innate_value','first_sub', 'first_sub_value', 'first_gemme_bool', 'first_sub_grinded_value', 'second_sub', 'second_sub_value', 'second_gemme_bool',
                                             'second_sub_grinded_value', 'third_sub', 'third_sub_value', 'third_gemme_bool', 'third_sub_grinded_value', 'fourth_sub',
                                             'fourth_sub_value', 'fourth_gemme_bool', 'fourth_sub_grinded_value'])
 
@@ -145,8 +145,10 @@ class Rune():
                 # # Map des sets
 
 
-        self.set = {1:"Energy", 2:"Guard", 3:"Swift", 4:"Blade", 5:"Rage", 6:"Focus", 7:"Endure", 8:"Fatal", 10:"Despair", 11:"Vampire", 13:"Violent",
-                        14:"Nemesis", 15:"Will", 16:"Shield", 17:"Revenge", 18:"Destroy", 19:"Fight", 20:"Determination", 21:"Enhance", 22:"Accuracy", 23:"Tolerance", 99:"Immemorial"}
+        self.set = {1:"Energy", 2:"Guard", 3:"Swift", 4:"Blade", 5:"Rage", 
+                    6:"Focus", 7:"Endure", 8:"Fatal", 10:"Despair", 11:"Vampire", 13:"Violent",
+                        14:"Nemesis", 15:"Will", 16:"Shield", 17:"Revenge", 18:"Destroy", 19:"Fight", 
+                        20:"Determination", 21:"Enhance", 22:"Accuracy", 23:"Tolerance", 99:"Immemorial"}
 
         self.data['rune_set'] = self.data['rune_set'].map(self.set)
 

@@ -12,6 +12,8 @@ from pages_streamlit.visualisation_joueur import visu_page
 from pages_streamlit.options import params
 from pages_streamlit.grind_runes import optimisation_rune
 from pages_streamlit.monster import find_monsters
+from fonctions.gestion_bdd import requete_perso_bdd
+from pages_streamlit.ladder import classement
 
 
 # https://stackoverflow.com/questions/7869592/how-to-do-an-update-join-in-postgresql SQL Join
@@ -59,14 +61,14 @@ else: # Json upload, la première page n'est plus utile
     if 'guildeid' in st.session_state: # Si on a l'info sur la guilde
         # if st.session_state['guildeid'] == 116424:  # si c'est l'id d'Endless, on peut ouvrir le suivi
         if st.session_state['pseudo'] == 'Tømløra': # si c'est l'admin
-            menu_selected = ['General', 'Evolution', 'Suivi', 'Runes', 'Bestiaire', 'Parametres']
+            menu_selected = ['General', 'Evolution', 'Classement', 'Suivi', 'Runes', 'Bestiaire', 'Parametres']
             icons_selected = ["info", 'kanban', 'kanban', 'bag-check-fill', 'book', 'gear']
         else: # si c'est pas l'admin
-            menu_selected = ['General', 'Evolution', 'Runes', 'Bestiaire', 'Parametres']
-            icons_selected = ["info", 'kanban', 'bag-check-fill', 'book', 'gear']
+            menu_selected = ['General', 'Evolution', 'Classement', 'Runes', 'Bestiaire', 'Parametres']
+            icons_selected = ["info", 'kanban', 'ladder', 'bag-check-fill', 'book', 'gear']
     else: # si on a pas l'info sur la guilde
-        menu_selected = ['General', 'Evolution', 'Runes', 'Parametres']
-        icons_selected = ["info", 'kanban', 'bag-check-fill', 'gear']
+        menu_selected = ['General', 'Evolution', 'Classement', 'Runes', 'Parametres']
+        icons_selected = ["info", 'kanban', 'ladder', 'bag-check-fill', 'gear']
 
 # Menu
 with st.sidebar:
@@ -78,9 +80,16 @@ with st.sidebar:
             "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#FFFFFF"},
             "nav-link-selected": {"background-color": "#2C3845"},
         })
-        st.write(f'Sets importants : {category_value}' )
         
         if 'pseudo' in st.session_state: # si on a le pseudo du joueur, on l'affiche.
+            # Visibilité
+            list_visibility = ['Non-visible', 'Caché', 'Visible'] # Liste de choix
+            # slider avec, par défaut, la value dans la bdd
+            slider_visibility = st.radio('Visibilité Classement', ['Non-visible', 'Caché', 'Visible à ma guilde', 'Visible à tous'], index=st.session_state.visibility)
+            dict_visibility = {'Non-visible' : 0, 'Caché' : 1, 'Visible à ma guilde' : 2, 'Visible à tous' : 3}
+            # on enregistre si changement
+            requete_perso_bdd('''UPDATE sw_user SET visibility = :visibility where joueur = :joueur''', {'visibility' : dict_visibility[slider_visibility],
+                                                                                                         'joueur' : st.session_state["pseudo"]})
             st.subheader(f'Joueur : {st.session_state["pseudo"]}')
             st.subheader(f'Guilde : {st.session_state["guilde"]}') 
         
@@ -91,6 +100,9 @@ if selected == "Upload JSON":
     
 elif selected == 'General':
     general_page()
+    
+elif selected == 'Classement':
+    classement()
 
 elif selected == 'Bestiaire':
     find_monsters()
