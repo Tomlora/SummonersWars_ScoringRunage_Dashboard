@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 
-from gestion_bdd import lire_bdd, supprimer_data
+from fonctions.gestion_bdd import lire_bdd, supprimer_data
 
 def params():
     # On lit la BDD

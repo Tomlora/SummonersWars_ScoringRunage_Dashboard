@@ -40,7 +40,7 @@ coef_set_spd = {'Violent' : 3,
 
 # CSS
 
-st.markdown("<h1 style='text-align: center; color: white;'>Scoring runes SW </h1>", unsafe_allow_html=True )
+st.markdown("<h1 style='text-align: center; color: white;'>Scoring SW </h1>", unsafe_allow_html=True )
 
 
 with open('style.css') as f:

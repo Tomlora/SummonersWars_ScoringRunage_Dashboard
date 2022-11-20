@@ -3,10 +3,8 @@ import numpy as np
 import plotly.express as px
 import ast
 import streamlit as st
-import json
-from pathlib import Path
 from io import BytesIO
-from visualisation import filter_dataframe
+from fonctions.visualisation import filter_dataframe
 
 
 # fix plotly express et Visual Studio Code

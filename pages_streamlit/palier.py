@@ -1,11 +1,7 @@
-import pandas as pd
-import numpy as np
-import streamlit as st
-import plotly.express as px
-import plotly.graph_objects as go
 
-from gestion_bdd import lire_bdd
-from visualisation import transformation_stats_visu, plotline_evol_rune_visu
+import streamlit as st
+import plotly.graph_objects as go
+from fonctions.visualisation import transformation_stats_visu, plotline_evol_rune_visu
 
 def palier_page():
     try:

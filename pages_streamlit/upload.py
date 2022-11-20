@@ -1,11 +1,13 @@
 import pandas as pd
-import numpy as np
+
 import streamlit as st
 import json
 from datetime import datetime
-from streamlit_option_menu import option_menu
 
-from gestion_bdd import sauvegarde_bdd, lire_bdd, update_guilde, get_user, requete_perso_bdd
+
+from fonctions.gestion_bdd import sauvegarde_bdd, update_guilde, get_user, requete_perso_bdd
+from fonctions.runes import Rune
+from fonctions.artefact import Artefact
 
 def date_du_jour():
     currentMonth = str(datetime.now().month)
@@ -27,9 +29,6 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
         st.session_state.data_json = data_json
 
 
-        player_runes = {}
-
-
         # infos du compte 
 
         st.session_state.pseudo = data_json['wizard_info']['wizard_name']
@@ -37,379 +36,25 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
         st.session_state.guilde = data_json['guild']['guild_info']['name']
         st.session_state.compteid = data_json['wizard_info']['wizard_id']
 
-        # rune
-        # Rune pas équipé
-        for rune in data_json['runes']:
-            first_sub = 0
-            first_sub_value = 0
-            first_sub_grinded_value = 0
-            second_sub = 0
-            second_sub_value = 0
-            second_sub_grinded_value = 0
-            third_sub = 0
-            third_sub_value = 0
-            third_sub_grinded_value = 0
-            fourth_sub = 0
-            fourth_sub_value = 0
-            fourth_sub_grinded_value = 0
-            first_gemme_bool = 0
-            first_sub_grinded_value = 0
-            second_gemme_bool = 0
-            second_sub_grinded_value = 0
-            third_gemme_bool = 0
-            third_sub_grinded_value = 0
-            fourth_gemme_bool = 0
-            fourth_sub_grinded_value = 0
-
-            rune_id = rune['rune_id']
-            rune_set = rune['set_id']
-            rune_slot = rune['slot_no']
-            rune_equiped = rune['occupied_id']
-            stars = rune['class']
-            level = rune['upgrade_curr']
-            efficiency = 0
-            max_efficiency = 0
-            max_efficiency_reachable = 0
-            gain = 0
-            main_type = rune['pri_eff'][0]
-            main_value = rune['pri_eff'][1]
-            innate_type = rune['prefix_eff'][0]
-            innate_value = rune['prefix_eff'][1]
-
-            if level > 2:
-                first_sub = rune['sec_eff'][0][0]
-                first_sub_value = rune['sec_eff'][0][1]
-                first_gemme_bool = rune['sec_eff'][0][2]
-                first_sub_grinded_value = rune['sec_eff'][0][3]
-            if level > 5:
-                second_sub = rune['sec_eff'][1][0]
-                second_sub_value = rune['sec_eff'][1][1]
-                second_gemme_bool = rune['sec_eff'][1][2]
-                second_sub_grinded_value = rune['sec_eff'][1][3]
-            if level > 8:
-                third_sub = rune['sec_eff'][2][0]
-                third_sub_value = rune['sec_eff'][2][1]
-                third_gemme_bool = rune['sec_eff'][2][2]
-                third_sub_grinded_value = rune['sec_eff'][2][3]
-            if level > 11:
-                fourth_sub = rune['sec_eff'][3][0]
-                fourth_sub_value = rune['sec_eff'][3][1]
-                fourth_gemme_bool = rune['sec_eff'][3][2]
-                fourth_sub_grinded_value = rune['sec_eff'][3][3]
-
-            try:
-                player_runes[rune_id] =  [rune_set, rune_slot, rune_equiped, stars, level, efficiency, max_efficiency,
-                                    max_efficiency_reachable, gain, main_type, main_value, innate_type, innate_value,
-                                    first_sub, first_sub_value, first_gemme_bool,  first_sub_grinded_value, second_sub, second_sub_value, second_gemme_bool,
-                                    second_sub_grinded_value, third_sub, third_sub_value, third_gemme_bool, third_sub_grinded_value, fourth_sub,
-                                    fourth_sub_value, fourth_gemme_bool, fourth_sub_grinded_value]
-            except:
-                print(f'Erreur : {rune_id}')
-
-        # Rune équipée
-        for unit in data_json['unit_list']:
-            for stat in unit:
-                if stat == "runes":
-                    for rune in unit[stat]:
-                        first_sub = 0
-                        first_sub_value = 0
-                        first_sub_grinded_value = 0
-                        second_sub = 0
-                        second_sub_value = 0
-                        second_sub_grinded_value = 0
-                        third_sub = 0
-                        third_sub_value = 0
-                        third_sub_grinded_value = 0
-                        fourth_sub = 0
-                        fourth_sub_value = 0
-                        fourth_sub_grinded_value = 0
-
-                        rune_id = rune['rune_id']
-                        rune_set = rune['set_id']
-                        rune_slot = rune['slot_no']
-                        rune_equiped = rune['occupied_id']
-                        stars = rune['class']
-                        level = rune['upgrade_curr']
-                        efficiency = 0
-                        max_efficiency = 0
-                        max_efficiency_reachable = 0
-                        gain = 0
-                        main_type = rune['pri_eff'][0]
-                        main_value = rune['pri_eff'][1]
-                        innate_type = rune['prefix_eff'][0]
-                        innate_value = rune['prefix_eff'][1]
-                        # rank = rune['extra']
-                        if level > 2:
-                            first_sub = rune['sec_eff'][0][0]
-                            first_sub_value = rune['sec_eff'][0][1]
-                            first_gemme_bool = rune['sec_eff'][0][2]
-                            first_sub_grinded_value = rune['sec_eff'][0][3]
-                        if level > 5:
-                            second_sub = rune['sec_eff'][1][0]
-                            second_sub_value = rune['sec_eff'][1][1]
-                            second_gemme_bool = rune['sec_eff'][1][2]
-                            second_sub_grinded_value = rune['sec_eff'][1][3]
-                        if level > 8:
-                            third_sub = rune['sec_eff'][2][0]
-                            third_sub_value = rune['sec_eff'][2][1]
-                            third_gemme_bool = rune['sec_eff'][2][2]
-                            third_sub_grinded_value = rune['sec_eff'][2][3]
-                        if level > 11:
-                            fourth_sub = rune['sec_eff'][3][0]
-                            fourth_sub_value = rune['sec_eff'][3][1]
-                            fourth_gemme_bool = rune['sec_eff'][3][2]
-                            fourth_sub_grinded_value = rune['sec_eff'][3][3]
-                            
-                        player_runes[rune_id] =  [rune_set, rune_slot, rune_equiped, stars, level, efficiency, max_efficiency,
-                                    max_efficiency_reachable, gain, main_type, main_value, innate_type, innate_value,
-                                    first_sub, first_sub_value, first_gemme_bool, first_sub_grinded_value, second_sub, second_sub_value, second_gemme_bool,
-                                    second_sub_grinded_value, third_sub, third_sub_value, third_gemme_bool, third_sub_grinded_value, fourth_sub,
-                                    fourth_sub_value, fourth_gemme_bool, fourth_sub_grinded_value]
-
-
-        # on crée un df avec la data
-
-        data = pd.DataFrame.from_dict(player_runes, orient="index", columns=['rune_set', 'rune_slot', 'rune_equiped', 'stars', 'level', 'efficiency', 'max_efficiency', 'max_efficiency_reachable', 'gain', 'main_type', 'main_value', 'innate_type',
-                                                                            'innate_value','first_sub', 'first_sub_value', 'first_gemme_bool', 'first_sub_grinded_value', 'second_sub', 'second_sub_value', 'second_gemme_bool',
-                                    'second_sub_grinded_value', 'third_sub', 'third_sub_value', 'third_gemme_bool', 'third_sub_grinded_value', 'fourth_sub',
-                                    'fourth_sub_value', 'fourth_gemme_bool', 'fourth_sub_grinded_value'])
-
-
-        # # Map des sets
-
-
-        set = {1:"Energy", 2:"Guard", 3:"Swift", 4:"Blade", 5:"Rage", 6:"Focus", 7:"Endure", 8:"Fatal", 10:"Despair", 11:"Vampire", 13:"Violent",
-                14:"Nemesis", 15:"Will", 16:"Shield", 17:"Revenge", 18:"Destroy", 19:"Fight", 20:"Determination", 21:"Enhance", 22:"Accuracy", 23:"Tolerance", 99:"Immemorial"}
-
-        data['rune_set'] = data['rune_set'].map(set)
-
-
-
-        # # Efficiency
-
-
-        # Valeur max
-        sub = {1: (375 * 5) * 2, # PV flat
-            2: 8 * 5,  # PV%
-            3: (20 * 5) * 2, #ATQ FLAT 
-            4: 8 * 5, #ATQ%
-            5:(20 * 5) * 2, #DEF FLAT 
-            6: 8 * 5,  # DEF %
-            8: 6 * 5, # SPD
-            9: 6 * 5, # CRIT
-            10: 7 * 5, # DCC
-            11: 8 * 5, # RES
-            12: 8 * 5} # ACC
-
-        # On map les valeurs max
-        data['first_sub_value_max'] = data['first_sub'].map(sub)
-        data['second_sub_value_max'] = data['second_sub'].map(sub)
-        data['third_sub_value_max'] = data['third_sub'].map(sub)
-        data['fourth_sub_value_max'] = data['fourth_sub'].map(sub)
-        data['innate_value_max'] = data['innate_type'].replace(sub)
-
-
-        # Value des runes du joueur ( stats de base + meule )
-
-        data['first_sub_value_total'] = (data['first_sub_value'] + data['first_sub_grinded_value'])
-        data['second_sub_value_total'] = (data['second_sub_value'] + data['second_sub_grinded_value'])
-        data['third_sub_value_total'] = (data['third_sub_value'] + data['third_sub_grinded_value'])
-        data['fourth_sub_value_total'] = (data['fourth_sub_value'] + data['fourth_sub_grinded_value'])
+        data_rune = Rune(data_json)
         
-        # calcul de l'efficiency (stat de la rune / stat max possible)
+        data_arte = Artefact(data_json)
 
-        data['efficiency'] = np.where(data['innate_type'] != 0, round(((1+data['innate_value'] / data['innate_value_max']
-                                                                        + data['first_sub_value_total'] / data['first_sub_value_max']
-                                                                        + data['second_sub_value_total'] / data['second_sub_value_max']
-                                                                        + data['third_sub_value_total'] / data['third_sub_value_max']
-                                                                        + data['fourth_sub_value_total'] / data['fourth_sub_value_max'])
-                                                                       / 2.8)*100,2),
-                                    round(((1 + data['first_sub_value_total'] / data['first_sub_value_max']
-                                            + data['second_sub_value_total'] / data['second_sub_value_max']
-                                            + data['third_sub_value_total'] / data['third_sub_value_max']
-                                            + data['fourth_sub_value_total'] / data['fourth_sub_value_max'])
-                                           / 2.8)*100,2))
-
-        st.session_state.data_grind = data.copy()
+        st.session_state.data_grind = data_rune.data.copy()
+    
         
-        data_spd = data.copy()
+        # --------------------- calcul score rune
         
-        # --------------------- calcul score
+        tcd_value, st.session_state.score = data_rune.scoring_rune(category_selected, coef_set) 
         
-        # on retient ce dont on a besoin
-        data = data[['rune_set', 'efficiency']]
-
-        data['efficiency_binned'] = pd.cut(data['efficiency'],bins=(100, 110, 119.99, 129.99), right=False)
-
-        # en dessous de 100, renvoie null, on les enlève.
-
-        data.dropna(inplace=True)
-
-
-
-        result = data.groupby(['rune_set', 'efficiency_binned']).count()
-        # pas besoin d'un multiindex
-        result.reset_index(inplace=True)
-
-
-        # palier
-        palier_1 = result['efficiency_binned'].unique()[0] # '[100.0, 110.0)'
-        palier_2 = result['efficiency_binned'].unique()[1] # '[110.0, 120.0)'
-        palier_3 = result['efficiency_binned'].unique()[2] # '[120.0, 130.0)'
-
-        # poids des paliers
-
-        poids_palier_1 = 1
-        poids_palier_2 = 2
-        poids_palier_3 = 3
-
-        result['factor'] = 0
-        result['factor'] = np.where(result['efficiency_binned'] == palier_1, poids_palier_1, result['factor'])
-        result['factor'] = np.where(result['efficiency_binned'] == palier_2, poids_palier_2, result['factor'])
-        result['factor'] = np.where(result['efficiency_binned'] == palier_3, poids_palier_3, result['factor'])
-        result['points'] = result['efficiency'] * result['factor']
-
-        # on sépare les dataset à mettre en évidence et les autres
-
-        value_selected = result[result['rune_set'].isin(category_selected)]
-        value_autres = result[~result['rune_set'].isin(category_selected)]
-
-        value_selected.drop(['factor'], axis=1, inplace=True)
-
-
-
-        # on ajoute les poids des sets 
-
-        for set in category_selected:
-            value_selected['points'] = np.where(value_selected['rune_set'] == set, value_selected['points'] * coef_set[set], value_selected['points'])
-            
-            
-            
-        value_autres = value_autres.groupby('efficiency_binned').sum()
-        value_autres.reset_index(inplace=True)
-        value_autres.insert(0, 'rune_set', 'Autre')
-        value_autres.drop(['factor'], axis=1, inplace=True)
-
-        # on regroupe
-
-        df_value = pd.concat([value_selected, value_autres])
-
-        # on replace pour plus de lisibilité
-
-        df_value['efficiency_binned'] = df_value['efficiency_binned'].replace({palier_1 : 100,
-                                                                            palier_2 : 110,
-                                                                            palier_3 : 120})
-
-        st.session_state.score = df_value['points'].sum()
+        # -------------------------- calcul score spd rune
         
+        st.session_state.tcd_spd, st.session_state.score_spd = data_rune.scoring_spd(category_selected_spd, coef_set_spd)
         
-        # Calcul du TCD :
-
-        tcd_value = df_value.pivot_table(df_value, 'rune_set', 'efficiency_binned', 'sum')['efficiency']
-        # pas besoin du multiindex
-        tcd_value.columns.name = "efficiency"
-        tcd_value.index.name = 'Set'
+        # calcul score arte
         
-        total_100 = tcd_value[100].sum()
-        total_110 = tcd_value[110].sum()
-        total_120 = tcd_value[120].sum()
-        
-        tcd_value.loc['Total'] = [total_100, total_110, total_120]
-        
-        # -------------------------- calcul score spd
-        
-        def detect_speed(df):
-            for sub in ['first_sub', 'second_sub', 'third_sub', 'fourth_sub']:
-                if df[sub] == 8:
-                    df['spd'] = df[f'{sub}_value_total']
-                
-            return df    
-            # stat speed = 8
+        st.session_state.tcd_arte, st.session_state.score_arte = data_arte.scoring_arte()
 
-
-        data_spd['spd'] = 0
-        
-        data_spd = data_spd.apply(detect_speed, axis=1)
-        
-        data_spd = data_spd[['rune_set', 'spd']]
-
-        data_spd['spd_binned'] = pd.cut(data_spd['spd'],bins=(23, 26, 29, 32, 36, 40), right=False)
-
-        data_spd.dropna()
-
-        result_spd = data_spd.groupby(['rune_set', 'spd_binned']).count()
-
-        result_spd.reset_index(inplace=True)
-
-        palier_1 = result_spd['spd_binned'].unique()[0] # 23-26
-        palier_2 = result_spd['spd_binned'].unique()[1] # 26-29
-        palier_3 = result_spd['spd_binned'].unique()[2] # 29-32
-        palier_4 = result_spd['spd_binned'].unique()[3] # 32-36
-        palier_5 = result_spd['spd_binned'].unique()[4] # 36+
-
-
-
-        poids_palier_1 = 1
-        poids_palier_2 = 2
-        poids_palier_3 = 3
-        poids_palier_4 = 4
-        poids_palier_5 = 5
-
-
-        result_spd['factor_spd'] = 0
-        result_spd['factor_spd'] = np.where(result_spd['spd_binned'] == palier_1, poids_palier_1, result_spd['factor_spd'])
-        result_spd['factor_spd'] = np.where(result_spd['spd_binned'] == palier_2, poids_palier_2, result_spd['factor_spd'])
-        result_spd['factor_spd'] = np.where(result_spd['spd_binned'] == palier_3, poids_palier_3, result_spd['factor_spd'])
-        result_spd['factor_spd'] = np.where(result_spd['spd_binned'] == palier_4, poids_palier_4, result_spd['factor_spd'])
-        result_spd['factor_spd'] = np.where(result_spd['spd_binned'] == palier_5, poids_palier_5, result_spd['factor_spd'])
-        result_spd['points_spd'] = result_spd['spd'] * result_spd['factor_spd']
-
-        # on sépare les dataset à mettre en évidence et les autres
-
-        value_selected_spd = result_spd[result_spd['rune_set'].isin(category_selected_spd)]
-        value_autres_spd = result_spd[~result_spd['rune_set'].isin(category_selected_spd)]
-
-        value_selected_spd.drop(['factor_spd'], axis=1, inplace=True)
-
-        for set in category_selected_spd:
-            value_selected_spd['points_spd'] = np.where(value_selected_spd['rune_set'] == set, value_selected_spd['points_spd'] * coef_set_spd[set], value_selected_spd['points_spd'])
-
-        value_autres_spd = value_autres_spd.groupby('spd_binned').sum()
-        value_autres_spd.reset_index(inplace=True)
-        value_autres_spd.insert(0, 'rune_set', 'Autre')
-        value_autres_spd.drop(['factor_spd'], axis=1, inplace=True)
-        
-        df_value_spd = pd.concat([value_selected_spd, value_autres_spd])
-
-        # on replace pour plus de lisibilité
-
-        df_value_spd['spd_binned'] = df_value_spd['spd_binned'].replace({palier_1 : '23-26',
-                                                                            palier_2 : '26-29',
-                                                                            palier_3 : '29-32',
-                                                                            palier_4 : '32-36',
-                                                                            palier_5 : '36+'})
-
-        score_spd = df_value_spd['points_spd'].sum()
-        
-        st.session_state.score_spd = score_spd
-        
-        tcd_value_spd = df_value_spd.pivot_table(df_value_spd, 'rune_set', 'spd_binned', 'sum')['spd']
-        
-        # pas besoin du multiindex
-        tcd_value_spd.columns.name = "spd"
-        tcd_value_spd.index.name = 'Set'
-        
-        total_23_spd = tcd_value_spd['23-26'].sum()
-        total_26_spd = tcd_value_spd['26-29'].sum()
-        total_29_spd = tcd_value_spd['29-32'].sum()
-        total_32_spd = tcd_value_spd['32-36'].sum()
-        total_36_spd = tcd_value_spd['36+'].sum()
-        
-        tcd_value_spd.loc['Total'] = [total_23_spd, total_26_spd, total_29_spd, total_32_spd, total_36_spd]
-        
-        st.session_state.tcd_spd = tcd_value_spd
-        
-        
         # -------------------------- on enregistre
 
         try:

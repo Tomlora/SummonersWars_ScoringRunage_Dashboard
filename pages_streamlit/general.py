@@ -1,10 +1,10 @@
-import pandas as pd
-import numpy as np
+
 import streamlit as st
 import plotly.graph_objects as go
-import os
+import pandas as pd
+import numpy as np
 
-from gestion_bdd import lire_bdd, lire_bdd_perso
+from fonctions.gestion_bdd import lire_bdd, lire_bdd_perso
 
 def comparaison(guilde_id): # à changer par guilde_id
     # Lire la BDD
@@ -65,10 +65,25 @@ def comparaison_graph(df, name):
                     })
     return fig
 
+def highlight_max(data, color='yellow'):
+    '''
+    highlight the maximum in a Series or DataFrame
+    
+    ex : st.session_state.tcd_spd.style.apply(highlight_max, color='green', axis=1)
+    '''
+    attr = 'background-color: {}'.format(color)
+    if data.ndim == 1:  # Series from .apply(axis=0) or axis=1
+        is_max = data == data.max()
+        return [attr if v else '' for v in is_max]
+    else:  # from .apply(axis=None)
+        is_max = data == data.max().max()
+        return pd.DataFrame(np.where(is_max, attr, ''),
+                            index=data.index, columns=data.columns)
+
 
 def general_page():
     # -------------- Scoring du compte
-    try:
+    # try:
         tcd_column, score_column = st.columns(2)
             
         with tcd_column:
@@ -77,28 +92,37 @@ def general_page():
             
         with score_column:
             # Score du joueur
-            st.metric('Score', st.session_state['score'])
+            st.metric('Score Rune', st.session_state['score'])
             st.metric('Date', st.session_state.tcd.iloc[0]['date'])
             
         size_general, avg_score_general, max_general, size_guilde, avg_score_guilde, max_guilde, df_max, df_guilde = comparaison(st.session_state['guildeid'])
         
+        with st.expander('Autre scorings'):
         
-        # ---------------- Scoring speed
+            # ---------------- Scoring arte + speed
         
+            tcd_column_spd, score_column_arte = st.columns(2)
         
-        with st.expander('Scoring speed'):
-            
-            tcd_column_spd, score_column_spd = st.columns(2)
-                         
             with tcd_column_spd:
-                st.dataframe(st.session_state['tcd_spd'])
+                st.metric('Score Speed', st.session_state['score_spd'])
+                
+            with score_column_arte:
+                st.metric('Score Arte', st.session_state['score_arte'])
+        
+        
+            # ---------------- Df arte + speed
+        
+            tcd_column_df_spd, score_column_df_arte = st.columns(2)
+                        #  df.style.highlight_max(axis=0)
+            with tcd_column_df_spd:
+                st.dataframe(st.session_state.tcd_spd)
             
-            with score_column_spd:
-                st.metric('Score speed', st.session_state['score_spd'])
+            with score_column_df_arte:
+                st.dataframe(st.session_state.tcd_arte)
                 
         # ---------------- Comparaison
             
-        st.title('Comparaison')
+        st.title('Comparaison (Runes)')
         
         # Par rapport à tous les joueurs
         st.subheader('General')
@@ -155,6 +179,6 @@ def general_page():
         st.write(fig_guilde)
             
     
-    except:
-        st.subheader('Erreur')
-        st.write('Pas de JSON chargé')
+    # except:
+    #     st.subheader('Erreur')
+    #     st.write('Pas de JSON chargé')
