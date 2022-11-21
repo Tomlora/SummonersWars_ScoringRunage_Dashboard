@@ -46,7 +46,8 @@ def comparaison_graph(df, name):
     fig.add_trace(go.Box(
             y = df['score'],
             marker_color='#2C75FF',
-            name=name
+            name=name,
+            quartilemethod='inclusive',
         ))
         
     fig.add_trace(go.Scatter(
