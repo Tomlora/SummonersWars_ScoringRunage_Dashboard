@@ -205,7 +205,7 @@ class Rune():
     def scoring_rune(self, category_selected, coef_set):
         self.data_r = self.data[['rune_set', 'efficiency']]
 
-        self.data_r['efficiency_binned'] = pd.cut(self.data_r['efficiency'],bins=(100, 110, 119.99, 129.99), right=False)
+        self.data_r['efficiency_binned'] = pd.cut(self.data_r['efficiency'],bins=(100, 110, 119.99, 139.99), right=False)
 
         # en dessous de 100, renvoie null, on les enlève.
 
