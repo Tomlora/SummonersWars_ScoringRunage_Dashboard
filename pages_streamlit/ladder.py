@@ -29,9 +29,9 @@ def cleaning_only_guilde(x):
 def classement():
     # On lit la BDD
     # on récupère la data
-    data = lire_bdd_perso('''SELECT * from sw_user, sw_score
-                        where sw_user.visibility != 0
-                        and sw_user.id = sw_score.id''').transpose().reset_index()
+    data = lire_bdd_perso('''SELECT * from sw_user
+                       INNER JOIN sw_score ON sw_user.id = sw_score.id
+                       where sw_user.visibility != 0''').transpose().reset_index()
 
     # on transpose la date au format date
     data['date'] = pd.to_datetime(data['date'], format="%d/%m/%Y")
