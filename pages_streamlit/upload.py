@@ -58,7 +58,9 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
         # -------------------------- on enregistre
 
         try:
-            st.session_state.id_joueur, guilde, st.session_state.visibility, guilde_id = get_user(st.session_state['pseudo'])
+            st.session_state.id_joueur, guilde, st.session_state.visibility, guilde_id = get_user(st.session_state['compteid'], type='id')
+            if st.session_state.id_joueur == 0: # si = 0, ça veut dire que c'était l'ancienne version.
+                st.session_state.id_joueur, guilde, st.session_state.visibility, guilde_id = get_user(st.session_state['pseudo'])
         except IndexError: #le joueur n'existe pas
             requete_perso_bdd('''INSERT INTO sw_user(joueur, guilde, visibility, guilde_id, joueur_id) VALUES (:joueur, :guilde, 0, :guilde_id, :joueur_id);''',
                             {'joueur' : st.session_state['pseudo'],
@@ -86,7 +88,7 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
         
         # MAJ guilde
         
-        update_guilde(st.session_state['pseudo'], st.session_state['guilde'], st.session_state['guildeid'], st.session_state['compteid']) # on update le compteid le temps d'avoir les infos de tout le monde
+        update_guilde(st.session_state['pseudo'], st.session_state['guilde'], st.session_state['guildeid'], st.session_state['compteid']) # on update le compte
         
         st.subheader(f'Validé pour le joueur {st.session_state["pseudo"]} !')
         st.write('Tu peux désormais aller sur les autres onglets disponibles')

@@ -111,7 +111,7 @@ def update_guilde(joueur, guilde, guildeid, compteid):
     conn = engine.connect()
     params_sql = {'joueur' : joueur, 'guilde' : guilde, 'guilde_id' : guildeid, 'joueur_id' : compteid}
     # sql1 = text('UPDATE sw_score SET guilde = :guilde WHERE "Joueur" = :joueur')
-    sql1 = text('UPDATE sw_user SET guilde = :guilde, guilde_id = :guilde_id, joueur_id = :joueur_id WHERE joueur = :joueur')
+    sql1 = text('UPDATE sw_user SET guilde = :guilde, guilde_id = :guilde_id, joueur = :joueur WHERE joueur_id = :joueur_id')
     conn.execute(sql1, params_sql)
     conn.close()
     
@@ -140,12 +140,17 @@ def requete_perso_bdd(request:text, dict_params:dict):
     conn.execute(sql, dict_params)
     conn.close
     
-def get_user(joueur):
-    '''Return l'id, la guilde et la visibilité du joueur demandé'''
+def get_user(joueur, type:str='name_user'):
+    '''Return l'id, la guilde et la visibilité du joueur demandé
+    type : name_user ou id'''
     # à adapter avec l'id du compte quand on aura assez d'infos
     conn = engine.connect()
-    sql = text('SELECT * FROM sw_user WHERE joueur = :joueur ')
-    data = conn.execute(sql, {'joueur' : joueur})
+    if type=='name_user':
+        sql = text('SELECT * FROM sw_user WHERE joueur = :joueur ')
+        data = conn.execute(sql, {'joueur' : joueur})
+    elif type=='id':
+        sql = text('SELECT * FROM sw_user WHERE joueur_id = :joueur ')
+        data = conn.execute(sql, {'joueur' : joueur})
     data = data.mappings().all()
     id_joueur = data[0]['id']
     guilde = data[0]['guilde']
