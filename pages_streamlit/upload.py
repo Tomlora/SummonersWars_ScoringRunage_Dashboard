@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 
 
-from fonctions.gestion_bdd import sauvegarde_bdd, update_guilde, get_user, requete_perso_bdd
+from fonctions.gestion_bdd import sauvegarde_bdd, update_info_compte, get_user, requete_perso_bdd
 from fonctions.runes import Rune
 from fonctions.artefact import Artefact
 
@@ -56,19 +56,19 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
         st.session_state.tcd_arte, st.session_state.score_arte = data_arte.scoring_arte()
 
         # -------------------------- on enregistre
-
         try:
             st.session_state.id_joueur, guilde, st.session_state.visibility, guilde_id = get_user(st.session_state['compteid'], type='id')
-            if st.session_state.id_joueur == 0: # si = 0, ça veut dire que c'était l'ancienne version.
+        except IndexError:
+            try:
+                st.session_state.id_joueur, guilde, st.session_state.visibility, guilde_id = get_user(st.session_state['pseudo'], id_compte=st.session_state['compteid'])
+            except IndexError: #le joueur n'existe pas ou est dans l'ancien système
+                requete_perso_bdd('''INSERT INTO sw_user(joueur, guilde, visibility, guilde_id, joueur_id) VALUES (:joueur, :guilde, 0, :guilde_id, :joueur_id);''',
+                                    {'joueur' : st.session_state['pseudo'],
+                                    'guilde' : st.session_state['guilde'],
+                                    'guilde_id' : st.session_state['guildeid'],
+                                    'joueur_id' : st.session_state['compteid']})
+                
                 st.session_state.id_joueur, guilde, st.session_state.visibility, guilde_id = get_user(st.session_state['pseudo'])
-        except IndexError: #le joueur n'existe pas
-            requete_perso_bdd('''INSERT INTO sw_user(joueur, guilde, visibility, guilde_id, joueur_id) VALUES (:joueur, :guilde, 0, :guilde_id, :joueur_id);''',
-                            {'joueur' : st.session_state['pseudo'],
-                            'guilde' : st.session_state['guilde'],
-                            'guilde_id' : st.session_state['guildeid'],
-                            'joueur_id' : st.session_state['compteid']})
-            
-            st.session_state.id_joueur, guilde, st.session_state.visibility, guilde_id = get_user(st.session_state['pseudo'])
         
         # Enregistrement SQL
         
@@ -88,7 +88,7 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
         
         # MAJ guilde
         
-        update_guilde(st.session_state['pseudo'], st.session_state['guilde'], st.session_state['guildeid'], st.session_state['compteid']) # on update le compte
+        update_info_compte(st.session_state['pseudo'], st.session_state['guilde'], st.session_state['guildeid'], st.session_state['compteid']) # on update le compte
         
         st.subheader(f'Validé pour le joueur {st.session_state["pseudo"]} !')
         st.write('Tu peux désormais aller sur les autres onglets disponibles')

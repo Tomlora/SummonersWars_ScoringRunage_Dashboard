@@ -107,7 +107,7 @@ def supprimer_data(Joueur, date):
 
     conn.close
     
-def update_guilde(joueur, guilde, guildeid, compteid):
+def update_info_compte(joueur, guilde, guildeid, compteid):
     conn = engine.connect()
     params_sql = {'joueur' : joueur, 'guilde' : guilde, 'guilde_id' : guildeid, 'joueur_id' : compteid}
     # sql1 = text('UPDATE sw_score SET guilde = :guilde WHERE "Joueur" = :joueur')
@@ -138,9 +138,9 @@ def requete_perso_bdd(request:text, dict_params:dict):
     conn = engine.connect()
     sql = text(request)
     conn.execute(sql, dict_params)
-    conn.close
+    conn.close()
     
-def get_user(joueur, type:str='name_user'):
+def get_user(joueur, type:str='name_user', id_compte:int=0):
     '''Return l'id, la guilde et la visibilité du joueur demandé
     type : name_user ou id'''
     # à adapter avec l'id du compte quand on aura assez d'infos
@@ -155,7 +155,12 @@ def get_user(joueur, type:str='name_user'):
     id_joueur = data[0]['id']
     guilde = data[0]['guilde']
     visibility = data[0]['visibility']
-    guildeid = data[0]['guilde_id']   
+    guildeid = data[0]['guilde_id']
+    # Dans l'ancien système, on ne prenait pas l'id. On regarde s'il faut maj
+    if data[0]['joueur_id'] == 0 and type == 'name_user':
+        sql = text('UPDATE sw_user SET joueur_id = :joueur_id where joueur = :joueur')
+        data = conn.execute(sql, {'joueur_id' : id_compte, 'joueur' : joueur})
+    conn.close()    
     return id_joueur, guilde, visibility, guildeid
     
-    
+ 
