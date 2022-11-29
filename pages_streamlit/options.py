@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 
-from fonctions.gestion_bdd import lire_bdd, supprimer_data
+from fonctions.gestion_bdd import lire_bdd, supprimer_data, supprimer_data_all
 
 def params():
     # On lit la BDD
@@ -32,3 +32,12 @@ def params():
     if validation_suppression:
        supprimer_data(st.session_state['id_joueur'], date_retenu)
        st.text('Supprimé')
+       
+    with st.form('Supprimer toutes mes données'):
+        st.subheader('Tout supprimer (Validation définitive !)')
+        validation_suppression_definitive = st.form_submit_button('Valider la suppression définitive')
+        
+    if validation_suppression_definitive:
+        
+        supprimer_data_all(st.session_state['id_joueur'])
+        st.text('Supprimé')

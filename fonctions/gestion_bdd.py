@@ -98,20 +98,30 @@ def supprimer_bdd(nom_table):
     conn.execute(sql)
     conn.close()
     
-def supprimer_data(Joueur, date):
+def supprimer_data(joueur, date):
     conn = engine.connect()
-    params_sql = {'joueur' : Joueur, 'date' : date}
+    params_sql = {'joueur' : joueur, 'date' : date}
     sql1 = text(f'''DELETE FROM sw WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_score WHERE "id" = :joueur AND date = :date''')  # :var_name
     conn.execute(sql1, params_sql)
 
     conn.close
     
-def update_info_compte(joueur, guilde, guildeid, compteid):
+def supprimer_data_all(joueur):
     conn = engine.connect()
-    params_sql = {'joueur' : joueur, 'guilde' : guilde, 'guilde_id' : guildeid, 'joueur_id' : compteid}
+    params_sql = {'joueur' : joueur}
+    sql1 = text(f'''DELETE FROM sw WHERE "id" = :joueur;
+                    DELETE FROM sw_score WHERE "id" = :joueur;
+                    DELETE FROM sw_user WHERE "id" = :joueur;''')  # :var_name
+    conn.execute(sql1, params_sql)
+
+    conn.close
+    
+def update_info_compte(joueur, guildeid, compteid):
+    conn = engine.connect()
+    params_sql = {'joueur' : joueur, 'guilde_id' : guildeid, 'joueur_id' : compteid}
     # sql1 = text('UPDATE sw_score SET guilde = :guilde WHERE "Joueur" = :joueur')
-    sql1 = text('UPDATE sw_user SET guilde = :guilde, guilde_id = :guilde_id, joueur = :joueur WHERE joueur_id = :joueur_id')
+    sql1 = text('UPDATE sw_user SET guilde_id = :guilde_id, joueur = :joueur WHERE joueur_id = :joueur_id;')
     conn.execute(sql1, params_sql)
     conn.close()
     
@@ -146,14 +156,14 @@ def get_user(joueur, type:str='name_user', id_compte:int=0):
     # à adapter avec l'id du compte quand on aura assez d'infos
     conn = engine.connect()
     if type=='name_user':
-        sql = text('SELECT * FROM sw_user WHERE joueur = :joueur ')
+        sql = text('SELECT id, guilde_id, visibility , joueur_id, (SELECT guilde from sw_guilde where sw_user.guilde_id = sw_guilde.guilde_id) as guilde FROM sw_user WHERE joueur = :joueur ')
         data = conn.execute(sql, {'joueur' : joueur})
     elif type=='id':
-        sql = text('SELECT * FROM sw_user WHERE joueur_id = :joueur ')
+        sql = text('SELECT id, guilde_id, visibility , joueur_id, (SELECT guilde from sw_guilde where sw_user.guilde_id = sw_guilde.guilde_id) as guilde FROM sw_user WHERE joueur_id =:joueur ')
         data = conn.execute(sql, {'joueur' : joueur})
     data = data.mappings().all()
     id_joueur = data[0]['id']
-    guilde = data[0]['guilde']
+
     visibility = data[0]['visibility']
     guildeid = data[0]['guilde_id']
     # Dans l'ancien système, on ne prenait pas l'id. On regarde s'il faut maj
@@ -161,6 +171,6 @@ def get_user(joueur, type:str='name_user', id_compte:int=0):
         sql = text('UPDATE sw_user SET joueur_id = :joueur_id where joueur = :joueur')
         data = conn.execute(sql, {'joueur_id' : id_compte, 'joueur' : joueur})
     conn.close()    
-    return id_joueur, guilde, visibility, guildeid
+    return id_joueur, visibility, guildeid
     
  

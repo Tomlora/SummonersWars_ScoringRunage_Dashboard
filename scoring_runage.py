@@ -114,7 +114,7 @@ elif selected == 'Suivi':
     visu_page()
 
 elif selected == 'Runes':
-    optimisation_rune()
+    optimisation_rune(category_selected, coef_set)
     
 elif selected == 'Parametres':
     params()

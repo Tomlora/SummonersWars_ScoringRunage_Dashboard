@@ -2,21 +2,7 @@ from fonctions.gestion_bdd import lire_bdd_perso
 import pandas as pd
 import streamlit as st
 import numpy as np
-def highlight(data, name, color='yellow'):
-    '''
-    highlight the maximum in a Series or DataFrame
-    
-    ex : st.session_state.tcd_spd.style.apply(highlight_max, color='green', axis=1)
-    '''
-    attr = 'background-color: {}'.format(color)
-    if data.ndim == 1:  # Series from .apply(axis=0) or axis=1
-        is_max = data.index == name
-        return [attr if v else '' for v in is_max]
-    else:  # from .apply(axis=None)
-        is_max = data.index == name
-        return pd.DataFrame(np.where(is_max, attr, ''),
-                            index=data.index, columns=data.columns)
-        
+       
         
 def cleaning_only_guilde(x):
     x['private'] = 0
@@ -29,9 +15,10 @@ def cleaning_only_guilde(x):
 def classement():
     # On lit la BDD
     # on récupère la data
-    data = lire_bdd_perso('''SELECT * from sw_user
-                       INNER JOIN sw_score ON sw_user.id = sw_score.id
-                       where sw_user.visibility != 0''').transpose().reset_index()
+    data = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_score.date, sw_score.score, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
+                        FROM sw_user
+                        INNER JOIN sw_score ON sw_user.id = sw_score.id
+                        where sw_user.visibility != 0''').transpose().reset_index()
 
     # on transpose la date au format date
     data['date'] = pd.to_datetime(data['date'], format="%d/%m/%Y")
