@@ -54,11 +54,8 @@ def find_monsters():
             df['verif3'] + df['verif4'] + df['verif5']
 
         def return_bool(x):
-            if x >= 1:
-                x = True
-            else:
-                x = False
-            return x
+            return x >= 1
+
 
         df['verif_g'] = df['verif_g'].apply(return_bool)
 
