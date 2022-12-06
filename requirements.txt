@@ -8,3 +8,7 @@ sqlalchemy
 psycopg2
 datetime
 streamlit_option_menu
+openpyxl
+xlsxwriter
+requests
+streamlit-lottie

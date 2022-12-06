@@ -6,7 +6,6 @@ import streamlit as st
 from io import BytesIO
 from fonctions.visualisation import filter_dataframe
 
-
 # fix plotly express et Visual Studio Code
 import plotly.io as pio
 pio.renderers.default = "notebook_connected"
@@ -112,6 +111,8 @@ def export_excel(data, data_short, data_property, data_count, data_inventaire):
 
 
 def optimisation_rune(category_selected, coef_set):
+    
+
     data = st.session_state['data_grind']
 
     data = data[data['level'] > 11]
@@ -189,88 +190,6 @@ def optimisation_rune(category_selected, coef_set):
     data['potentiel_max_lgd'] = data['efficiency_max_lgd'] - data['efficiency']
 
     data['potentiel_max_hero'] = data['efficiency_max_hero'] - data['efficiency']
-
-    # def scoring_rune(potentiel):
-
-    #     data_scoring = data.copy()
-    #     data_scoring = data[['rune_set', potentiel]]
-
-    #     data_scoring['efficiency_binned'] = pd.cut(data_scoring[potentiel],bins=(100, 110, 119.99, 139.99), right=False)
-
-    #     # en dessous de 100, renvoie null, on les enlève.
-
-    #     data_scoring.dropna(inplace=True)
-
-    #     result = data_scoring.groupby(['rune_set', 'efficiency_binned']).count()
-    #     # pas besoin d'un multiindex
-    #     result.reset_index(inplace=True)
-
-    #     print(result)
-    #     # palier
-    #     palier_1 = result['efficiency_binned'].unique()[0] # '[100.0, 110.0)'
-    #     palier_2 = result['efficiency_binned'].unique()[1] # '[110.0, 120.0)'
-    #     palier_3 = result['efficiency_binned'].unique()[2] # '[120.0, 130.0)'
-
-    #     # poids des paliers
-
-    #     palier = {palier_1 : 1,
-    #       palier_2 : 2,
-    #       palier_3 : 3}
-
-    #     result['factor'] = 0
-
-    #     for key, value in palier.items():
-    #         result['factor'] = np.where(result['efficiency_binned'] == key, value, result['factor'])
-
-    #     result['points'] = result[potentiel] * result['factor']
-
-    #     # on sépare les dataset à mettre en évidence et les autres
-
-    #     value_selected = result[result['rune_set'].isin(category_selected)]
-    #     value_autres = result[~result['rune_set'].isin(category_selected)]
-
-    #     value_selected.drop(['factor'], axis=1, inplace=True)
-
-    #     # on ajoute les poids des sets
-
-    #     for set in category_selected:
-    #         value_selected['points'] = np.where(value_selected['rune_set'] == set, value_selected['points'] * coef_set[set], value_selected['points'])
-
-    #     value_autres = value_autres.groupby('efficiency_binned').sum()
-    #     value_autres.reset_index(inplace=True)
-    #     value_autres.insert(0, 'rune_set', 'Autre')
-    #     value_autres.drop(['factor'], axis=1, inplace=True)
-
-    #     # on regroupe
-
-    #     df_value = pd.concat([value_selected, value_autres])
-
-    #     # on replace pour plus de lisibilité
-
-    #     df_value['efficiency_binned'] = df_value['efficiency_binned'].replace({palier_1 : 100,
-    #                                                                         palier_2 : 110,
-    #                                                                         palier_3 : 120})
-
-    #     score_r = df_value['points'].sum()
-
-    #     # Calcul du TCD :
-
-    #     tcd_value = df_value.pivot_table(df_value, 'rune_set', 'efficiency_binned', 'sum')[potentiel]
-    #     # pas besoin du multiindex
-    #     tcd_value.columns.name = "efficiency_potentiel"
-    #     tcd_value.index.name = 'Set'
-
-    #     total_100 = tcd_value[100].sum()
-    #     total_110 = tcd_value[110].sum()
-    #     total_120 = tcd_value[120].sum()
-
-    #     tcd_value.loc['Total'] = [total_100, total_110, total_120]
-
-    #     return tcd_value, score_r
-
-    # tcd_potentiel_hero, score_potentiel_hero = scoring_rune('efficiency_max_hero')
-    # tcd_potentiel_lgd, score_potentiel_lgd = scoring_rune('efficiency_max_lgd')
-    # # On supprime les variables inutiles
 
     data.drop(['max_efficiency', 'max_efficiency_reachable',
               'gain'], axis=1, inplace=True)
@@ -448,7 +367,8 @@ def optimisation_rune(category_selected, coef_set):
     data_short = data[['rune_set', 'rune_slot', 'rune_equiped', 'efficiency', 'efficiency_max_hero',
                        'efficiency_max_lgd', 'potentiel_max_lgd', 'potentiel_max_hero', 'Commentaires', 'Grind_lgd', 'Grind_hero']]
 
-    # ## Meules manquantes par stat
+    
+    # ## Meules manquantes par stat (total)
     with st.spinner('Calcul des stats manquantes...'):
         property_grind = {1: 'Meule : HP',
                           2: 'Meule : HP%',
@@ -485,6 +405,7 @@ def optimisation_rune(category_selected, coef_set):
             [list_property_type, list_property_count]).transpose()
         df_property = df_property.rename(columns={
                                          0: 'Propriété', 1: 'Meules/Gemmes (hero) manquantes pour atteindre la stat max'})
+        
 
     st.success('Calcul des stats manquantes effectués !')
 
@@ -498,6 +419,7 @@ def optimisation_rune(category_selected, coef_set):
     set = {1: "Energy", 2: "Guard", 3: "Swift", 4: "Blade", 5: "Rage", 6: "Focus", 7: "Endure", 8: "Fatal", 10: "Despair", 11: "Vampire", 13: "Violent",
            14: "Nemesis", 15: "Will", 16: "Shield", 17: "Revenge", 18: "Destroy", 19: "Fight", 20: "Determination", 21: "Enhance", 22: "Accuracy", 23: "Tolerance", 99: "Immemorial"}
 
+    # Même calcul mais par set
     with st.spinner('Ajout des informations pour identifier les runes...'):
         for type_rune in set.values():
             for propriete in property_grind.values():
@@ -527,6 +449,8 @@ def optimisation_rune(category_selected, coef_set):
                                 list_propriete_gemmes, list_count_gemmes]).transpose()
         df_count = df_count.rename(columns={0: 'Set', 1: 'Propriété Meules',
                                    2: 'Meules (hero) manquantes pour la stat max', 3: 'Propriété Gemmes', 4: 'Gemmes (hero) manquantes'})
+        
+
 
         # Graphique
         fig_hero_manquante = px.histogram(df_count, x='Set', y='Meules (hero) manquantes pour la stat max',
@@ -657,15 +581,6 @@ def optimisation_rune(category_selected, coef_set):
     st.download_button('Télécharger la data (Excel)', data_xlsx, file_name='grind.xlsx',
                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
-    # with st.expander('Potentiel scoring'):
-    #     column1, column2 = st.columns(2)
-    #     with column1:
-    #         st.metric('Score Hero', score_potentiel_hero)
-    #         st.dataframe(tcd_potentiel_hero)
-
-    #     with column2:
-    #         st.metric('Score Lgd', score_potentiel_lgd)
-    #         st.dataframe(tcd_potentiel_lgd)
 
     with st.expander('Nombre de runes (Grind max Hero)'):
         df_rune_filter = filter_dataframe(df_rune, 'df_rune')

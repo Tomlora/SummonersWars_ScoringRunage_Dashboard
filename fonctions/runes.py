@@ -350,10 +350,10 @@ class Rune():
 
         # on replace pour plus de lisibilité
 
-        self.df_value_spd['spd_binned'] = self.df_value_spd['spd_binned'].replace({palier_1: '23-26',
-                                                                                   palier_2: '26-29',
-                                                                                   palier_3: '29-32',
-                                                                                   palier_4: '32-36',
+        self.df_value_spd['spd_binned'] = self.df_value_spd['spd_binned'].replace({palier_1: '23-25',
+                                                                                   palier_2: '26-28',
+                                                                                   palier_3: '29-31',
+                                                                                   palier_4: '32-35',
                                                                                    palier_5: '36+'})
 
         self.score_spd = self.df_value_spd['points_spd'].sum()
@@ -365,13 +365,13 @@ class Rune():
         self.tcd_value_spd .columns.name = "spd"
         self.tcd_value_spd .index.name = 'Set'
 
-        total_23_spd = self.tcd_value_spd['23-26'].sum()
-        total_26_spd = self.tcd_value_spd['26-29'].sum()
-        total_29_spd = self.tcd_value_spd['29-32'].sum()
-        total_32_spd = self.tcd_value_spd['32-36'].sum()
+        total_23_spd = self.tcd_value_spd['23-25'].sum()
+        total_26_spd = self.tcd_value_spd['26-28'].sum()
+        total_29_spd = self.tcd_value_spd['29-31'].sum()
+        total_32_spd = self.tcd_value_spd['32-35'].sum()
         total_36_spd = self.tcd_value_spd['36+'].sum()
 
-        self.tcd_value_spd .loc['Total'] = [
+        self.tcd_value_spd.loc['Total'] = [
             total_23_spd, total_26_spd, total_29_spd, total_32_spd, total_36_spd]
 
         return self.tcd_value_spd, self.score_spd

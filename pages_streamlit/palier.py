@@ -2,6 +2,8 @@
 import streamlit as st
 import plotly.graph_objects as go
 from fonctions.visualisation import transformation_stats_visu, plotline_evol_rune_visu
+from fonctions.visuel import load_lottieurl
+from streamlit_lottie import st_lottie
 
 
 def palier_page():
@@ -12,9 +14,15 @@ def palier_page():
         data_scoring = transformation_stats_visu(
             'sw_score', st.session_state['id_joueur'], distinct=True)
 
-        st.subheader('Evolution')
-
-        st.dataframe(data_scoring.set_index('date'))
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader('Evolution')
+            st.dataframe(data_scoring.set_index('date'))
+        
+        with col2:
+            img = load_lottieurl('https://assets10.lottiefiles.com/packages/lf20_sfiiilbf.json')
+            st_lottie(img, width=150, height=150)
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(

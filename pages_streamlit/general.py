@@ -3,6 +3,8 @@ import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
+from fonctions.visuel import load_lottieurl
+from streamlit_lottie import st_lottie
 
 from fonctions.gestion_bdd import lire_bdd, lire_bdd_perso
 
@@ -127,7 +129,12 @@ def general_page():
 
     # ---------------- Comparaison
 
-    st.title('Comparaison (Runes)')
+    col1, col2 = st.columns(2)
+    with col1:
+        st.header('Comparaison (Runes)')
+    with col2:
+        img = load_lottieurl('https://assets4.lottiefiles.com/packages/lf20_yMpiqXia1k.json')
+        st_lottie(img, width=60, height=60)
 
     # Par rapport à tous les joueurs
     st.subheader('General')

@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
 import json
+
 import plotly.express as px
 import streamlit as st
+
 
 from streamlit_option_menu import option_menu
 from pages_streamlit.general import general_page
@@ -14,6 +16,7 @@ from pages_streamlit.grind_runes import optimisation_rune
 from pages_streamlit.monster import find_monsters
 from fonctions.gestion_bdd import requete_perso_bdd
 from pages_streamlit.ladder import classement
+
 
 
 # https://stackoverflow.com/questions/7869592/how-to-do-an-update-join-in-postgresql SQL Join
@@ -102,6 +105,7 @@ with st.sidebar:
                                                                                                      'joueur': st.session_state["pseudo"]})
         st.subheader(f'Joueur : {st.session_state["pseudo"]}')
         st.subheader(f'Guilde : {st.session_state["guilde"]}')
+
 
 
 # Pages :

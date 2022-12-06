@@ -3,6 +3,8 @@ import pandas as pd
 import streamlit as st
 import json
 from datetime import datetime
+from fonctions.visuel import load_lottieurl
+from streamlit_lottie import st_lottie
 
 
 from fonctions.gestion_bdd import sauvegarde_bdd, update_info_compte, get_user, requete_perso_bdd
@@ -23,6 +25,11 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
             'Choisis un json', type=['json'], help='Json SW Exporter')
         st.session_state['submitted'] = st.form_submit_button(
             'Calcule mon score')
+    if not st.session_state.submitted:
+        col1, col2, col3 = st.columns(3)
+        with col2:
+            img = load_lottieurl('https://assets5.lottiefiles.com/packages/lf20_ABViugg18Y.json')
+            st_lottie(img, height=200, width=200)
 
     if st.session_state['file'] is not None and st.session_state.submitted:
 
