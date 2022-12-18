@@ -16,6 +16,7 @@ from pages_streamlit.grind_runes import optimisation_rune
 from pages_streamlit.monster import find_monsters
 from fonctions.gestion_bdd import requete_perso_bdd
 from pages_streamlit.ladder import classement
+from pages_streamlit.timelapse import timelapse_joueur
 
 
 
@@ -67,14 +68,14 @@ else:  # Json upload, la première page n'est plus utile
     if 'guildeid' in st.session_state:  # Si on a l'info sur la guilde
         # if st.session_state['guildeid'] == 116424:  # si c'est l'id d'Endless, on peut ouvrir le suivi
         if st.session_state['pseudo'] == 'Tømløra':  # si c'est l'admin
-            menu_selected = ['General', 'Evolution', 'Classement',
+            menu_selected = ['General', 'Evolution', 'Classement', 'Timelapse',
                              'Suivi', 'Runes', 'Bestiaire', 'Parametres']
-            icons_selected = ["info", 'kanban', 'kanban',
+            icons_selected = ["info", 'kanban', 'kanban', 'alarm',
                               'bag-check-fill', 'book', 'gear']
         else:  # si c'est pas l'admin
             menu_selected = ['General', 'Evolution',
-                             'Classement', 'Runes', 'Bestiaire', 'Parametres']
-            icons_selected = ["info", 'kanban', 'ladder',
+                             'Classement', 'Timelapse', 'Runes', 'Bestiaire', 'Parametres']
+            icons_selected = ["info", 'kanban', 'ladder', 'alarm',
                               'bag-check-fill', 'book', 'gear']
     else:  # si on a pas l'info sur la guilde
         menu_selected = ['General', 'Evolution',
@@ -121,6 +122,9 @@ elif selected == 'Classement':
 
 elif selected == 'Bestiaire':
     find_monsters()
+    
+elif selected == 'Timelapse':
+    timelapse_joueur()
 
 elif selected == 'Evolution':
     palier_page()
