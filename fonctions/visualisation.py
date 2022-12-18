@@ -67,7 +67,7 @@ def plotline_evol_rune_visu(df):
     return fig
 
 
-def filter_dataframe(df: pd.DataFrame, key='key') -> pd.DataFrame:
+def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='float') -> pd.DataFrame:
     """
     Adds a UI on top of a dataframe to let viewers filter columns
 
@@ -83,10 +83,11 @@ def filter_dataframe(df: pd.DataFrame, key='key') -> pd.DataFrame:
         return df
 
     df = df.copy()
+    
 
     # Try to convert datetimes into a standard format (datetime, no timezone)
     for col in df.columns:
-        if is_object_dtype(df[col]) and key != 'df_count':
+        if is_object_dtype(df[col]) and key != 'df_count' and key != 'timelapse':
             try:
                 df[col] = pd.to_datetime(df[col])
             except Exception:
@@ -102,7 +103,7 @@ def filter_dataframe(df: pd.DataFrame, key='key') -> pd.DataFrame:
         for column in to_filter_columns:
             left, right = st.columns((1, 20))
             # Treat columns with < 10 unique values as categorical
-            if is_categorical_dtype(df[column]) or df[column].nunique() < 50:
+            if is_categorical_dtype(df[column]) or df[column].nunique() < nunique:
                 user_cat_input = right.multiselect(
                     f"Valeurs pour {column}",
                     df[column].unique(),
@@ -110,9 +111,14 @@ def filter_dataframe(df: pd.DataFrame, key='key') -> pd.DataFrame:
                 )
                 df = df[df[column].isin(user_cat_input)]
             elif is_numeric_dtype(df[column]):
-                _min = float(df[column].min())
-                _max = float(df[column].max())
-                step = (_max - _min) / 100
+                if type_number == 'float':
+                    _min = float(df[column].min())
+                    _max = float(df[column].max())
+                    step = (_max - _min) / 100
+                elif type_number == 'int':
+                    _min = int(df[column].min())
+                    _max = int(df[column].max())
+                    step = 1
                 user_num_input = right.slider(
                     f"Valeurs pour {column}",
                     min_value=_min,
