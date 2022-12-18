@@ -7,3 +7,6 @@ Api permettant d'attribuer un score aux runes d'un compte Summoners Wars
 
 https://scoringsw.herokuapp.com/
 
+# Todo :
+
+Documenter le code.
