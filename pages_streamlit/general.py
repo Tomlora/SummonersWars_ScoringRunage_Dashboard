@@ -135,6 +135,7 @@ def general_page():
     with col2:
         img = load_lottieurl('https://assets4.lottiefiles.com/packages/lf20_yMpiqXia1k.json')
         st_lottie(img, width=60, height=60)
+        
 
     # Par rapport à tous les joueurs
     st.subheader('General')
@@ -160,7 +161,7 @@ def general_page():
 
     # with rank2_2:
     fig_general = comparaison_graph(df_max, 'General')
-    st.write(fig_general)
+    st.plotly_chart(fig_general)
 
     # Par rapport à sa guilde
     st.subheader(st.session_state['guilde'])
@@ -186,7 +187,7 @@ def general_page():
 
     # with rank2_2:
     fig_guilde = comparaison_graph(df_guilde, st.session_state['guilde'])
-    st.write(fig_guilde)
+    st.plotly_chart(fig_guilde)
 
     # except:
     #     st.subheader('Erreur')

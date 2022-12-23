@@ -1,7 +1,7 @@
 
 import streamlit as st
 import plotly.graph_objects as go
-from fonctions.visualisation import transformation_stats_visu, plotline_evol_rune_visu
+from fonctions.visualisation import transformation_stats_visu, plotline_evol_rune_visu, filter_dataframe
 from fonctions.visuel import load_lottieurl
 from streamlit_lottie import st_lottie
 
@@ -24,13 +24,10 @@ def palier_page():
             img = load_lottieurl('https://assets10.lottiefiles.com/packages/lf20_sfiiilbf.json')
             st_lottie(img, width=150, height=150)
 
+
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             x=data_scoring['date'], y=data_scoring['score'], mode='lines+markers'))
-        fig.update_layout({
-            'plot_bgcolor': 'rgb(255, 255, 255)',
-            'paper_bgcolor': 'rgba(0, 0, 0,0)'
-        })
 
         fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
         fig.update_yaxes(showgrid=False)

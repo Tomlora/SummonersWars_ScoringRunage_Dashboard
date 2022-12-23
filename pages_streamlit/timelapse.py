@@ -136,7 +136,7 @@ def timelapse_graph(dataset):
     fig_dict["layout"]["sliders"] = [sliders_dict]
 
     fig = go.Figure(fig_dict)
-    fig.update_layout(height=800, width=1000)
+    fig.update_layout(height=800, width=1000, showlegend=False)
     
     return fig
 

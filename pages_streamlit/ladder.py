@@ -2,6 +2,8 @@ from fonctions.gestion_bdd import lire_bdd_perso
 import pandas as pd
 import streamlit as st
 import numpy as np
+import plotly.graph_objects as go
+from datetime import datetime
 
 
 def cleaning_only_guilde(x):
@@ -59,3 +61,5 @@ def classement():
     height_dataframe = 36 * data_ranking.shape[0]
     st.dataframe(data_ranking, height=height_dataframe,
                  use_container_width=True)
+    
+    

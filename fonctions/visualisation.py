@@ -58,10 +58,7 @@ def transformation_stats_visu(nom_table, joueur, distinct: bool = False):
 
 def plotline_evol_rune_visu(df):
     fig = px.line(df, x="date", y="Nombre", color="Set")
-    fig.update_layout({
-        'plot_bgcolor': 'rgb(255, 255, 255)',
-        'paper_bgcolor': 'rgba(0, 0, 0,0)'
-    })
+
     fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
     fig.update_yaxes(showgrid=False)
     return fig
