@@ -173,8 +173,13 @@ def timelapse_joueur():
         
         
     dataset['semaine'] = dataset['date'].apply(lambda x : datetime.date(x).isocalendar().week)
+    dataset['year'] = dataset['date'].apply(lambda x : datetime.date(x).isocalendar().year)
     
-    dataset_final = dataset[['joueur', 'score', 'guilde', 'semaine']]
+    annee = st.radio('Année', dataset['year'].unique().tolist(), horizontal=True)
+    
+    dataset_annee = dataset[dataset['year'] == annee]
+    
+    dataset_final = dataset_annee[['joueur', 'score', 'guilde', 'semaine']]
     
     dataset_final = filter_dataframe(dataset_final, 'timelapse', 10, 'int')
     
