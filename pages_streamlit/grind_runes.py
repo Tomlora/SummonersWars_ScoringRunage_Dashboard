@@ -5,6 +5,8 @@ import ast
 import streamlit as st
 from io import BytesIO
 from fonctions.visualisation import filter_dataframe
+import re
+import plotly.graph_objects as go
 
 # fix plotly express et Visual Studio Code
 import plotly.io as pio
@@ -370,8 +372,8 @@ def optimisation_rune(category_selected, coef_set):
     
     # ## Meules manquantes par stat (total)
     with st.spinner('Calcul des stats manquantes...'):
-        property_grind = {1: 'Meule : HP',
-                          2: 'Meule : HP%',
+        property_grind = {1: 'Meule : HP', # 141
+                          2: 'Meule : HP%', # 125
                           3: 'Meule : ATQ',
                           4: 'Meule : ATQ%',
                           5: 'Meule : DEF',
@@ -382,7 +384,9 @@ def optimisation_rune(category_selected, coef_set):
         list_property_count = []
 
         for propriete in property_grind.values():
+
             count = data['Grind_hero'].str.count(propriete).sum()
+
 
             list_property_type.append(propriete)
             list_property_count.append(count)
@@ -426,6 +430,7 @@ def optimisation_rune(category_selected, coef_set):
                 data_type_rune = data[data['rune_set'] == type_rune]
                 nb_rune = data[data['rune_set'] == type_rune].count().max()
                 count = data_type_rune['Grind_hero'].str.count(propriete).sum()
+                
 
                 dict_rune[type_rune] = nb_rune
 
@@ -582,16 +587,44 @@ def optimisation_rune(category_selected, coef_set):
                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 
-    with st.expander('Nombre de runes (Grind max Hero)'):
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(['Potentiel max hero', 'Potentiel max lgd', 'Nombre de runes (Grid max Hero)', 'Meules/Gemmes nécessaires', 'Inventaire'])
+    
+    def potentiel_max(variable):
+        data_grp : pd.DataFrame = data_short.groupby('rune_set').agg({f'efficiency_max_{variable}' : ['mean', 'max', 'median'],
+                                                                      f'potentiel_max_{variable}' : ['mean', 'max', 'median']})
+        data_grp.columns.set_levels(['Moyenne', 'Max', 'Mediane'], level = 1, inplace=True)
+        # data_grp = data_grp.droplevel(level=0, axis=1)
+        st.dataframe(data_grp)
+
+        fig = go.Figure()
+        # on calcule ce que ça donnerait avec le potentiel
+        data_grp['total'] = data_grp[f'efficiency_max_{variable}']['Moyenne'] + data_grp[f'potentiel_max_{variable}']['Moyenne']
+        fig.add_trace(go.Histogram(y=data_grp['total'], x=data_grp.index, histfunc='avg', name=f'potentiel {variable}'))
+        fig.add_trace(go.Histogram(y=data_grp[f'efficiency_max_{variable}']['Moyenne'], x=data_grp.index, histfunc='avg', name='efficience actuelle'))
+        fig.update_layout(
+        barmode="overlay",
+        title=f'Potentiel {variable}',
+        bargap=0.1)
+        
+        return fig
+
+    with tab1:
+        fig_max_hero = potentiel_max('hero')
+        st.plotly_chart(fig_max_hero)   
+        
+    with tab2:
+        fig_max_lgd = potentiel_max('lgd')
+        st.plotly_chart(fig_max_lgd)                    
+    with tab3:
         df_rune_filter = filter_dataframe(df_rune, 'df_rune')
         st.dataframe(df_rune_filter)
 
-    with st.expander('Nombre de meules/gemmes nécessaires'):
+    with tab4:
         df_count_filter = filter_dataframe(df_count, 'df_count')
         st.dataframe(df_count_filter)
         st.plotly_chart(fig_hero_manquante)
         st.plotly_chart(fig_lgd_manquante)
 
-    with st.expander('Inventaire'):
+    with tab5:
         df_inventaire_filter = filter_dataframe(df_inventaire, 'df_inventaire')
         st.dataframe(df_inventaire_filter)

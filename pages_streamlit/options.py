@@ -11,9 +11,6 @@ def params():
     df_actuel = df_actuel.transpose()
     df_actuel.reset_index(inplace=True)
 
-    # On filtre sur le joueur
-    # df_actuel = df_actuel[df_actuel['Joueur'] == st.session_state['pseudo']]
-    # df_actuel.drop(['Joueur'], axis=1, inplace=True)
 
     df_actuel = df_actuel[df_actuel['id'] == st.session_state['id_joueur']]
     df_actuel.drop(['id'], axis=1, inplace=True)

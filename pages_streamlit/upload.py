@@ -40,8 +40,12 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
         # infos du compte
 
         st.session_state.pseudo = data_json['wizard_info']['wizard_name']
-        st.session_state.guildeid = data_json['guild']['guild_info']['guild_id']
-        st.session_state.guilde = data_json['guild']['guild_info']['name']
+        try:
+            st.session_state.guildeid = data_json['guild']['guild_info']['guild_id']
+            st.session_state.guilde = data_json['guild']['guild_info']['name']
+        except TypeError: # pas de guilde
+            st.session_state.guildeid = 0
+            st.session_state.guilde = 'Aucune'          
         st.session_state.compteid = data_json['wizard_info']['wizard_id']
 
         data_rune = Rune(data_json)
@@ -49,6 +53,7 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
         data_arte = Artefact(data_json)
 
         st.session_state.data_grind = data_rune.data.copy()
+        st.session_state.data_avg = data_rune.data.copy()
 
         # --------------------- calcul score rune
 
@@ -87,19 +92,37 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
 
         # Enregistrement SQL
 
+        # Scoring general 
         tcd_value['id'] = st.session_state['id_joueur']
         tcd_value['date'] = date_du_jour()
-
+        
         st.session_state.tcd = tcd_value
 
         sauvegarde_bdd(tcd_value, 'sw', 'append')
 
-        df_scoring = pd.DataFrame({'id': [st.session_state['id_joueur']], 'score': [st.session_state['score']],
-                                   'date': [date_du_jour()]})
+        df_scoring = pd.DataFrame({'id': [st.session_state['id_joueur']], 'score_general': [st.session_state['score']],
+                                   'date': [date_du_jour()], 'score_spd' : st.session_state['score_spd'], 'score_arte' : st.session_state['score_arte']})
         df_scoring.set_index('id', inplace=True)
 
         sauvegarde_bdd(df_scoring, 'sw_score', 'append')
-
+        
+        # Scoring speed
+        tcd_spd_save : pd.DataFrame = st.session_state.tcd_spd.copy()
+        
+        tcd_spd_save['id'] = st.session_state['id_joueur']
+        tcd_spd_save['date'] = date_du_jour()
+        
+        sauvegarde_bdd(tcd_spd_save, 'sw_spd', 'append')
+        
+        # Scoring arte
+        
+        tcd_arte_save : pd.DataFrame = st.session_state.tcd_arte.copy()
+        
+        tcd_arte_save['id'] = st.session_state['id_joueur']
+        tcd_arte_save['date'] = date_du_jour()
+        
+        sauvegarde_bdd(tcd_arte_save, 'sw_arte', 'append')
+        
         # MAJ guilde
 
         update_info_compte(st.session_state['pseudo'], st.session_state['guildeid'],

@@ -23,8 +23,8 @@ def timelapse_graph(dataset):
     min_week = min(weeks)
     max_week = max(weeks)
     
-    min_points = min(dataset['score'])
-    max_points = max(dataset['score'])
+    min_points = min(dataset['score_general'])
+    max_points = max(dataset['score_general'])
     
     continents = []
     for continent in dataset["joueur"]:
@@ -97,7 +97,7 @@ def timelapse_graph(dataset):
 
         data_dict = {
             "x": list(dataset_by_week_and_cont["semaine"]),
-            "y": list(dataset_by_week_and_cont["score"]),
+            "y": list(dataset_by_week_and_cont["score_general"]),
             "mode": "markers+text",
             "text": list(dataset_by_week_and_cont["joueur"]),
             "name": continent
@@ -114,7 +114,7 @@ def timelapse_graph(dataset):
 
             data_dict = {
                 "x": list(dataset_by_week_and_cont["semaine"]),
-                "y": list(dataset_by_week_and_cont["score"]),
+                "y": list(dataset_by_week_and_cont["score_general"]),
                 "mode": "markers+text",
                 "text": list(dataset_by_week_and_cont["joueur"]),
                 "name": continent
@@ -146,7 +146,7 @@ def timelapse_joueur():
     
     @st.cache
     def recup_data():
-        dataset = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_score.date, sw_score.score, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
+        dataset = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_score.date, sw_score.score_general, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user
                             INNER JOIN sw_score ON sw_user.id = sw_score.id
                             where sw_user.visibility != 0''').transpose().reset_index()
@@ -179,12 +179,12 @@ def timelapse_joueur():
     
     dataset_annee = dataset[dataset['year'] == annee]
     
-    dataset_final = dataset_annee[['joueur', 'score', 'guilde', 'semaine']]
+    dataset_final = dataset_annee[['joueur', 'score_general', 'guilde', 'semaine']]
     
     dataset_final = filter_dataframe(dataset_final, 'timelapse', 10, 'int')
     
     dataset_final = dataset_final.groupby(['joueur', 'semaine']).agg(
-        {'score': 'max'}).reset_index()
+        {'score_general': 'max'}).reset_index()
     
     try:
         fig = timelapse_graph(dataset_final)

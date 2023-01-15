@@ -33,7 +33,7 @@ def visu_page():
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(
-            x=data_scoring['date'], y=data_scoring['score'], mode='lines+markers'))
+            x=data_scoring['date'], y=data_scoring['score_general'], mode='lines+markers'))
 
         fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
         fig.update_yaxes(showgrid=False)

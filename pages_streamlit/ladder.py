@@ -18,22 +18,31 @@ def cleaning_only_guilde(x):
 def classement():
     # On lit la BDD
     # on récupère la data
-    data = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_score.date, sw_score.score, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
-                        FROM sw_user
-                        INNER JOIN sw_score ON sw_user.id = sw_score.id
-                        where sw_user.visibility != 0''').transpose().reset_index()
+
+    def load_data():
+        data = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_score.date, sw_score.score_general, sw_score.score_spd, sw_score.score_arte, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
+                            FROM sw_user
+                            INNER JOIN sw_score ON sw_user.id = sw_score.id
+                            where sw_user.visibility != 0''').transpose().reset_index()
+        return data
+    
+    data = load_data()
+    
+    st.subheader('Ranking')
+    
+    classement = st.radio('Type de classement', options=['score_general', 'score_spd', 'score_arte'], index=0, horizontal=True)
 
     # on transpose la date au format date
     data['date'] = pd.to_datetime(data['date'], format="%d/%m/%Y")
-
+    
     # on groupby : score, dernière date et visibilité
     data_ranking = data.groupby(['joueur', 'guilde']).agg(
-        {'score': 'max', 'date': 'max', 'visibility': 'max'})
+        {classement: 'max', 'date': 'max', 'visibility': 'max'})
     # on met en forme la date
     data_ranking['date'] = data_ranking['date'].dt.strftime('%d/%m/%Y')
     # on sort_value
     data_ranking.reset_index(inplace=True)
-    data_ranking.sort_values('score', ascending=False, inplace=True)
+    data_ranking.sort_values(classement, ascending=False, inplace=True)
     # on anonymise
     data_ranking['joueur'] = data_ranking.apply(
         lambda x: "***" if x['visibility'] == 1 else x['joueur'], axis=1)
@@ -45,11 +54,9 @@ def classement():
 
     # on revoit l'ordre :
 
-    data_ranking = data_ranking[['joueur', 'score', 'date', 'guilde']]
+    data_ranking = data_ranking[['joueur', classement, 'date', 'guilde']]
 
     # ----- Page
-
-    st.subheader('Ranking')
 
     filtre_guilde = st.checkbox('Filtrer sur ma guilde')
 
