@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import json
+from params.coef import coef_set, coef_set_spd
 
 import plotly.express as px
 import streamlit as st
@@ -30,19 +30,11 @@ pd.options.mode.chained_assignment = None  # default='warn'
 category_selected = ['Violent', 'Will', 'Destroy', 'Despair']
 category_value = ", ".join(category_selected)
 
-coef_set = {'Violent': 3,
-            'Will': 3,
-            'Destroy': 2,
-            'Despair': 2}
+
 
 category_selected_spd = ['Violent', 'Will', 'Destroy', 'Despair', 'Swift']
-category_value_spd = ", ".join(category_selected)
+category_value_spd = ", ".join(category_selected_spd)
 
-coef_set_spd = {'Violent': 3,
-                'Will': 3,
-                'Destroy': 2,
-                'Despair': 2,
-                'Swift': 3}
 
 # CSS
 
