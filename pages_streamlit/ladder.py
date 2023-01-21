@@ -2,6 +2,8 @@ from fonctions.gestion_bdd import lire_bdd_perso
 import pandas as pd
 import streamlit as st
 
+from params.coef import coef_set, coef_set_spd
+
 
 def cleaning_only_guilde(x):
     x['private'] = 0
@@ -29,7 +31,7 @@ def mise_en_forme_classement(df, variable='score'):
     df.sort_values(variable, ascending=False, inplace=True)
     # on anonymise
     df['joueur'] = df.apply(
-        lambda x: "***" if x['visibility'] == 1 else x['joueur'], axis=1)
+        lambda x: "***" if x['visibility'] == 1 and st.session_state['pseudo'] != x['joueur'] else x['joueur'], axis=1)
     # on filtre pour ceux qui veulent only guilde :
     df = df.apply(cleaning_only_guilde, axis=1)
     df = df[df['private'] == 0]
@@ -50,18 +52,6 @@ def mise_en_forme_classement(df, variable='score'):
 
     return df
 
-
-coef_set = {'Violent': 3,
-            'Will': 3,
-            'Destroy': 2,
-            'Despair': 2}
-
-
-coef_set_spd = {'Violent': 3,
-                'Will': 3,
-                'Destroy': 2,
-                'Despair': 2,
-                'Swift': 3}
 
 
 def classement():
