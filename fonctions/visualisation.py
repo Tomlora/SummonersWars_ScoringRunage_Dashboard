@@ -14,7 +14,25 @@ import pandas as pd
 import streamlit as st
 
 
-def transformation_stats_visu(nom_table, joueur, distinct: bool = False):
+def transformation_stats_visu(nom_table, joueur, distinct: bool = False, score='score_general'):
+    """Met en page les scorings d'un joueur.
+
+    Parameters
+    ----------
+    nom_table : str
+        nom de la table sql à lire
+    joueur : str
+        nom du joueur
+    distinct : bool, optional
+        prise en compte des doublons dans la table, by default False
+    score : str, optional
+        variable représentant les scores dans la table sql, by default 'score_general'
+
+    Returns
+    -------
+    DataFrame
+        _description_
+    """
     # Lire la bdd
     df_actuel = lire_bdd(nom_table, distinct=distinct)
     df_actuel = df_actuel.transpose()
@@ -45,9 +63,25 @@ def transformation_stats_visu(nom_table, joueur, distinct: bool = False):
             df_actuel['date'], format='%d/%m/%Y')
         df_actuel.sort_values(by=['datetime', 'Set', 'Palier'], inplace=True)
         df_actuel.drop(['datetime'], axis=1, inplace=True)
+        
+    elif nom_table == 'sw_arte':
+        df_actuel = pd.melt(df_actuel, id_vars=['date', 'arte_type', 'type'], value_vars=[
+                            '80', '85', '90', '95', '100+'], var_name='Palier', value_name='Nombre')
+        df_actuel['datetime'] = pd.to_datetime(
+            df_actuel['date'], format='%d/%m/%Y')
+        df_actuel.sort_values(by=['datetime', 'arte_type', 'type'], inplace=True)
+        df_actuel.drop(['datetime'], axis=1, inplace=True)
+        
+    elif nom_table == 'sw_spd':
+        df_actuel = pd.melt(df_actuel, id_vars=['date', 'Set'], value_vars=[
+                            '23-25', '26-28', '29-31', '32-35', '36+'], var_name='Palier', value_name='Nombre')
+        df_actuel['datetime'] = pd.to_datetime(
+            df_actuel['date'], format='%d/%m/%Y')
+        df_actuel.sort_values(by=['datetime', 'Set', 'Palier'], inplace=True)
+        df_actuel.drop(['datetime'], axis=1, inplace=True)
     else:
         # df_actuel = pd.pivot_table(df_actuel, 'score', index='date')
-        df_actuel['score'] = df_actuel['score'].astype('int')
+        df_actuel[score] = df_actuel[score].astype('int')
         df_actuel['datetime'] = pd.to_datetime(
             df_actuel['date'], format='%d/%m/%Y')
         df_actuel.sort_values(by=['datetime'], inplace=True)
@@ -56,8 +90,22 @@ def transformation_stats_visu(nom_table, joueur, distinct: bool = False):
     return df_actuel
 
 
-def plotline_evol_rune_visu(df):
-    fig = px.line(df, x="date", y="Nombre", color="Set")
+def plotline_evol_rune_visu(df, color='Set'):
+    """Crée un graphique montrant l'évolution des scorings.
+
+    Parameters
+    ----------
+    df : DataFrame
+        DataFrame contenant les scorings
+    color : str, optional
+        variable à différencier par des couleurs, by default 'Set'
+
+    Returns
+    -------
+    Figure plotly
+        Graphique montrant l'évolution du score en fonction de la date
+    """
+    fig = px.line(df, x="date", y="Nombre", color=color, markers=True)
 
     fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
     fig.update_yaxes(showgrid=False)

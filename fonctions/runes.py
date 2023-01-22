@@ -200,6 +200,22 @@ class Rune():
         self.data_spd = self.data.copy()
 
     def scoring_rune(self, category_selected, coef_set):
+        """Calcule le score général du compte
+
+        Parameters
+        ----------
+        category_selected : List
+            Liste des sets de rune à mettre en évidence
+        coef_set : List
+            Liste des coefficients à utiliser pour les sets à mettre en évidence
+
+        Returns
+        -------
+        TCD : DataFrame
+            DataFrame des résultats
+        Score : Integer
+            Scoring
+        """
         self.data_r = self.data[['rune_set', 'efficiency']]
 
         self.data_r['efficiency_binned'] = pd.cut(
@@ -281,6 +297,22 @@ class Rune():
         return self.tcd_value, self.score_r
 
     def scoring_spd(self, category_selected_spd, coef_set_spd):
+        """Calcule le score speed du compte
+
+        Parameters
+        ----------
+        category_selected_spd : List
+            Liste des sets de rune à mettre en évidence
+        coef_set_spd : List
+            Liste des coefficients à utiliser pour les sets à mettre en évidence
+
+        Returns
+        -------
+        TCD : DataFrame
+            DataFrame des résultats
+        Score : Integer
+            Scoring speed
+        """
 
         def detect_speed(df):
             for sub in ['first_sub', 'second_sub', 'third_sub', 'fourth_sub']:
