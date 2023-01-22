@@ -7,6 +7,8 @@ L'utilisateur upload un fichier json, qui est généré par [SWEX](https://githu
 
 Il a ensuite accès à un certain nombre de pages.
 
+Les données sont stockées dans une base de données PostgreSQL. __Seuls les scores, la date, le pseudo et la guilde du joueur sont stockées.__
+
  <p align="center">
   <img width="300" height="600" src="https://github.com/Tomlora/SummonersWars_ScoringRunage_Dashboard/blob/main/img/Menu.png?raw=true">
 </p>
