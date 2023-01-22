@@ -6,7 +6,7 @@ import numpy as np
 from fonctions.visuel import load_lottieurl
 from streamlit_lottie import st_lottie
 
-from fonctions.gestion_bdd import lire_bdd, lire_bdd_perso
+from fonctions.gestion_bdd import lire_bdd_perso
 
 
 def comparaison(guilde_id):  # à changer par guilde_id
@@ -85,7 +85,7 @@ def highlight_max(data, color='yellow'):
 
 def general_page():
     # -------------- Scoring du compte
-    # try:
+    try:
         tcd_column, score_column = st.columns(2)
 
         with tcd_column:
@@ -204,6 +204,6 @@ def general_page():
             fig_guilde = comparaison_graph(df_guilde, st.session_state['guilde'])
             st.plotly_chart(fig_guilde)
 
-    # except:
-    #     st.subheader('Erreur')
-    #     st.write('Pas de JSON chargé')
+    except:
+        st.subheader('Erreur')
+        st.write('Pas de JSON chargé')
