@@ -3,7 +3,7 @@ Dashboard permettant d'attribuer un score aux runes d'un compte Summoners Wars
 
 # Fonctionnement
 
-L'utilisateur upload un fichier json, qui est généré par [SWEX](https://github.com/Xzandro/sw-exporter/releases) et qui récapitule l'ensemble des informations de son compte.
+L'utilisateur upload un fichier json, qui est généré par [SWEX](https://github.com/Xzandro/sw-exporter) et qui récapitule l'ensemble des informations de son compte.
 
 Il a ensuite accès à un certain nombre de pages.
 
