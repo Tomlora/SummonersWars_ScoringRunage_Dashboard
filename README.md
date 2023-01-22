@@ -23,6 +23,9 @@ Il existe également des objets pour améliorer ses runes, ce qui permet de dép
 
 Pour notre calcul, nous ne prenons en compte que les runes ayant 100 ou plus d'efficience.
 
+Certains sets de runes (c'est-à-dire des familles de runes donnant des bonus si elles sont associées ensemble), ont une importance supérieure à d'autres. 
+C'est pourquoi chaque set a un coefficient différent dans le scoring final en fonction de leur importance.
+
 
 # Pages
 ### Général
