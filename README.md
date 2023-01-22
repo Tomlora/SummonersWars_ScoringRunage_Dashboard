@@ -26,13 +26,25 @@ Pour notre calcul, nous ne prenons en compte que les runes ayant 100 ou plus d'e
 Certains sets de runes (c'est-à-dire des familles de runes donnant des bonus si elles sont associées ensemble), ont une importance supérieure à d'autres. 
 C'est pourquoi chaque set a un coefficient différent dans le scoring final en fonction de leur importance.
 
+| Set        | Coefficient      | 
+| ------|-----|
+| Violent  	| 3 	| 
+| Destroy 	| 3 	|
+| Will 	| 2 	| 
+| Despair | 2      |
+| Swift (score rapidité) | 3 |
+
+****
+
 Pour un set :
 
-	$\alpha$ = nombre de runes dont l'efficience est entre 100 et 110
- $\beta$ = nombre de runes dont l'efficience est entre 110 et 120
- $\gamma$ = nombre de runes dont l'efficience est supérieur à 120
+$\alpha$ = nombre de runes dont l'efficience est entre 100 et 110
+
+$\beta$ = nombre de runes dont l'efficience est entre 110 et 120
  
- score d'un set n = ($\alpha$ * 1 + $\beta$ * 2 + $\gamma$) * coefficient du set n
+$\gamma$ = nombre de runes dont l'efficience est supérieur à 120
+ 
+$$score = ( \alpha * 1 + \beta * 2 + \gamma * 3) * coefficient$$
  
  Le score total correspond à l'addition de tous les sets :
  $$\sum_{i=1}^n set_i$$
