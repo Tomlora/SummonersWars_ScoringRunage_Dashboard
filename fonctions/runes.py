@@ -196,6 +196,7 @@ class Rune():
                                                    + self.data['third_sub_value_total'] / self.data['third_sub_value_max']
                                                    + self.data['fourth_sub_value_total'] / self.data['fourth_sub_value_max'])
                                                   / 2.8)*100, 2))
+        
 
         self.data_spd = self.data.copy()
 
@@ -407,3 +408,76 @@ class Rune():
             total_23_spd, total_26_spd, total_29_spd, total_32_spd, total_36_spd]
 
         return self.tcd_value_spd, self.score_spd
+    
+    def calcul_value_max(self):
+        self.data_max = self.data.copy()
+        
+        property = {0: 'Aucun',
+                1: 'HP',
+                2: 'HP%',
+                3: 'ATQ',
+                4: 'ATQ%',
+                5: 'DEF',
+                6: 'DEF%',
+                8: "SPD",
+                9: 'CRIT',
+                10: 'DCC',
+                11: 'RES',
+                12: 'ACC'}
+
+        for c in ['innate_type', 'first_sub', 'second_sub', 'third_sub', 'fourth_sub', 'main_type']:
+                self.data_max[c] = self.data_max[c].map(property)
+                
+                
+        self.data_max['first_sub_value_total'] = (
+            self.data_max['first_sub_value'] + self.data_max['first_sub_grinded_value'])
+        self.data['second_sub_value_total'] = (
+            self.data_max['second_sub_value'] + self.data_max['second_sub_grinded_value'])
+        self.data_max['third_sub_value_total'] = (
+            self.data_max['third_sub_value'] + self.data_max['third_sub_grinded_value'])
+        self.data_max['fourth_sub_value_total'] = (
+            self.data_max['fourth_sub_value'] + self.data_max['fourth_sub_grinded_value'])
+                
+        def prepare_data(data_max, aggfunc):        
+            df_first = pd.pivot_table(data_max, index=['first_sub', 'rune_set'], values='first_sub_value_total', aggfunc=aggfunc).reset_index()
+            df_second = pd.pivot_table(data_max, index=['second_sub', 'rune_set'], values='second_sub_value_total', aggfunc=aggfunc).reset_index()
+            df_third = pd.pivot_table(data_max, index=['third_sub', 'rune_set'], values='third_sub_value_total', aggfunc=aggfunc).reset_index()
+            df_fourth = pd.pivot_table(data_max, index=['fourth_sub', 'rune_set'], values='fourth_sub_value_total', aggfunc=aggfunc).reset_index()
+
+            df_max = df_first.merge(df_second, left_on=['first_sub', 'rune_set'], right_on=['second_sub', 'rune_set'])
+            df_max = df_max.merge(df_third, left_on=['first_sub', 'rune_set'], right_on=['third_sub', 'rune_set'])
+            df_max = df_max.merge(df_fourth, left_on=['first_sub', 'rune_set'], right_on=['fourth_sub', 'rune_set'])
+            
+            df_max = df_max[df_max['first_sub'] != 'Aucun']
+            
+            return df_max
+        
+        # MAX
+        
+        self.df_max = prepare_data(self.data_max, 'max')
+            
+        self.df_max.drop(['second_sub', 'third_sub', 'fourth_sub'], axis=1, inplace=True)
+        
+        self.df_max['max_value'] = self.df_max[['first_sub_value_total', 'second_sub_value_total', 'third_sub_value_total', 'fourth_sub_value_total']].max(axis=1)
+        self.df_max.rename(columns={'first_sub' : 'substat'}, inplace=True)
+        self.df_max.set_index('substat', inplace=True)
+        
+        self.df_max = self.df_max[['rune_set', 'max_value']]
+        
+        
+        # AVG
+        
+        def calcul_avg(data_max, n):
+            df_avg = prepare_data(data_max, lambda x: x.nlargest(n).tolist())
+            df_avg['value'] = df_avg[['first_sub_value_total', 'second_sub_value_total', 'third_sub_value_total', 'fourth_sub_value_total']].sum(axis=1)
+            df_avg[f'top{n}'] = df_avg['value'].apply(lambda liste: np.sort(np.array(liste))[-n:].mean())
+            
+            return df_avg[f'top{n}'].values
+        
+        
+        for i in [5,10,15,25]:
+            self.df_max[f'top{i}'] = calcul_avg(self.data_max, i)
+
+
+        
+        return self.df_max

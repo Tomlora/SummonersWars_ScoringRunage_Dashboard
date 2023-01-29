@@ -25,6 +25,7 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
             'Choisis un json', type=['json'], help='Json SW Exporter')
         st.session_state['submitted'] = st.form_submit_button(
             'Calcule mon score')
+        st.warning(body='Seuls les scorings sont sauvegardés. Je ne conserve pas les json.', icon="🚨")
     if not st.session_state.submitted:
         col1, col2, col3 = st.columns(3)
         with col2:
@@ -68,6 +69,10 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
         # calcul score arte
 
         st.session_state.tcd_arte, st.session_state.score_arte = data_arte.scoring_arte()
+        
+        # calcul max value rune
+        
+        st.session_state.df_max = data_rune.calcul_value_max()
 
         # -------------------------- on enregistre
         try:
@@ -122,6 +127,15 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
         tcd_arte_save['date'] = date_du_jour()
         
         sauvegarde_bdd(tcd_arte_save, 'sw_arte', 'append')
+        
+        # Scoring max_value
+        
+        df_max = st.session_state.df_max.copy()
+        
+        df_max['id'] = st.session_state['id_joueur']
+        df_max['date'] = date_du_jour()
+        
+        sauvegarde_bdd(df_max, 'sw_max', 'append')        
         
         # MAJ guilde
 

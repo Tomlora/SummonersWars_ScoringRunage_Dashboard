@@ -108,7 +108,8 @@ def supprimer_data(joueur, date):
     sql1 = text(f'''DELETE FROM sw WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_score WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_arte WHERE "id" = :joueur AND date = :date;
-                    DELETE FROM sw_spd WHERE "id" = :joueur AND date = :date;''')  # :var_name
+                    DELETE FROM sw_spd WHERE "id" = :joueur AND date = :date;
+                    DELETE FROM sw_max WHERE "id" = :joueur AND date = :date;''')  # :var_name
     conn.execute(sql1, params_sql)
 
     conn.close
@@ -121,7 +122,8 @@ def supprimer_data_all(joueur):
                     DELETE FROM sw_score WHERE "id" = :joueur;
                     DELETE FROM sw_user WHERE "id" = :joueur;
                     DELETE FROM sw_arte WHERE "id" = :joueur;
-                    DELETE FROM sw_spd WHERE "id" = :joueur;''')  # :var_name
+                    DELETE FROM sw_spd WHERE "id" = :joueur;
+                    DELETE FROM sw_max WHERE "id" = :joueur''')  # :var_name
     conn.execute(sql1, params_sql)
 
     conn.close
@@ -178,7 +180,6 @@ def get_user(joueur, type: str = 'name_user', id_compte: int = 0):
         data = conn.execute(sql, {'joueur': joueur})
     data = data.mappings().all()
     id_joueur = data[0]['id']
-
     visibility = data[0]['visibility']
     guildeid = data[0]['guilde_id']
     # Dans l'ancien système, on ne prenait pas l'id. On regarde s'il faut maj

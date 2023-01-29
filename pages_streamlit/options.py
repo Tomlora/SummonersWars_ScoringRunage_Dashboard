@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import streamlit as st
 
 from fonctions.gestion_bdd import lire_bdd, supprimer_data, supprimer_data_all

@@ -5,7 +5,6 @@ import ast
 import streamlit as st
 from io import BytesIO
 from fonctions.visualisation import filter_dataframe
-import re
 import plotly.graph_objects as go
 
 # fix plotly express et Visual Studio Code
