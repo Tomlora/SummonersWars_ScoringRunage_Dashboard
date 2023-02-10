@@ -24,22 +24,23 @@ def max_sub_by_proc(proc):
 
 
 
+
 def stats(n):
-    
+     
     column1, column2, column3, column4, column5, column6 = st.columns([1,1,1,1,1,1])
     
     with column1:
         stats_selected = st.selectbox(f'Substat {n}', options=max_sub_by_proc(4).keys(), key=f'substat{n}')
         
     with column2:
-        proc = st.number_input(f'Proc Substat {n}', min_value=0, max_value=4, format='%i', key=f'proc {n}')
+        proc = st.number_input(f'Proc Substat {n}', min_value=0, max_value=4, format='%i', key=f'proc{n}')
         
     with column3:
         value = st.number_input(f'Valeur de base', format='%i', min_value=0, key=f'value{n}')
         
     with column5:
         max_stats = max_sub_by_proc(proc)[stats_selected]
-        st.metric('Max possible', value=max_stats, delta=max_stats-value)
+        st.metric('Max possible', value=max_stats, delta=value-max_stats)
     
     if stats_selected in sub_max_lgd.keys():     # si meulable
         
@@ -58,7 +59,7 @@ def stats(n):
 sub_max = max_sub_by_proc(4)
 
 def calculateur_efficiency():
-    
+      
     column0_0, column0_1 = st.columns(2)
     
     
@@ -137,5 +138,30 @@ def calculateur_efficiency():
     st.markdown(f'Efficience : :green[{efficiency}]')
     st.markdown(f'Efficience max heroique : :violet[{efficiency_max_hero}]')
     st.markdown(f'Efficience max lgd : :orange[{efficiency_max_lgd}]')
+    
+    
+    def reset():
+        st.session_state.substat1 = 'HP'
+        st.session_state.substat2 = 'HP'
+        st.session_state.substat3 = 'HP'
+        st.session_state.substat4 = 'HP'
+        st.session_state.proc1 = 0
+        st.session_state.proc2 = 0
+        st.session_state.proc3 = 0
+        st.session_state.proc4 = 0
+        st.session_state.value0 = 0
+        st.session_state.value1 = 0
+        st.session_state.value2 = 0
+        st.session_state.value3 = 0
+        st.session_state.value4 = 0
+        st.session_state.meule1 = 0
+        st.session_state.meule2 = 0
+        st.session_state.meule3 = 0
+        st.session_state.meule4 = 0
+        
+
+    
+    st.button('Reset', on_click=reset)
+        
     
     
