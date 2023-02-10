@@ -18,7 +18,7 @@ from fonctions.gestion_bdd import requete_perso_bdd
 from pages_streamlit.ladder import classement
 from pages_streamlit.timelapse import timelapse_joueur
 from pages_streamlit.ladder_value import classement_value
-
+from pages_streamlit.calculator import calculateur_efficiency
 
 
 # https://stackoverflow.com/questions/7869592/how-to-do-an-update-join-in-postgresql SQL Join
@@ -30,7 +30,6 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 category_selected = ['Violent', 'Will', 'Destroy', 'Despair']
 category_value = ", ".join(category_selected)
-
 
 
 category_selected_spd = ['Violent', 'Will', 'Destroy', 'Despair', 'Swift']
@@ -55,18 +54,21 @@ if 'submitted' not in st.session_state:
 
 # PAs de json initialisé. Donc menu avec Upload json
 if st.session_state['submitted'] == False:
-    menu_selected = ['Upload JSON', 'General', 'Evolution']
-    icons_selected = ["gear", 'info', 'kanban']
+    menu_selected = ['Upload JSON', 'General', 'Evolution', 'Calculateur']
+    icons_selected = ["gear", 'info', 'kanban', 'calculator']
+
 else:  # Json upload, la première page n'est plus utile
     if 'guildeid' in st.session_state:  # Si on a l'info sur la guilde
         menu_selected = ['General', 'Evolution',
-                             'Ranking score', 'Ranking value', 'Timelapse', 'Runes', 'Bestiaire', 'Parametres']
+                         'Ranking score', 'Ranking substat', 'Timelapse', 'Runes', 'Bestiaire', 'Calculateur', 'Parametres']
         icons_selected = ["info", 'kanban', 'ladder', 'ladder', 'alarm',
-                              'bag-check-fill', 'book', 'gear']
+                          'bag-check-fill', 'book', 'calculator', 'gear']
+
     else:  # si on a pas l'info sur la guilde
         menu_selected = ['General', 'Evolution',
-                         'Classement', 'Runes', 'Parametres']
-        icons_selected = ["info", 'kanban', 'ladder', 'bag-check-fill', 'gear']
+                         'Classement', 'Runes', 'Calculateur', 'Parametres']
+        icons_selected = ["info", 'kanban', 'ladder', 'bag-check-fill', 'calculator', 'gear']
+
 
 # Menu
 with st.sidebar:
@@ -85,14 +87,15 @@ with st.sidebar:
         # slider avec, par défaut, la value dans la bdd
         slider_visibility = st.radio('Visibilité Classement', [
                                      'Non-visible', 'Caché', 'Visible à ma guilde', 'Visible à tous'], index=st.session_state.visibility)
-        dict_visibility = {'Non-visible': 0, 'Caché': 1,
-                           'Visible à ma guilde': 2, 'Visible à tous': 3}
+        dict_visibility = {'Non-visible': 0,
+                           'Caché': 1,
+                           'Visible à ma guilde': 2,
+                           'Visible à tous': 3}
         # on enregistre si changement
         requete_perso_bdd('''UPDATE sw_user SET visibility = :visibility where joueur = :joueur''', {'visibility': dict_visibility[slider_visibility],
                                                                                                      'joueur': st.session_state["pseudo"]})
         st.subheader(f'Joueur : {st.session_state["pseudo"]}')
         st.subheader(f'Guilde : {st.session_state["guilde"]}')
-
 
 
 # Pages :
@@ -105,13 +108,13 @@ elif selected == 'General':
 
 elif selected == 'Ranking score':
     classement()
-    
-elif selected == 'Ranking value':
+
+elif selected == 'Ranking substat':
     classement_value()
 
 elif selected == 'Bestiaire':
     find_monsters()
-    
+
 elif selected == 'Timelapse':
     timelapse_joueur()
 
@@ -123,6 +126,10 @@ elif selected == 'Suivi':
 
 elif selected == 'Runes':
     optimisation_rune(category_selected, coef_set)
+    
+elif selected == 'Calculateur':
+    calculateur_efficiency()
+
 
 elif selected == 'Parametres':
     params()
