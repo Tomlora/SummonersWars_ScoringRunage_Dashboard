@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from fonctions.visuel import load_lottieurl
 from streamlit_lottie import st_lottie
+from params.coef import coef_set
 
 from fonctions.gestion_bdd import lire_bdd_perso
 
@@ -100,7 +101,7 @@ def general_page():
         size_general, avg_score_general, max_general, size_guilde, avg_score_guilde, max_guilde, df_max, df_guilde = comparaison(
             st.session_state['guildeid'])
 
-        tab1, tab2 = st.tabs(['Autres scoring', 'Efficience moyenne par set'])
+        tab1, tab2, tab3 = st.tabs(['Autres scoring', 'Detail du scoring', 'Efficience moyenne par set'])
         
         with tab1:
             with st.expander('Autre scorings'):
@@ -126,12 +127,32 @@ def general_page():
                     st.dataframe(st.session_state.tcd_arte)
                     
         with tab2:
+            with st.expander('Detail du scoring'):
+                
+                column_detail_scoring1, column_detail_scoring2 = st.columns(2)
+                
+                with column_detail_scoring1:
+                    st.dataframe(st.session_state.tcd_detail_score)
+                
+                with column_detail_scoring2:
+                    txt = 'Une rune 100 vaut 1 point \nUne rune 110 vaut 2 points\nUne Rune 120 vaut 3 points\n\n\nCoefficient : \n'
+                    
+                    for rune, score in coef_set.items():
+                        txt += f'{rune.upper()} : {score} \n'
+                    
+                    st.text(txt)    
+                    
+                    
+                    
+                    
+        with tab3:
             with st.expander('Efficience par set'):
 
   
                 data_grp : pd.DataFrame = st.session_state['data_avg'].groupby('rune_set').agg({'efficiency' : ['mean', 'max', 'median']})
                 data_grp = data_grp.droplevel(level=0, axis=1)
-                st.dataframe(data_grp)
+                st.dataframe(data_grp.rename(columns={'mean' : 'moyenne',
+                                                      'median' : 'mediane'}))
 
                 fig = go.Figure()
                 fig.add_trace(go.Histogram(y=data_grp['max'], x=data_grp.index, histfunc='avg', name='max'))
