@@ -248,6 +248,29 @@ class Rune():
                 result['efficiency_binned'] == key, value, result['factor'])
 
         result['points'] = result['efficiency'] * result['factor']
+        
+        # Dans le détail :
+        
+        self.df_efficiency = result.copy()
+        
+        self.df_efficiency['efficiency_binned'] = self.df_efficiency['efficiency_binned'].replace({palier_1: 100,
+                                                                               palier_2: 110,
+                                                                               palier_3: 120})
+        
+        self.tcd_df_efficiency = self.df_efficiency.pivot_table(
+            self.df_efficiency, 'rune_set', 'efficiency_binned', 'sum')['efficiency']
+        
+        self.tcd_df_efficiency['points'] = self.tcd_df_efficiency.apply(lambda x: (x[100] * 1 + x[110] * 2 + x[120] * 3) * coef_set.get(x.name, 1), axis=1)
+        
+        total_100 = self.tcd_df_efficiency[100].sum()
+        total_110 = self.tcd_df_efficiency[110].sum()
+        total_120 = self.tcd_df_efficiency[120].sum()
+        total = self.tcd_df_efficiency['points'].sum()
+
+        self.tcd_df_efficiency.loc['Total'] = [total_100, total_110, total_120, total]
+        
+        print(self.tcd_df_efficiency)
+        
 
         # on sépare les dataset à mettre en évidence et les autres
 
