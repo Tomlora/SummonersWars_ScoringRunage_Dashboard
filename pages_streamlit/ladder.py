@@ -86,11 +86,11 @@ def classement():
     if classement == 'score sur un set':
         set = st.radio('Quel set ?', options=coef_set.keys(), horizontal=True)
 
-        data_set = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw.date, sw."Set", sw."100", sw."110", sw."120", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
+        data_set = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw.date, sw."Set", sw."100", sw."110", sw."120", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user
                             INNER JOIN sw ON sw_user.id = sw.id
                             where sw_user.visibility != 0
-                            and sw."Set" = %(set)s;''', params={'set': set}).transpose().reset_index()
+                            and sw."Set" = '{set}';''').transpose().reset_index()
 
         data_set['date'] = pd.to_datetime(data_set['date'], format="%d/%m/%Y")
 
@@ -111,11 +111,11 @@ def classement():
         set_spd = st.radio(
             'Quel set ?', options=coef_set_spd.keys(), horizontal=True)
 
-        data_spd = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_spd.date, sw_spd."Set", sw_spd."23-25", sw_spd."26-28", sw_spd."29-31", sw_spd."32-35", sw_spd."36+", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
+        data_spd = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_spd.date, sw_spd."Set", sw_spd."23-25", sw_spd."26-28", sw_spd."29-31", sw_spd."32-35", sw_spd."36+", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user
                             INNER JOIN sw_spd ON sw_user.id = sw_spd.id
                             where sw_user.visibility != 0
-                            and sw_spd."Set" = %(set)s;''', params={'set': set_spd}).transpose().reset_index()
+                            and sw_spd."Set" = '{set_spd}';''').transpose().reset_index()
 
         data_spd['date'] = pd.to_datetime(data_spd['date'], format="%d/%m/%Y")
 

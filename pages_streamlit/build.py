@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 from fonctions.visualisation import filter_dataframe
 import requests
+from math import ceil
 
 from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd
 
@@ -18,7 +19,7 @@ def build(data_class : Rune):
     # On va boucler et retenir ce qui nous intéresse..
     list_mobs = []
 
-    print(data_mobs[0][0])
+
 
     for monstre in data_mobs[0]:
         unit = monstre['unit_id']
@@ -33,7 +34,7 @@ def build(data_class : Rune):
                 list_mobs[-1].append(0)
 
     # On met ça en dataframe
-    df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre', 'level', 'atk', 'def', 'spd', 'resist', 'accuracy', 'CRIT', 'CDMG',
+    df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre', 'level', 'atk', 'def', 'spd', 'resist', 'accuracy', 'CRIT', 'DCC',
                                                'Rune1', 'Rune2', 'Rune3', 'Rune4', 'Rune5', 'Rune6'])
     
 
@@ -58,45 +59,17 @@ def build(data_class : Rune):
     rename_column = {'rune_set' : 'Set rune',
                              'rune_slot' : 'Slot',
                              'rune_equiped' : 'Equipé',
-                             'efficiency' : 'Efficience',
-                             'efficiency_max_hero' : 'Efficience_max_hero',
-                             'efficiency_max_lgd' : 'Efficience_max_lgd',
-                             'quality' : 'qualité',
-                             'amount' : 'montant',
                              'main_type' : 'Stat principal',
                              'main_value' : 'Valeur stat principal',
                              'first_sub' : 'Substat 1',
                              'second_sub' : 'Substat 2',
                              'third_sub' : 'Substat 3', 
                              'fourth_sub' : 'Substat 4',
-                             'first_sub_value' : 'Substat valeur 1',
-                             'second_sub_value' : 'Substat valeur 2',
-                             'third_sub_value' : 'Substat valeur 3',
-                             'fourth_sub_value' : 'Substat valeur 4',
-                             'first_gemme_bool' : 'Gemmé 1 ?',
-                             'second_gemme_bool' : 'Gemmé 2 ?',
-                             'third_gemme_bool' : 'Gemmé 3 ?',
-                             'fourth_gemme_bool' : 'Gemmé 4 ?',
-                             'first_sub_grinded_value' : 'Valeur meule 1',
-                             'second_sub_grinded_value' : 'Valeur meule 2',
-                             'third_sub_grinded_value' : 'Valeur meule 3',
-                             'fourth_sub_grinded_value' : 'Valeur meule 4',
-                             'first_sub_value_max' : 'Substat 1 max',
-                             'second_sub_value_max' : 'Substat 2 max',
-                             'third_sub_value_max' : 'Substat 3 max',
-                             'fourth_sub_value_max' : 'Substat 4 max',
                              'first_sub_value_total' : 'Substat 1 total',
                              'second_sub_value_total' : 'Substat 2 total',
                              'third_sub_value_total' : 'Substat 3 total',
                              'fourth_sub_value_total' : 'Substat 4 total',
-                             'first_grind_value_max_lgd' : 'Meule 1 lgd Max',
-                             'second_grind_value_max_lgd' : 'Meule 2 lgd Max',
-                             'third_grind_value_max_lgd' : 'Meule 3 lgd Max',
-                             'fourth_grind_value_max_lgd' : 'Meule 4 lgd Max',
-                             'first_grind_value_max_hero' : 'Meule 1 hero Max',
-                             'second_grind_value_max_hero' : 'Meule 2 hero Max',
-                             'third_grind_value_max_hero' : 'Meule 3 hero Max',
-                             'fourth_grind_value_max_hero' : 'Meule 4 hero Max'}
+                            }
     
     data_class.data_build.rename(columns=rename_column, inplace=True)
     data_class.data_build['Equipé'] = data_class.data_build['Equipé'].astype('str')
@@ -120,7 +93,7 @@ def build(data_class : Rune):
     
     col1, col2 = st.columns([0.8, 0.2])
     
-   
+    # DataFrame avec les monstres
     with col1:
         st.subheader('Chercher un monstre')
         monster_selected = st.selectbox('Monstre', options=df_mobs['name_monstre'].unique())
@@ -130,63 +103,236 @@ def build(data_class : Rune):
         image = req['image_filename']
         st.image(f'https://swarfarm.com/static/herders/images/monsters/{image}')
         
-    df_build_save = lire_bdd_perso('''SELECT * FROM sw_build where monstre = %(monstre)s and id = %(id_joueur)s''', params={'id_joueur' : st.session_state.id_joueur, 'monstre' : monster_selected.lower()}, index_col='id_build').transpose()
+    df_build_save = lire_bdd_perso(f'''SELECT * FROM sw_build where monstre = '{monster_selected.lower()}' and id = {st.session_state.id_joueur}''', index_col='id_build').transpose()
     
     
     if len(df_build_save) > 0:
+        # Si un build existe, on ouvre la liste déroulante des build
         with st.expander('Charger un build'):
             liste_build = df_build_save['nom_build'].unique().tolist()
             liste_build.append('Aucun')
             build_selected = st.selectbox('Selection du build', options=liste_build, index=len(liste_build)-1)
     else:
         build_selected = 'Aucun'
+    
+    def calcul_substats(monster_selected, build_selected):
+        '''Calcule le total de substat pour les 6 runes
+        
+        La variable build_selected est pour différencier le build actuel et ceux enregistrés'''    
+        dict_stat = {'ATQ' : 0, 'ATQ%' : 0, 'DEF%' : 0, 'DEF' : 0, 'HP' : 0, 'HP%' : 0, 'SPD' : 0, 'CRIT' : 0, 'DCC' : 0, 'RES' : 0, 'ACC' : 0, 'Aucun' : 0}
+        set_equiped = []
+        
+        if build_selected == 'Aucun':
+            df_rune_selected = df_mobs[df_mobs['name_monstre'] == monster_selected]
+        else:
+            df_rune_selected = df_build_save[df_build_save['monstre'] == monster_selected.lower()]
+        
+        for i in range(1,7):
+            
+            if build_selected == 'Aucun':
+                id_rune = df_rune_selected[f'Rune{i}'].values[0]
+            else:
+                id_rune = df_build_save[df_build_save['monstre'] == monster_selected.lower()][f'rune{i}'].values[0]
+            type = data_class.data_build.loc[id_rune][f"Stat principal"]
+            dict_stat[type] = dict_stat[type] + data_class.data_build.loc[id_rune]["Valeur stat principal"]
+            set_equiped.append(data_class.data_build.loc[id_rune][f"Set rune"])
+            
+            type = data_class.data_build.loc[id_rune][f"innate_type"]
+            dict_stat[type] = dict_stat[type] + data_class.data_build.loc[id_rune]["innate_value"]
+            
+            for i in range(1,5):
+                type = data_class.data_build.loc[id_rune][f"Substat {i}"]
+                dict_stat[type] = dict_stat[type] + data_class.data_build.loc[id_rune][f"Substat {i} total"]
+
+
+        return dict_stat, set_equiped
+        
+        
+        
+    dict_bonus, set_equiped = calcul_substats(monster_selected, build_selected)    
         
     def show_rune(num_rune, monster_selected, build_selected):
+        '''Montre la rune et ses différentes caractéristiques
         
+        La variable build_selected est pour différencier le build actuel et ceux enregistrés'''
         if build_selected == 'Aucun':
             id_rune = df_mobs[df_mobs['name_monstre'] == monster_selected][f'Rune{num_rune}'].values[0]
             id_rune = st.number_input(label=f'identifiant rune {num_rune}', value=id_rune, format='%i', key=f'number_{num_rune}')
         else:
-            id_rune = df_build_save[df_build_save['monstre'] == monster_selected.lower()][f'rune{num_rune}'].values[0] 
-            st.session_state.number_1 = df_build_save[df_build_save['monstre'] == monster_selected.lower()][f'rune1'].values[0]
-            st.session_state.number_2 = df_build_save[df_build_save['monstre'] == monster_selected.lower()][f'rune2'].values[0]
-            st.session_state.number_3 = df_build_save[df_build_save['monstre'] == monster_selected.lower()][f'rune3'].values[0]
-            st.session_state.number_4 = df_build_save[df_build_save['monstre'] == monster_selected.lower()][f'rune4'].values[0]
-            st.session_state.number_5 = df_build_save[df_build_save['monstre'] == monster_selected.lower()][f'rune5'].values[0]
-            st.session_state.number_6 = df_build_save[df_build_save['monstre'] == monster_selected.lower()][f'rune6'].values[0]
+            selection = df_build_save[df_build_save['monstre'] == monster_selected.lower()]
+            id_rune = selection[f'rune{num_rune}'].values[0] 
+            st.session_state.number_1 = selection[f'rune1'].values[0]
+            st.session_state.number_2 = selection[f'rune2'].values[0]
+            st.session_state.number_3 = selection[f'rune3'].values[0]
+            st.session_state.number_4 = selection[f'rune4'].values[0]
+            st.session_state.number_5 = selection[f'rune5'].values[0]
+            st.session_state.number_6 = selection[f'rune6'].values[0]
 
         
         # id_rune = st.number_input(label=f'identifiant rune {num_rune}', value=id_rune, format='%i', key=f'number_{num_rune}')
-        
+
+            
         return f'Rune {num_rune} : :blue[{data_class.data_build.loc[id_rune]["Set rune"]}]\
-    <br>Stat principal : :blue[{data_class.data_build.loc[id_rune]["Stat principal"]}] :green[({data_class.data_build.loc[id_rune]["Valeur stat principal"]})]\
-    <br>Sub1 : :blue[{data_class.data_build.loc[id_rune]["Substat 1"]}] :green[({data_class.data_build.loc[id_rune]["Substat 1 total"]})]\
-    <br>Sub2 : :blue[{data_class.data_build.loc[id_rune]["Substat 2"]}] :green[({data_class.data_build.loc[id_rune]["Substat 2 total"]})]\
-    <br>Sub3 : :blue[{data_class.data_build.loc[id_rune]["Substat 3"]}] :green[({data_class.data_build.loc[id_rune]["Substat 3 total"]})]\
-    <br>Sub4 : :blue[{data_class.data_build.loc[id_rune]["Substat 4"]}] :green[({data_class.data_build.loc[id_rune]["Substat 4 total"]})]\
-        '
-    
+        <br><br>Stat principal : :blue[{data_class.data_build.loc[id_rune]["Stat principal"]}] :green[({data_class.data_build.loc[id_rune]["Valeur stat principal"]})]\
+        <br>Innate : :blue[{data_class.data_build.loc[id_rune]["innate_type"]}] :green[({data_class.data_build.loc[id_rune]["innate_value"]})]\
+        <br><br>Sub1 : :blue[{data_class.data_build.loc[id_rune]["Substat 1"]}] :green[({data_class.data_build.loc[id_rune]["Substat 1 total"]})]\
+        <br>Sub2 : :blue[{data_class.data_build.loc[id_rune]["Substat 2"]}] :green[({data_class.data_build.loc[id_rune]["Substat 2 total"]})]\
+        <br>Sub3 : :blue[{data_class.data_build.loc[id_rune]["Substat 3"]}] :green[({data_class.data_build.loc[id_rune]["Substat 3 total"]})]\
+        <br>Sub4 : :blue[{data_class.data_build.loc[id_rune]["Substat 4"]}] :green[({data_class.data_build.loc[id_rune]["Substat 4 total"]})]'
+
+        
+    with st.expander('Stats'):
+            set = ''
+            stats1, stats2 = st.columns(2)
+            with stats1:
+                selection = df_mobs[df_mobs["name_monstre"] == monster_selected]
+                hp = req['max_lvl_hp'] # Les HP de base ne sont pas dans le json. On prend donc l'api swarfarm pour le niveau max.
+                atk = selection[f"atk"].values[0]
+                defense = selection[f"def"].values[0]
+                spd = selection[f"spd"].values[0]
+                res = selection[f"resist"].values[0]
+                acc = selection[f"accuracy"].values[0]
+                crit = selection[f"CRIT"].values[0]
+                dcc = selection[f"DCC"].values[0]
+                 
+                # Energy               
+                if set_equiped.count('Energy') in (2,3):
+                    st.caption(f'HP : :blue[{hp}] :orange[(+{ceil(hp*(dict_bonus["HP%"]/100) + dict_bonus["HP"] + hp*0.20)})]')
+                elif set_equiped.count('Energy') in (4,5):
+                    st.caption(f'HP : :blue[{hp}] :orange[(+{ceil(hp*(dict_bonus["HP%"]/100) + dict_bonus["HP"] + hp*0.40)})]')
+                if set_equiped.count('Energy') == (6):
+                    st.caption(f'HP : :blue[{hp}] :orange[(+{ceil(hp*(dict_bonus["HP%"]/100) + dict_bonus["HP"] + hp*0.60)})]')
+                else:
+                    st.caption(f'HP : :blue[{hp}] :orange[(+{ceil(hp*(dict_bonus["HP%"]/100) + dict_bonus["HP"])})]')
+                
+                # Fatal
+                if set_equiped.count('Fatal') >= 4:
+                    st.caption(f'ATK : :blue[{atk}] :orange[(+{ceil(atk*(dict_bonus["ATQ%"]/100) + dict_bonus["ATQ"] + atk*0.35)})]')
+                    set += 'Fatal '
+                else:
+                    st.caption(f'ATK : :blue[{atk}] :orange[(+{ceil(atk*(dict_bonus["ATQ%"]/100) + dict_bonus["ATQ"])})]')
+                
+                # Guard
+                if set_equiped.count('Guard') in (2,3):
+                    st.caption(f'DEF : :blue[{defense}] :orange[(+{ceil(defense*(dict_bonus["DEF%"]/100) + dict_bonus["DEF"] + defense*0.15)})]')
+                    set += 'Guard '
+                elif set_equiped.count('Guard') in (4,5):
+                    st.caption(f'DEF : :blue[{defense}] :orange[(+{ceil(defense*(dict_bonus["DEF%"]/100) + dict_bonus["DEF"] + defense*0.3)})]')
+                    set += 'Guard x2 '
+                elif set_equiped.count('Guard') == 6:
+                    st.caption(f'DEF : :blue[{defense}] :orange[(+{ceil(defense*(dict_bonus["DEF%"]/100) + dict_bonus["DEF"] + defense*0.45)})]')
+                    set += 'Guard x3 '
+                else:
+                    st.caption(f'DEF : :blue[{defense}] :orange[(+{ceil(defense*(dict_bonus["DEF%"]/100) + dict_bonus["DEF"])})]')
+                
+                # Swift
+                if set_equiped.count('Swift') >= 4:
+                    st.caption(f'SPD : :blue[{spd}] :orange[(+{ceil(dict_bonus["SPD"] + spd*0.25)})]')
+                    set += 'Swift '
+                else:
+                    st.caption(f'SPD : :blue[{spd}] :orange[(+{dict_bonus["SPD"]})]')
+                    
+            with stats2:
+                
+                # Endure
+                if set_equiped.count('Endure') in (2,3):
+                    st.caption(f'RES : :blue[{res}%] :orange[(+{dict_bonus["RES"] + 20})%]')
+                    set += 'Endure '
+                elif set_equiped.count('Endure') in (4,5):
+                    st.caption(f'RES : :blue[{res}%] :orange[(+{dict_bonus["RES"] + 40})%]')
+                    set += 'Endure x2 '
+                elif set_equiped.count('Endure') == 6:
+                    st.caption(f'RES : :blue[{res}%] :orange[(+{dict_bonus["RES"] + 60})%]')
+                    set += 'Endure x3 '
+                else:
+                    st.caption(f'RES : :blue[{res}%] :orange[(+{dict_bonus["RES"]})%]')
+                
+                # Focus    
+                if set_equiped.count('Focus') in (2,3):
+                   st.caption(f'ACC : :blue[{acc}%] :orange[(+{dict_bonus["ACC"] + 20})%]')
+                   set += 'Focus '
+                if set_equiped.count('Focus') in (3,4):
+                    st.caption(f'ACC : :blue[{acc}%] :orange[(+{dict_bonus["ACC"] + 40})%]') 
+                    set += 'Focus x2 '
+                if set_equiped.count('Focus') == 6:
+                    st.caption(f'ACC : :blue[{acc}%] :orange[(+{dict_bonus["ACC"] + 60})%]')
+                    set += 'Focus x3 '
+                else:
+                    st.caption(f'ACC : :blue[{acc}%] :orange[(+{dict_bonus["ACC"]})%]')
+                    
+                # Blade    
+                if set_equiped.count('Blade') in (2,3):
+                    st.caption(f'CRIT : :blue[{crit}%] :orange[(+{dict_bonus["CRIT"] + 12}%)]')
+                    set += 'Blade '
+                elif set_equiped.count('Blade') in (4,5):
+                    st.caption(f'CRIT : :blue[{crit}%] :orange[(+{dict_bonus["CRIT"] + 24}%)]')
+                    set += 'Blade x2 '
+                elif set_equiped.count('Blade') == 6:
+                    st.caption(f'CRIT : :blue[{crit}%] :orange[(+{dict_bonus["CRIT"] + 36}%)]')
+                    set += 'Blade x3 '
+                else:
+                    st.caption(f'CRIT : :blue[{crit}%] :orange[(+{dict_bonus["CRIT"]}%)]')
+                
+                # Rage
+                if set_equiped.count('Rage') >= 4:
+                    st.caption(f'DCC : :blue[{dcc}%] :orange[(+{dict_bonus["DCC"] + 40}%)]')
+                    set += 'Rage '
+                else:
+                    st.caption(f'DCC : :blue[{dcc}%] :orange[(+{dict_bonus["DCC"]}%)]')
+                    
+                if set_equiped.count('Violent') >=4:
+                    set += 'Violent '
+                
+                if set_equiped.count('Nemesis') in (2,3):
+                    set += 'Nemesis '
+                    
+                elif set_equiped.count('Nemesis') in (4,5):
+                    set += 'Nemesis x2 '
+                     
+                elif set_equiped.count('Nemesis') == 6:
+                    set += 'Nemesis x3 '
+                    
+                if set_equiped.count('Will') in (2,3):
+                    set += 'Will '
+                    
+                elif set_equiped.count('Will') in (4,5):
+                    set += 'Will x2 '
+                     
+                elif set_equiped.count('Will') == 6:
+                    set += 'Will x3 '                   
+        
+            if set != '':
+                st.write(f'Sets : {set}')
+            
     col3, col4 = st.columns(2)
-    
+    # Rune 1/3/5 à gauche. 2/4/6 à droite
     with col3:
         with st.container():
             for i in [1,3,5]:
-                st.write(show_rune(i, monster_selected, build_selected), unsafe_allow_html=True)
+                try:
+                    st.write(show_rune(i, monster_selected, build_selected), unsafe_allow_html=True)
+                except KeyError:
+                    st.warning("Cette rune n'existe pas", icon="🚨")
 
     with col4: 
         with st.container():
             for i in [2,4,6]:
-                st.write(show_rune(i, monster_selected, build_selected), unsafe_allow_html=True)   
-     
+                try:
+                    st.write(show_rune(i, monster_selected, build_selected), unsafe_allow_html=True)
+                except KeyError:
+                    st.warning("Cette rune n'existe pas", icon="🚨")
+                       
+    # Si le build est personnalisé, on affiche un bouton pour le supprimer. 
     if build_selected != 'Aucun':
         col5, col6 = st.columns([0.7,0.3])
-        
+
         with col6:
             if st.button('Supprimer ce build'):
                 requete_perso_bdd('DELETE FROM sw_build where id = :id_joueur and monstre =:monstre and nom_build = :nom_build',
                                   dict_params={'id_joueur' : st.session_state.id_joueur, 'monstre' : monster_selected.lower(), 'nom_build' : build_selected})
                 st.success('Build supprimé')      
- 
+    
+    # Formulaire pour sauvegarder les build
     with st.form('Sauvegarder ce build'):
         build_name = st.text_input('Nom du build : ', 'Par default')
         
@@ -194,6 +340,7 @@ def build(data_class : Rune):
         submitted_build = st.form_submit_button('Sauvegarder')
 
     if submitted_build:
+        # on enregistre si formulaire validé.
         requete_perso_bdd('''INSERT INTO public.sw_build(
 	                        id, monstre, nom_build, rune1, rune2, rune3, rune4, rune5, rune6)
 	                        VALUES (:id, :monstre, :nom_build, :rune1, :rune2, :rune3, :rune4, :rune5, :rune6); ''',

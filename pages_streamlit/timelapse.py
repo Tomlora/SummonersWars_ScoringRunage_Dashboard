@@ -144,7 +144,7 @@ def timelapse_joueur():
     # On lit la BDD
     # on récupère la data
     
-    @st.cache
+    @st.cache_data
     def recup_data():
         dataset = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_score.date, sw_score.score_general, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user

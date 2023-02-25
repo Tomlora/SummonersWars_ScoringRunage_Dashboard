@@ -26,6 +26,7 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
         st.session_state['submitted'] = st.form_submit_button(
             'Calcule mon score')
         st.warning(body='Seuls les scorings sont sauvegardés.', icon="🚨")
+        st.success("25/02/2023 : Ajout d'une nouvelle page : build", icon='🔥')
     if not st.session_state.submitted:
         col1, col2, col3 = st.columns(3)
         with col2:

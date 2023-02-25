@@ -7,7 +7,7 @@ from fonctions.visuel import load_lottieurl
 from streamlit_lottie import st_lottie
 
 
-@st.cache
+@st.cache_data
 def filter_data(df, selected_options):
     """Filtre la data en fonction des dates sélectionnés
 

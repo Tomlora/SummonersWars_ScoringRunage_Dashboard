@@ -1,6 +1,6 @@
 
 import pandas as pd
-
+import streamlit as st
 from sqlalchemy import *
 
 import os
@@ -9,8 +9,12 @@ import os
 
 DB = os.environ.get('API_SQL')
 
-engine = create_engine(DB, echo=False)
+@st.cache_resource
+def init_connection():
+    engine = create_engine(DB, echo=False)
+    return engine.connect()
 
+conn = init_connection()
 
 def lire_bdd(nom_table, format: str = "df", index=None, distinct: bool = False):
     """Lire la BDD
@@ -22,12 +26,12 @@ def lire_bdd(nom_table, format: str = "df", index=None, distinct: bool = False):
     format: :class:`str`
             Choix entre 'dict' ou 'df'
     """
-    conn = engine.connect()
+    # conn = engine.connect()
 
     if distinct:
-        requetesql = f'SELECT distinct * FROM {nom_table}'
+        requetesql = text(f'SELECT distinct * FROM {nom_table}')
     else:
-        requetesql = f'SELECT * FROM {nom_table}'
+        requetesql = text(f'SELECT * FROM {nom_table}')
     try:
         df = pd.read_sql(requetesql, con=conn, index_col=index)
     except KeyError:
@@ -39,7 +43,7 @@ def lire_bdd(nom_table, format: str = "df", index=None, distinct: bool = False):
     df = df.transpose()
     if format == "dict":
         df = df.to_dict()
-    conn.close()
+    # conn.close()
     return df
 
 
@@ -58,18 +62,18 @@ def lire_bdd_perso(requests: str, format: str = "df", index_col: str = "joueur",
 
     Les variables doivent être sous forme %(variable)s
     """
-    conn = engine.connect()
+    # conn = engine.connect()
 
     if params == None:
-        df = pd.read_sql(requests, con=conn, index_col=index_col)
+        df = pd.read_sql(text(requests), con=conn, index_col=index_col)
     else:
-        df = pd.read_sql(requests, con=conn,
+        df = pd.read_sql(text(requests), con=conn,
                          index_col=index_col, params=params)
 
     df = df.transpose()
     if format == "dict":
         df = df.to_dict()
-    conn.close()
+    # conn.close()
     return df
 
 
@@ -85,25 +89,25 @@ def sauvegarde_bdd(df, nom_table, methode_save='replace'):
     method_save: :class:`str`
             Si la table existe déjà, choix entre "append" pour insérer des nouvelles valeurs ou "replace" pour supprimer la table existante et la remplacer
     """
-    conn = engine.connect()
+    # conn = engine.connect()
     # si la variable envoyée n'est pas un dataframe, on l'a met au format dataframe
     if not isinstance(df, pd.DataFrame):
         df = pd.DataFrame(df)
         df = df.transpose()
     df.to_sql(nom_table, con=conn, if_exists=methode_save, index=True,
               method='multi', dtype={'Score': Float(), 'serie': BigInteger()})
-    conn.close()
+    # conn.close()
 
 
 def supprimer_bdd(nom_table):
-    conn = engine.connect()
+    # conn = engine.connect()
     sql = text(f'DROP TABLE IF EXISTS {nom_table}')
     conn.execute(sql)
-    conn.close()
+    # conn.close()
 
 
 def supprimer_data(joueur, date):
-    conn = engine.connect()
+    # conn = engine.connect()
     params_sql = {'joueur': joueur, 'date': date}
     sql1 = text(f'''DELETE FROM sw WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_score WHERE "id" = :joueur AND date = :date;
@@ -112,11 +116,11 @@ def supprimer_data(joueur, date):
                     DELETE FROM sw_max WHERE "id" = :joueur AND date = :date;''')  # :var_name
     conn.execute(sql1, params_sql)
 
-    conn.close
+    # conn.close
 
 
 def supprimer_data_all(joueur):
-    conn = engine.connect()
+    # conn = engine.connect()
     params_sql = {'joueur': joueur}
     sql1 = text(f'''DELETE FROM sw WHERE "id" = :joueur;
                     DELETE FROM sw_score WHERE "id" = :joueur;
@@ -126,28 +130,28 @@ def supprimer_data_all(joueur):
                     DELETE FROM sw_max WHERE "id" = :joueur''')  # :var_name
     conn.execute(sql1, params_sql)
 
-    conn.close
+    # conn.close
 
 
 def update_info_compte(joueur, guildeid, compteid):
-    conn = engine.connect()
+    # conn = engine.connect()
     params_sql = {'joueur': joueur,
                   'guilde_id': guildeid, 'joueur_id': compteid}
     # sql1 = text('UPDATE sw_score SET guilde = :guilde WHERE "Joueur" = :joueur')
     sql1 = text(
         'UPDATE sw_user SET guilde_id = :guilde_id, joueur = :joueur WHERE joueur_id = :joueur_id;')
     conn.execute(sql1, params_sql)
-    conn.close()
+    # conn.close()
 
 
 def get_data_bdd(request: text, dict_params=None):
-    conn = engine.connect()
+    # conn = engine.connect()
     sql = text(request)
     if dict_params == None:
         data = conn.execute(sql)
     else:
         data = conn.execute(sql, dict_params)
-    conn.close()
+    # conn.close()
 
     return data
 
@@ -161,17 +165,17 @@ def requete_perso_bdd(request: text, dict_params: dict):
     Rappel
     -------
     Dans la requête sql, une variable = :variable """
-    conn = engine.connect()
+    # conn = engine.connect()
     sql = text(request)
     conn.execute(sql, dict_params)
-    conn.close()
+    # conn.close()
 
 
 def get_user(joueur, type: str = 'name_user', id_compte: int = 0):
     '''Return l'id, la guilde et la visibilité du joueur demandé
     type : name_user ou id'''
     # à adapter avec l'id du compte quand on aura assez d'infos
-    conn = engine.connect()
+    # conn = engine.connect()
     if type == 'name_user':
         sql = text('SELECT id, guilde_id, visibility , joueur_id, (SELECT guilde from sw_guilde where sw_user.guilde_id = sw_guilde.guilde_id) as guilde FROM sw_user WHERE joueur = :joueur ')
         data = conn.execute(sql, {'joueur': joueur})
@@ -187,5 +191,5 @@ def get_user(joueur, type: str = 'name_user', id_compte: int = 0):
         sql = text(
             'UPDATE sw_user SET joueur_id = :joueur_id where joueur = :joueur')
         data = conn.execute(sql, {'joueur_id': id_compte, 'joueur': joueur})
-    conn.close()
+    # conn.close()
     return id_joueur, visibility, guildeid

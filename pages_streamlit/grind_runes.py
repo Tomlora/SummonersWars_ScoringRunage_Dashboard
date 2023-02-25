@@ -261,7 +261,7 @@ def optimisation_rune(data_class : Rune, category_selected, coef_set):
     #     quality : 14
     
 
-    @st.cache(show_spinner=False, suppress_st_warning=True)
+    @st.cache_data(show_spinner=False)
     def charge_data(data, data_short, df_rune, df_count, df_inventaire):
         with st.spinner('Chargement des données concaténées...Prévoir quelques secondes'):
 
