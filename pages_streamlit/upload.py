@@ -25,7 +25,7 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
             'Choisis un json', type=['json'], help='Json SW Exporter')
         st.session_state['submitted'] = st.form_submit_button(
             'Calcule mon score')
-        st.warning(body='Seuls les scorings sont sauvegardés. Je ne conserve pas les json.', icon="🚨")
+        st.warning(body='Seuls les scorings sont sauvegardés.', icon="🚨")
     if not st.session_state.submitted:
         col1, col2, col3 = st.columns(3)
         with col2:
@@ -50,16 +50,20 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
         st.session_state.compteid = data_json['wizard_info']['wizard_id']
 
         data_rune = Rune(data_json)
+        
+        st.session_state.data_rune = data_rune
 
         data_arte = Artefact(data_json)
 
-        st.session_state.data_grind = data_rune.data.copy()
+        # st.session_state.data_grind = data_rune.data.copy()
         st.session_state.data_avg = data_rune.data.copy()
 
         # --------------------- calcul score rune
 
         tcd_value, st.session_state.score = data_rune.scoring_rune(
             category_selected, coef_set)
+        
+        st.session_state.tcd_detail_score = data_rune.tcd_df_efficiency
 
         # -------------------------- calcul score spd rune
 

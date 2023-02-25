@@ -6,6 +6,7 @@ import streamlit as st
 from io import BytesIO
 from fonctions.visualisation import filter_dataframe
 import plotly.graph_objects as go
+from fonctions.runes import Rune
 
 # fix plotly express et Visual Studio Code
 import plotly.io as pio
@@ -71,7 +72,7 @@ def export_excel(data, data_short, data_property, data_count, data_inventaire):
         worksheet2.set_column(i, i+1, 20, cell_format)
     for i, col in enumerate(data_property.columns):
         # colonne, colonne, len_colonne, format colonne
-        worksheet3.set_column(i, i+1, 20, cell_format)
+        worksheet3.set_column(i, i+1, 30, cell_format)
     for i, col in enumerate(data_count.columns):
         # colonne, colonne, len_colonne, format colonne
         worksheet4.set_column(i, i+1, 20, cell_format)
@@ -111,109 +112,14 @@ def export_excel(data, data_short, data_property, data_count, data_inventaire):
     return processed_data
 
 
-def optimisation_rune(category_selected, coef_set):
+def optimisation_rune(data_class : Rune, category_selected, coef_set):
     
 
-    data = st.session_state['data_grind']
-
-    data = data[data['level'] > 11]
-    data = data[data['stars'] > 5]
-
-    sub_max_lgd = {1: 550, 2: 10, 3: 30, 4: 10, 5: 30, 6: 10, 8: 5}
-    sub_max_heroique = {1: 450, 2: 7, 3: 22, 4: 7, 5: 22, 6: 7, 8: 4}
-
-    # Certaines stats ne sont pas meulables. On remplace donc le potentiel de meule par 0
-
-    dict = {'first_grind_value_max': 'first_sub', 'second_grind_value_max': 'second_sub',
-            'third_grind_value_max': 'third_sub', 'fourth_grind_value_max': 'fourth_sub'}
-
     with st.spinner('Calcul du potentiel des runes...'):
-        for key, value in dict.items():
 
-            data[key + '_lgd'] = data[value].replace(sub_max_lgd)
-            data[key + '_hero'] = data[value].replace(sub_max_heroique)
-
-            # Certaines stats ne sont pas meulables. On remplace donc le potentiel de meule par 0
-
-            data[key + "_lgd"] = np.where(data[value]
-                                          > 8, 0,  data[key + "_lgd"])
-            data[key + "_hero"] = np.where(data[value]
-                                           > 8, 0, data[key + "_hero"])
+        data_class.calcul_potentiel()
 
     st.success('Calcul du potentiel des runes effectué !')
-
-    # Value stats de base + meule (max)
-
-    data['first_sub_value_total_max_lgd'] = (
-        data['first_sub_value'] + data['first_grind_value_max_lgd'])
-    data['second_sub_value_total_max_lgd'] = (
-        data['second_sub_value'] + data['second_grind_value_max_lgd'])
-    data['third_sub_value_total_max_lgd'] = (
-        data['third_sub_value'] + data['third_grind_value_max_lgd'])
-    data['fourth_sub_value_total_max_lgd'] = (
-        data['fourth_sub_value'] + data['fourth_grind_value_max_lgd'])
-
-    data['first_sub_value_total_max_hero'] = (
-        data['first_sub_value'] + data['first_grind_value_max_hero'])
-    data['second_sub_value_total_max_hero'] = (
-        data['second_sub_value'] + data['second_grind_value_max_hero'])
-    data['third_sub_value_total_max_hero'] = (
-        data['third_sub_value'] + data['third_grind_value_max_hero'])
-    data['fourth_sub_value_total_max_hero'] = (
-        data['fourth_sub_value'] + data['fourth_grind_value_max_hero'])
-
-    data['efficiency_max_lgd'] = np.where(data['innate_type'] != 0,
-                                          round(((1+data['innate_value'] / data['innate_value_max']
-                                                + data['first_sub_value_total_max_lgd'] / data['first_sub_value_max']
-                                                + data['second_sub_value_total_max_lgd'] / data['second_sub_value_max']
-                                                + data['third_sub_value_total_max_lgd'] / data['third_sub_value_max']
-                                                + data['fourth_sub_value_total_max_lgd'] / data['fourth_sub_value_max'])
-                                                 / 2.8)*100, 2),
-                                          round(((1 + data['first_sub_value_total_max_lgd'] / data['first_sub_value_max']
-                                                + data['second_sub_value_total_max_lgd'] / data['second_sub_value_max']
-                                                + data['third_sub_value_total_max_lgd'] / data['third_sub_value_max']
-                                                + data['fourth_sub_value_total_max_lgd'] / data['fourth_sub_value_max'])
-                                                 / 2.8)*100, 2))
-
-    data['efficiency_max_hero'] = np.where(data['innate_type'] != 0,
-                                           round(((1+data['innate_value'] / data['innate_value_max']
-                                                   + data['first_sub_value_total_max_hero'] / data['first_sub_value_max']
-                                                   + data['second_sub_value_total_max_hero'] / data['second_sub_value_max']
-                                                   + data['third_sub_value_total_max_hero'] / data['third_sub_value_max']
-                                                   + data['fourth_sub_value_total_max_hero'] / data['fourth_sub_value_max'])
-                                                  / 2.8)*100, 2),
-                                           round(((1 + data['first_sub_value_total_max_hero'] / data['first_sub_value_max']
-                                                   + data['second_sub_value_total_max_hero'] / data['second_sub_value_max']
-                                                   + data['third_sub_value_total_max_hero'] / data['third_sub_value_max']
-                                                   + data['fourth_sub_value_total_max_hero'] / data['fourth_sub_value_max'])
-                                                  / 2.8)*100, 2))
-
-    data['potentiel_max_lgd'] = data['efficiency_max_lgd'] - data['efficiency']
-
-    data['potentiel_max_hero'] = data['efficiency_max_hero'] - data['efficiency']
-
-    data.drop(['max_efficiency', 'max_efficiency_reachable',
-              'gain'], axis=1, inplace=True)
-
-    # # Map
-    # ## Propriété
-    # Plus simple ici qu'avant
-
-    property = {0: 'Aucun',
-                1: 'HP',
-                2: 'HP%',
-                3: 'ATQ',
-                4: 'ATQ%',
-                5: 'DEF',
-                6: 'DEF%',
-                8: "SPD",
-                9: 'CRIT',
-                10: 'DCC',
-                11: 'RES',
-                12: 'ACC'}
-
-    for c in ['innate_type', 'first_sub', 'second_sub', 'third_sub', 'fourth_sub', 'main_type']:
-        data[c] = data[c].map(property)
 
     # ## Monstres
 
@@ -249,210 +155,38 @@ def optimisation_rune(category_selected, coef_set):
         df_mobs = df_mobs[['id_unit', 'name_monstre']].set_index('id_unit')
     st.success('Chargement des monstres effectués !')
 
-    data['rune_equiped'] = data['rune_equiped'].replace(
-        df_mobs.to_dict(orient="dict")['name_monstre'])
+
+    data_class.identify_monsters(df_mobs.to_dict(orient="dict")['name_monstre'])
+    
+
 
     # # Indicateurs
     # ## Runes +15
 
-    data['indicateurs_level'] = (data['level'] == 15).astype(
-        'int')  # Si 15 -> 1. Sinon 0
-
-    # # Amélioration des Grind
-
-    dict = {'amelioration_first_grind': ['first_sub_grinded_value', 'first_grind_value'],
-            'amelioration_second_grind': ['second_sub_grinded_value', 'second_grind_value'],
-            'amelioration_third_grind': ['third_sub_grinded_value', 'third_grind_value'],
-            'amelioration_fourth_grind': ['fourth_sub_grinded_value', 'fourth_grind_value']}
-
     with st.spinner('Vérification des runes et des modifications possibles  ...'):
-        for key, value in dict.items():
-            # Améliorable ? (valeur)
-            data[key + '_lgd_value'] = data[value[1] +
-                                            '_max_lgd'] - data[value[0]]
-            data[key + '_hero_value'] = data[value[1] +
-                                             '_max_hero'] - data[value[0]]
-            # Améliorable ? (bool)
-            data[key +
-                 '_lgd_ameliorable?'] = (data[key + '_lgd_value'] > 0).astype('int')
-            data[key +
-                 '_hero_ameliorable?'] = (data[key + '_hero_value'] > 0).astype('int')
+        data_class.grind()
+        
     st.success('Vérification des runes et des modifications possibles effectué !')
 
-    # # Commentaires
-
-    with st.spinner('Ajout des observations pour chaque rune'):
-        # Level
-        data['Commentaires'] = np.where(
-            data['level'] != 15, "A monter +15 \n", "")
-        calcul_gemme = data['first_gemme_bool'] + data['second_gemme_bool'] + \
-            data['third_gemme_bool'] + data['fourth_gemme_bool']
-        data['Commentaires'] = np.where(
-            calcul_gemme == 0, data['Commentaires'] + "Pas de gemme utilisée", data['Commentaires'])
-        data['Grind_lgd'] = ""
-        data['Grind_hero'] = ""
-
-        dict = {'amelioration_first_grind': 'first_sub',
-                'amelioration_second_grind': 'second_sub',
-                'amelioration_third_grind': 'third_sub',
-                'amelioration_fourth_grind': 'fourth_sub'}
-
-        # meule
-
-        for key, value in dict.items():
-            nom = key + "_lgd_value"
-            data['Grind_lgd'] = np.where(data[key + '_lgd_ameliorable?'] == 1, data['Grind_lgd'] +
-                                         "Meule : " + data[value] + "(" + data[nom].astype('str') + ") \n", data['Grind_lgd'])
-
-            nom = key + "_hero_value"
-            data['Grind_hero'] = np.where(data[key + '_hero_ameliorable?'] == 1, data['Grind_hero'] +
-                                          "Meule : " + data[value] + "(" + data[nom].astype('str') + ") \n", data['Grind_hero'])
-
-        # gemme
-
-        # sub des gemmes
-
-        gemme_max_lgd = {'HP': 580, 'HP%': 13, 'ATQ': 40, 'ATQ%': 13, 'DEF': 40,
-                         'DEF%': 13, 'SPD': 10, 'CRIT': 9, 'DCC': 10, 'RES': 11, 'ACC': 11}
-        gemme_max_hero = {'HP': 420, 'HP%': 11, 'ATQ': 30, 'ATQ%': 11, 'DEF': 30,
-                          'DEF%': 11, 'SPD': 8, 'CRIT': 7, 'DCC': 8, 'RES': 9, 'ACC': 9}
-
-        # On les inclut au dataframe
-
-        data['first_gemme_max_lgd'] = data['first_sub'].map(gemme_max_lgd)
-        data['second_gemme_max_lgd'] = data['second_sub'].map(gemme_max_lgd)
-        data['third_gemme_max_lgd'] = data['third_sub'].map(gemme_max_lgd)
-        data['fourth_gemme_max_lgd'] = data['fourth_sub'].map(gemme_max_lgd)
-
-        data['first_gemme_max_hero'] = data['first_sub'].map(gemme_max_hero)
-        data['second_gemme_max_hero'] = data['second_sub'].map(gemme_max_hero)
-        data['third_gemme_max_hero'] = data['third_sub'].map(gemme_max_hero)
-        data['fourth_gemme_max_hero'] = data['fourth_sub'].map(gemme_max_hero)
-
-        dict2 = {'first_gemme': 'first_sub',
-                 'second_gemme': 'second_sub',
-                 'third_gemme': 'third_sub',
-                 'fourth_gemme': 'fourth_sub'}
-
-        # On fait le calcul :
-
-        for key, sub in dict2.items():
-
-            condition = data[key + '_bool'] == 1  # si 1 -> gemme utilisée
-            # différence entre le max et la gemme
-            calcul_lgd = data[key + '_max_lgd'] - data[sub + '_value']
-            # différence entre le max et la gemme
-            calcul_hero = data[key + '_max_hero'] - data[sub + '_value']
-            condition_lgd = calcul_lgd > 0  # s'il y a un écart, ce n'est pas la stat max
-            condition_hero = calcul_hero > 0
-
-            data['Grind_lgd'] = np.where(condition,
-                                         np.where(condition_lgd,
-                                                  data['Grind_lgd'] + "Gemme : " + data[sub] +
-                                                  "(" + calcul_lgd.astype('str') + ")",
-                                                  data['Grind_lgd']),
-                                         data['Grind_lgd'])
-            data['Grind_hero'] = np.where(condition,
-                                          np.where(condition_hero,
-                                                   data['Grind_hero'] + "Gemme : " + data[sub] +
-                                                   "(" + calcul_hero.astype('str') + ")",
-                                                   data['Grind_hero']),
-                                          data['Grind_hero'])
-
-    st.success('Ajout des observations pour chaque rune effectué !')
-
-    # # Clean du xl
-
-    data.drop(['stars', 'level'], axis=1, inplace=True)
-
-    data_short = data[['rune_set', 'rune_slot', 'rune_equiped', 'efficiency', 'efficiency_max_hero',
-                       'efficiency_max_lgd', 'potentiel_max_lgd', 'potentiel_max_hero', 'Commentaires', 'Grind_lgd', 'Grind_hero']]
+    data = data_class.data_grind
+    data_short = data_class.data_short
 
     
     # ## Meules manquantes par stat (total)
     with st.spinner('Calcul des stats manquantes...'):
-        property_grind = {1: 'Meule : HP', # 141
-                          2: 'Meule : HP%', # 125
-                          3: 'Meule : ATQ',
-                          4: 'Meule : ATQ%',
-                          5: 'Meule : DEF',
-                          6: 'Meule : DEF%',
-                          8: "Meule : SPD"}
-
-        list_property_type = []
-        list_property_count = []
-
-        for propriete in property_grind.values():
-
-            count = data['Grind_hero'].str.count(propriete).sum()
-
-
-            list_property_type.append(propriete)
-            list_property_count.append(count)
-
-        property_grind_gemme = {1: 'Gemme : HP',
-                                2: 'Gemme : HP%',
-                                3: 'Gemme : ATQ',
-                                4: 'Gemme : ATQ%',
-                                5: 'Gemme : DEF',
-                                6: 'Gemme : DEF%',
-                                8: "Gemme : SPD"}
-
-        for propriete in property_grind_gemme.values():
-            count = data['Grind_hero'].str.count(propriete).sum()
-
-            list_property_type.append(propriete)
-            list_property_count.append(count)
-
-        df_property = pd.DataFrame(
-            [list_property_type, list_property_count]).transpose()
-        df_property = df_property.rename(columns={
-                                         0: 'Propriété', 1: 'Meules/Gemmes (hero) manquantes pour atteindre la stat max'})
+        df_property = data_class.count_meules_manquantes()
         
 
     st.success('Calcul des stats manquantes effectués !')
 
-    dict_rune = {}
-    list_type = []
-    list_count = []
-    list_propriete = []
-    list_propriete_gemmes = []
-    list_count_gemmes = []
-
-    set = {1: "Energy", 2: "Guard", 3: "Swift", 4: "Blade", 5: "Rage", 6: "Focus", 7: "Endure", 8: "Fatal", 10: "Despair", 11: "Vampire", 13: "Violent",
-           14: "Nemesis", 15: "Will", 16: "Shield", 17: "Revenge", 18: "Destroy", 19: "Fight", 20: "Determination", 21: "Enhance", 22: "Accuracy", 23: "Tolerance", 99: "Immemorial"}
-
     # Même calcul mais par set
     with st.spinner('Ajout des informations pour identifier les runes...'):
-        for type_rune in set.values():
-            for propriete in property_grind.values():
-                data_type_rune = data[data['rune_set'] == type_rune]
-                nb_rune = data[data['rune_set'] == type_rune].count().max()
-                count = data_type_rune['Grind_hero'].str.count(propriete).sum()
-                
-
-                dict_rune[type_rune] = nb_rune
-
-                list_type.append(type_rune)
-                list_count.append(count)
-                list_propriete.append(propriete)
-
-                df_rune = pd.DataFrame.from_dict(
-                    dict_rune, orient='index', columns=['Nombre de runes'])
-
-            for propriete in property_grind_gemme.values():
-                data_type_rune = data[data['rune_set'] == type_rune]
-                nb_rune = data[data['rune_set'] == type_rune].count().max()
-                count = data_type_rune['Grind_hero'].str.count(propriete).sum()
-
-                # list_type.append(type_rune)
-                list_count_gemmes.append(count)
-                list_propriete_gemmes.append(propriete)
-
-        df_count = pd.DataFrame([list_type, list_propriete, list_count,
-                                list_propriete_gemmes, list_count_gemmes]).transpose()
-        df_count = df_count.rename(columns={0: 'Set', 1: 'Propriété Meules',
-                                   2: 'Meules (hero) manquantes pour la stat max', 3: 'Propriété Gemmes', 4: 'Gemmes (hero) manquantes'})
+        
+        data_class.count_rune_with_potentiel_left()
+        
+        df_rune = data_class.df_rune
+        
+        df_count = data_class.df_count
         
 
 
@@ -471,6 +205,8 @@ def optimisation_rune(category_selected, coef_set):
             st.session_state['data_json'], orient='index').transpose()
 
         df_inventaire = df_inventaire['rune_craft_item_list']
+        
+
 
         # id des crafts
 
@@ -501,6 +237,7 @@ def optimisation_rune(category_selected, coef_set):
         # Combien de gemmes/meules différentes ?
 
         nb_boucle = len(df_inventaire[0])
+        
 
         for i in range(0, nb_boucle):
             objet = str(df_inventaire[0][i]['craft_type_id'])
@@ -512,8 +249,8 @@ def optimisation_rune(category_selected, coef_set):
             quality = int(objet[nb_chiffre-2:nb_chiffre])
 
             df_inventaire[0][i]['type'] = CRAFT_TYPE_MAP[type]
-            df_inventaire[0][i]['rune'] = set[rune]
-            df_inventaire[0][i]['stat'] = property[stat]
+            df_inventaire[0][i]['rune'] = data_class.set[rune]
+            df_inventaire[0][i]['stat'] = data_class.property[stat]
             df_inventaire[0][i]['quality'] = COM2US_QUALITY_MAP[quality]
 
     st.success('Les informations pour identifier les runes ont été ajoutés !')
@@ -522,13 +259,14 @@ def optimisation_rune(category_selected, coef_set):
     #     rune : 15
     #     stat : 8
     #     quality : 14
+    
 
     @st.cache(show_spinner=False, suppress_st_warning=True)
     def charge_data(data, data_short, df_rune, df_count, df_inventaire):
         with st.spinner('Chargement des données concaténées...Prévoir quelques secondes'):
 
             df_inventaire = pd.DataFrame(df_inventaire)
-
+            
             # découpe le dictionnaire imbriqué en un dict = une variable
             df_inventaire = extraire_variables_imbriquees(
                 df_inventaire, 'rune_craft_item_list')
@@ -552,18 +290,69 @@ def optimisation_rune(category_selected, coef_set):
             # on sort values
 
             df_inventaire.sort_values(by=['rune'],  inplace=True)
+            
+            rename_column = {'rune_set' : 'Set rune',
+                             'rune_slot' : 'Slot',
+                             'rune_equiped' : 'Equipé',
+                             'efficiency' : 'Efficience',
+                             'efficiency_max_hero' : 'Efficience_max_hero',
+                             'efficiency_max_lgd' : 'Efficience_max_lgd',
+                             'quality' : 'qualité',
+                             'amount' : 'montant',
+                             'main_type' : 'Stat principal',
+                             'main_value' : 'Valeur stat principal',
+                             'first_sub' : 'Substat 1',
+                             'second_sub' : 'Substat 2',
+                             'third_sub' : 'Substat 3', 
+                             'fourth sub' : 'Substat 4',
+                             'first_sub_value' : 'Substat valeur 1',
+                             'second_sub_value' : 'Substat valeur 2',
+                             'third_sub_value' : 'Substat valeur 3',
+                             'fourth_sub_value' : 'Substat valeur 4',
+                             'first_gemme_bool' : 'Gemmé 1 ?',
+                             'second_gemme_bool' : 'Gemmé 2 ?',
+                             'third_gemme_bool' : 'Gemmé 3 ?',
+                             'fourth_gemme_bool' : 'Gemmé 4 ?',
+                             'first_sub_grinded_value' : 'Valeur meule 1',
+                             'second_sub_grinded_value' : 'Valeur meule 2',
+                             'third_sub_grinded_value' : 'Valeur meule 3',
+                             'fourth_sub_grinded_value' : 'Valeur meule 4',
+                             'first_sub_value_max' : 'Substat 1 max',
+                             'second_sub_value_max' : 'Substat 2 max',
+                             'third_sub_value_max' : 'Substat 3 max',
+                             'fourth_sub_value_max' : 'Substat 4 max',
+                             'first_sub_value_total' : 'Substat 1 total',
+                             'second_sub_value_total' : 'Substat 2 total',
+                             'third_sub_value_total' : 'Substat 3 total',
+                             'fourth_sub_value_total' : 'Substat 4 total',
+                             'first_grind_value_max_lgd' : 'Meule 1 lgd Max',
+                             'second_grind_value_max_lgd' : 'Meule 2 lgd Max',
+                             'third_grind_value_max_lgd' : 'Meule 3 lgd Max',
+                             'fourth_grind_value_max_lgd' : 'Meule 4 lgd Max',
+                             'first_grind_value_max_hero' : 'Meule 1 hero Max',
+                             'second_grind_value_max_hero' : 'Meule 2 hero Max',
+                             'third_grind_value_max_hero' : 'Meule 3 hero Max',
+                             'fourth_grind_value_max_hero' : 'Meule 4 hero Max'}
+            
+            for c in ['first_gemme_bool', 'second_gemme_bool', 'third_gemme_bool', 'fourth_gemme_bool']:
+                data[c] = data[c].map({0 : 'Non', 1 : 'Oui'})
+            
+            data.rename(columns=rename_column, inplace=True)
+            data_short.rename(columns=rename_column, inplace=True)
+            df_rune.rename(columns=rename_column, inplace=True)
+            df_count.rename(columns=rename_column, inplace=True)
+            df_inventaire.rename(columns=rename_column, inplace=True)
 
             data_xlsx = export_excel(
                 data, data_short, df_rune, df_count, df_inventaire)
 
             # Mise en forme :
 
-            data['rune_equiped'] = data['rune_equiped'].astype('str')
-            data_short['rune_equiped'] = data['rune_equiped'].astype('str')
-            data_short['rune_equiped'] = data_short['rune_equiped'].replace({
-                                                                            '0': 'Inventaire'})
+            data['Equipé'] = data['Equipé'].astype('str')
+            data_short['Equipé'] = data['Equipé'].astype('str')
+            data_short['Equipé'] = data_short['Equipé'].replace({'0': 'Inventaire'})
 
-            data_short['efficiency'] = np.round(data_short['efficiency'], 2)
+            data_short['Efficience'] = np.round(data_short['Efficience'], 2)
 
             try:
                 data_short.drop('Set', axis=1,  inplace=True)
@@ -571,6 +360,7 @@ def optimisation_rune(category_selected, coef_set):
                 pass
 
             return data_xlsx, data, data_short, df_rune, df_count, df_inventaire
+
 
     data_xlsx, data, data_short, df_rune, df_count, df_inventaire = charge_data(
         data, data_short, df_rune, df_count, df_inventaire)
@@ -589,7 +379,7 @@ def optimisation_rune(category_selected, coef_set):
     tab1, tab2, tab3, tab4, tab5 = st.tabs(['Potentiel max hero', 'Potentiel max lgd', 'Nombre de runes (Grid max Hero)', 'Meules/Gemmes nécessaires', 'Inventaire'])
     
     def potentiel_max(variable):
-        data_grp : pd.DataFrame = data_short.groupby('rune_set').agg({f'efficiency_max_{variable}' : ['mean', 'max', 'median'],
+        data_grp : pd.DataFrame = data_short.groupby('Set rune').agg({f'Efficience_max_{variable}' : ['mean', 'max', 'median'],
                                                                       f'potentiel_max_{variable}' : ['mean', 'max', 'median']})
         data_grp.columns.set_levels(['Moyenne', 'Max', 'Mediane'], level = 1, inplace=True)
         # data_grp = data_grp.droplevel(level=0, axis=1)
@@ -597,9 +387,9 @@ def optimisation_rune(category_selected, coef_set):
 
         fig = go.Figure()
         # on calcule ce que ça donnerait avec le potentiel
-        data_grp['total'] = data_grp[f'efficiency_max_{variable}']['Moyenne'] + data_grp[f'potentiel_max_{variable}']['Moyenne']
+        data_grp['total'] = data_grp[f'Efficience_max_{variable}']['Moyenne'] + data_grp[f'potentiel_max_{variable}']['Moyenne']
         fig.add_trace(go.Histogram(y=data_grp['total'], x=data_grp.index, histfunc='avg', name=f'potentiel {variable}'))
-        fig.add_trace(go.Histogram(y=data_grp[f'efficiency_max_{variable}']['Moyenne'], x=data_grp.index, histfunc='avg', name='efficience actuelle'))
+        fig.add_trace(go.Histogram(y=data_grp[f'Efficience_max_{variable}']['Moyenne'], x=data_grp.index, histfunc='avg', name='efficience actuelle'))
         fig.update_layout(
         barmode="overlay",
         title=f'Potentiel {variable}',

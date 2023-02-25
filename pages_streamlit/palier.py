@@ -50,7 +50,9 @@ def palier_page():
 
         with col1:  # on met la col1 après, pour bien prendre en compte les modifs dans data_scoring
             st.subheader('Evolution')
-            st.dataframe(data_scoring.set_index('date'))
+            st.dataframe(data_scoring.set_index('date').rename(columns={'score_general' : 'General',
+                                                                        'score_spd' : 'Speed',
+                                                                        'score_arte' : 'Artefact'}))
 
             fig = go.Figure()
             fig.add_trace(go.Scatter(

@@ -5,6 +5,12 @@ import streamlit as st
 from params.coef import coef_set, coef_set_spd
 
 
+dict_type = {'Score general' : 'score_general',
+                 'Score speed' : 'score_spd',
+                 'Score sur un set' : 'score sur un set',
+                 'Score speed sur un set' : 'score spd sur un set',
+                 'Score artefact' : 'score_arte'}
+    
 def cleaning_only_guilde(x):
     x['private'] = 0
     if x['visibility'] == 2:
@@ -47,7 +53,9 @@ def mise_en_forme_classement(df, variable='score'):
     df.reset_index(inplace=True, drop=True)
     height_dataframe = 36 * df.shape[0]
 
-    st.dataframe(df, height=height_dataframe,
+    st.dataframe(df.rename(columns={'score_general' : 'General',
+                                    'score_spd' : 'Speed',
+                                    'score_arte' : 'Artefact'}), height=height_dataframe,
                  use_container_width=True)
 
     return df
@@ -69,8 +77,11 @@ def classement():
 
     st.subheader('Ranking')
 
-    classement = st.radio('Type de classement', options=[
-                          'score_general', 'score sur un set', 'score_spd', 'score spd sur un set', 'score_arte'], index=0, horizontal=True)
+    choice_radio = st.radio('Type de classement', options=[
+                          'Score general', 'Score sur un set', 'Score speed', 'Score speed sur un set', 'Score artefact'], index=0, horizontal=True)
+    
+    
+    classement = dict_type[choice_radio]
 
     if classement == 'score sur un set':
         set = st.radio('Quel set ?', options=coef_set.keys(), horizontal=True)

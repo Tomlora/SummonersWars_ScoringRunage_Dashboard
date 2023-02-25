@@ -2,8 +2,6 @@ from fonctions.gestion_bdd import lire_bdd_perso
 import pandas as pd
 import streamlit as st
 
-from params.coef import coef_set, coef_set_spd
-
 
 def cleaning_only_guilde(x):
     x['private'] = 0
@@ -45,9 +43,11 @@ def mise_en_forme_classement(df, variable='score'):
                 == st.session_state.guilde]
 
     df.reset_index(inplace=True, drop=True)
-    height_dataframe = 36 * df.shape[0]
+    height_dataframe = 50 * df.shape[0]
 
-    st.dataframe(df, height=height_dataframe,
+
+    st.dataframe(df.rename(columns={'max_value' : 'Max substat',
+                                    variable : f'Moyenne {variable.capitalize()}'}), height=height_dataframe,
                  use_container_width=True)
 
     return df

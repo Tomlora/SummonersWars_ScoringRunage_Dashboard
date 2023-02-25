@@ -64,10 +64,10 @@ def calculateur_efficiency():
     
     
     with column0_0:
-        innate_stats = st.selectbox('Innate', options=max_sub_by_proc(4).keys())
+        innate_stats = st.selectbox('Innate', options=max_sub_by_proc(4).keys(), key='innate')
     
     with column0_1:
-        value0 = st.number_input(f'Valeur', format='%i', min_value=0)
+        value0 = st.number_input(f'Valeur', format='%i', min_value=0, key='value0')
         
     st.markdown("***") 
     
@@ -141,6 +141,8 @@ def calculateur_efficiency():
     
     
     def reset():
+        '''Reset les boutons'''
+        st.session_state.innate = 'HP'
         st.session_state.substat1 = 'HP'
         st.session_state.substat2 = 'HP'
         st.session_state.substat3 = 'HP'
@@ -160,7 +162,7 @@ def calculateur_efficiency():
         st.session_state.meule4 = 0
         
 
-    
+    st.markdown('***')
     st.button('Reset', on_click=reset)
         
     

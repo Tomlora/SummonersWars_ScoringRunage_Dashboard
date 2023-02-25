@@ -142,9 +142,6 @@ def general_page():
                     
                     st.text(txt)    
                     
-                    
-                    
-                    
         with tab3:
             with st.expander('Efficience par set'):
 
