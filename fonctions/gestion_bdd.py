@@ -103,6 +103,7 @@ def supprimer_bdd(nom_table):
     # conn = engine.connect()
     sql = text(f'DROP TABLE IF EXISTS {nom_table}')
     conn.execute(sql)
+    conn.commit()
     # conn.close()
 
 
@@ -115,6 +116,7 @@ def supprimer_data(joueur, date):
                     DELETE FROM sw_spd WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_max WHERE "id" = :joueur AND date = :date;''')  # :var_name
     conn.execute(sql1, params_sql)
+    conn.commit()
 
     # conn.close
 
@@ -129,6 +131,7 @@ def supprimer_data_all(joueur):
                     DELETE FROM sw_spd WHERE "id" = :joueur;
                     DELETE FROM sw_max WHERE "id" = :joueur''')  # :var_name
     conn.execute(sql1, params_sql)
+    conn.commit()
 
     # conn.close
 
@@ -168,6 +171,7 @@ def requete_perso_bdd(request: text, dict_params: dict):
     # conn = engine.connect()
     sql = text(request)
     conn.execute(sql, dict_params)
+    conn.commit()
     # conn.close()
 
 
@@ -191,5 +195,6 @@ def get_user(joueur, type: str = 'name_user', id_compte: int = 0):
         sql = text(
             'UPDATE sw_user SET joueur_id = :joueur_id where joueur = :joueur')
         data = conn.execute(sql, {'joueur_id': id_compte, 'joueur': joueur})
+        conn.commit()
     # conn.close()
     return id_joueur, visibility, guildeid
