@@ -19,6 +19,7 @@ from pages_streamlit.ladder import classement
 from pages_streamlit.timelapse import timelapse_joueur
 from pages_streamlit.ladder_value import classement_value
 from pages_streamlit.calculator import calculateur_efficiency
+from pages_streamlit.build import build
 
 
 # https://stackoverflow.com/questions/7869592/how-to-do-an-update-join-in-postgresql SQL Join
@@ -54,15 +55,15 @@ if 'submitted' not in st.session_state:
 
 # PAs de json initialisé. Donc menu avec Upload json
 if st.session_state['submitted'] == False:
-    menu_selected = ['Upload JSON', 'General', 'Evolution', 'Calculateur']
-    icons_selected = ["gear", 'info', 'kanban', 'calculator']
+    menu_selected = ['Upload JSON', 'General', 'Calculateur']
+    icons_selected = ["gear", 'info', 'calculator']
 
 else:  # Json upload, la première page n'est plus utile
     if 'guildeid' in st.session_state:  # Si on a l'info sur la guilde
         menu_selected = ['General', 'Evolution',
-                         'Ranking score', 'Ranking substat', 'Timelapse', 'Runes', 'Bestiaire', 'Calculateur', 'Parametres']
-        icons_selected = ["info", 'kanban', 'ladder', 'ladder', 'alarm',
-                          'bag-check-fill', 'book', 'calculator', 'gear']
+                         'Ranking score', 'Ranking substat', 'Build', 'Timelapse', 'Runes', 'Calculateur', 'Parametres']
+        icons_selected = ["info", 'kanban', 'ladder', 'ladder', 'columns-gap', 'alarm',
+                          'bag-check-fill', 'calculator', 'gear']
 
     else:  # si on a pas l'info sur la guilde
         menu_selected = ['General', 'Evolution',
@@ -112,8 +113,8 @@ elif selected == 'Ranking score':
 elif selected == 'Ranking substat':
     classement_value()
 
-elif selected == 'Bestiaire':
-    find_monsters()
+# elif selected == 'Bestiaire':
+#     find_monsters()
 
 elif selected == 'Timelapse':
     timelapse_joueur()
@@ -123,9 +124,12 @@ elif selected == 'Evolution':
 
 elif selected == 'Suivi':
     visu_page()
+    
+elif selected == 'Build':
+    build(st.session_state.data_rune)
 
 elif selected == 'Runes':
-    optimisation_rune(category_selected, coef_set)
+    optimisation_rune(st.session_state.data_rune, category_selected, coef_set)
     
 elif selected == 'Calculateur':
     calculateur_efficiency()
