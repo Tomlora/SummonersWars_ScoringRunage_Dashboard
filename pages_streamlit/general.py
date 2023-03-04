@@ -6,6 +6,7 @@ import numpy as np
 from fonctions.visuel import load_lottieurl
 from streamlit_lottie import st_lottie
 from params.coef import coef_set
+import requests
 
 from fonctions.gestion_bdd import lire_bdd_perso
 
@@ -82,12 +83,24 @@ def highlight_max(data, color='yellow'):
         is_max = data == data.max().max()
         return pd.DataFrame(np.where(is_max, attr, ''),
                             index=data.index, columns=data.columns)
+        
+
+def show_img_monsters(data, stars):
+    
+    data = data[data['*'] == stars]
+    
+    st.subheader(f'{stars} etoiles ({data.shape[0]} monstres)')
+    
+    data = data[data['*'] == stars]
+    
+    return st.image(data['url'].tolist(), width=70, caption=data['name'].tolist())
 
 
 def general_page():
     # -------------- Scoring du compte
     try:
         tcd_column, score_column = st.columns(2)
+        
 
         with tcd_column:
             # Stat du joueur
@@ -101,7 +114,7 @@ def general_page():
         size_general, avg_score_general, max_general, size_guilde, avg_score_guilde, max_guilde, df_max, df_guilde = comparaison(
             st.session_state['guildeid'])
 
-        tab1, tab2, tab3 = st.tabs(['Autres scoring', 'Detail du scoring', 'Efficience moyenne par set'])
+        tab1, tab2, tab3, tab4 = st.tabs(['Autre scorings', 'Detail du scoring', 'Efficience moyenne par set', 'Monstres'])
         
         with tab1:
             with st.expander('Autre scorings'):
@@ -146,10 +159,11 @@ def general_page():
             with st.expander('Efficience par set'):
 
   
-                data_grp : pd.DataFrame = st.session_state['data_avg'].groupby('rune_set').agg({'efficiency' : ['mean', 'max', 'median']})
+                data_grp : pd.DataFrame = st.session_state['data_avg'].groupby('rune_set').agg({'efficiency' : ['mean', 'max', 'median', 'count']})
                 data_grp = data_grp.droplevel(level=0, axis=1)
                 st.dataframe(data_grp.rename(columns={'mean' : 'moyenne',
-                                                      'median' : 'mediane'}))
+                                                      'median' : 'mediane',
+                                                      'count' : 'Nombre runes'}))
 
                 fig = go.Figure()
                 fig.add_trace(go.Histogram(y=data_grp['max'], x=data_grp.index, histfunc='avg', name='max'))
@@ -158,6 +172,89 @@ def general_page():
                 barmode="overlay",
                 bargap=0.1)
                 st.plotly_chart(fig)
+        
+        with tab4:
+            with st.expander('Box'):
+                
+                st.warning(body="Pour des raisons de performance, le stockage des monstres n'est pas inclus", icon="🚨")
+                data_mobs = pd.DataFrame.from_dict(
+                                st.session_state['data_json'], orient="index").transpose()
+
+                data_mobs = data_mobs['unit_list']
+                
+                # data_mobs = data_mobs[data_mobs['class'] > 3]
+
+                # On va boucler et retenir ce qui nous intéresse..
+                list_mobs = []
+
+
+                for monstre in data_mobs[0]:
+                    unit = monstre['unit_id']
+                    master_id = monstre['unit_master_id']
+                    stars = monstre['class']
+                    level = monstre['unit_level']
+                    list_mobs.append([unit, master_id, stars, level])
+
+                # On met ça en dataframe
+                df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre', '*', 'level'])
+
+                # Maintenant, on a besoin d'identifier les id.
+                # Pour cela, on va utiliser l'api de swarfarm
+
+                swarfarm = pd.read_excel('swarfarm.xlsx')
+                # swarfarm
+
+                # swarfarm = swarfarm[['com2us_id', 'name', 'image_filename', 'element', 'natural_stars']]
+                
+                
+                df_mobs_complet = pd.merge(df_mobs, swarfarm, left_on='id_monstre', right_on='com2us_id')
+                
+
+                df_mobs_name = df_mobs_complet[['name', '*', 'level', 'image_filename', 'element', 'natural_stars']]
+                
+                def key_element(x):
+                    if x == 'Fire':
+                        return 0
+                    elif x == 'Water':
+                        return 1
+                    elif x == 'Wind':
+                        return 2
+                    elif x == 'Light':
+                        return 3
+                    elif x == 'Dark':
+                        return 4
+                    else:
+                        return x
+                    
+                df_mobs_name['element_number'] = df_mobs_name['element'].apply(lambda x : key_element(x))
+                
+               
+                df_mobs_name.sort_values(by=['natural_stars', 'element_number', '*', 'level', 'element_number', 'name'],
+                                         ascending=[False, False, False, True, True],
+                                         inplace=True)
+                
+                
+                df_mobs_name['url'] = df_mobs_name.apply(lambda x:  f'https://swarfarm.com/static/herders/images/monsters/{x["image_filename"]}', axis=1)
+                
+                tab1, tab2, tab3, tab4, tab5 = st.tabs(['6 etoiles', '5 etoiles', '4 etoiles', '3 etoiles', '2 etoiles'])
+                
+                
+                
+                with tab1:
+                    show_img_monsters(df_mobs_name, 6)
+                
+                with tab2:
+                    show_img_monsters(df_mobs_name, 5)
+                    
+                with tab3:
+                    show_img_monsters(df_mobs_name, 4)
+                
+                with tab4:
+                    show_img_monsters(df_mobs_name, 3)
+                    
+                with tab5:
+                    show_img_monsters(df_mobs_name, 2)
+
                 
         # ---------------- Comparaison
 
