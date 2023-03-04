@@ -85,9 +85,9 @@ def highlight_max(data, color='yellow'):
                             index=data.index, columns=data.columns)
         
 
-def show_img_monsters(data, stars):
+def show_img_monsters(data, stars, variable='*'):
     
-    data = data[data['*'] == stars]
+    data = data[data[variable] == stars]
     
     st.subheader(f'{stars} etoiles ({data.shape[0]} monstres)')
     
@@ -200,17 +200,15 @@ def general_page():
                 # Pour cela, on va utiliser l'api de swarfarm
 
                 swarfarm = pd.read_excel('swarfarm.xlsx')
-                # swarfarm
-
-                # swarfarm = swarfarm[['com2us_id', 'name', 'image_filename', 'element', 'natural_stars']]
                 
-                
+                # on merge
                 df_mobs_complet = pd.merge(df_mobs, swarfarm, left_on='id_monstre', right_on='com2us_id')
                 
-
-                df_mobs_name = df_mobs_complet[['name', '*', 'level', 'image_filename', 'element', 'natural_stars']]
+                # on retient ce dont on a besoin
+                df_mobs_name = df_mobs_complet[['name', '*', 'level', 'image_filename', 'element', 'natural_stars', 'awaken_level']]
                 
                 def key_element(x):
+                    '''Transforme les valeurs catégoriques en valeurs numériques'''
                     if x == 'Fire':
                         return 0
                     elif x == 'Water':
@@ -234,24 +232,68 @@ def general_page():
                 
                 df_mobs_name['url'] = df_mobs_name.apply(lambda x:  f'https://swarfarm.com/static/herders/images/monsters/{x["image_filename"]}', axis=1)
                 
-                tab1, tab2, tab3, tab4, tab5 = st.tabs(['6 etoiles', '5 etoiles', '4 etoiles', '3 etoiles', '2 etoiles'])
+                menu1, menu2, menu3 = st.tabs(['Box', '2A', 'LD'])
                 
-                
-        
-                with tab1:
-                    show_img_monsters(df_mobs_name, 6)
-                
-                with tab2:
-                    show_img_monsters(df_mobs_name, 5)
+                with menu1:
+                    tab1, tab2, tab3, tab4, tab5 = st.tabs(['6 etoiles', '5 etoiles', '4 etoiles', '3 etoiles', '2 etoiles'])
                     
-                with tab3:
-                    show_img_monsters(df_mobs_name, 4)
-                
-                with tab4:
-                    show_img_monsters(df_mobs_name, 3)
+                    with tab1:
+                        show_img_monsters(df_mobs_name, 6)
                     
-                with tab5:
-                    show_img_monsters(df_mobs_name, 2)
+                    with tab2:
+                        show_img_monsters(df_mobs_name, 5)
+                        
+                    with tab3:
+                        show_img_monsters(df_mobs_name, 4)
+                    
+                    with tab4:
+                        show_img_monsters(df_mobs_name, 3)
+                        
+                    with tab5:
+                        show_img_monsters(df_mobs_name, 2)
+                
+                with menu2:
+                    tab1, tab2, tab3, tab4, tab5 = st.tabs(['6 etoiles', '5 etoiles', '4 etoiles', '3 etoiles', '2 etoiles'])
+                    
+                    df_mobs_2a_only = df_mobs_name[df_mobs_name['awaken_level'] == 2]
+                    
+                    with tab1:
+                        show_img_monsters(df_mobs_2a_only, 6)
+                    
+                    with tab2:
+                        show_img_monsters(df_mobs_2a_only, 5)
+                        
+                    with tab3:
+                        show_img_monsters(df_mobs_2a_only, 4)
+                    
+                    with tab4:
+                        show_img_monsters(df_mobs_2a_only, 3)
+                        
+                    with tab5:
+                        show_img_monsters(df_mobs_2a_only, 2)
+                    
+                    
+                with menu3:
+                    df_mobs_ld_only = df_mobs_name[df_mobs_name['element_number'].isin([3,4])]
+                    
+                    
+                    tab1, tab2, tab3, tab4 = st.tabs(['5 etoiles naturel', '4 etoiles naturel', '3 etoiles naturel', '2 etoiles naturel'])
+                    
+                    with tab1:
+                        show_img_monsters(df_mobs_ld_only, 5, 'natural_stars')
+                    
+                    with tab2:
+                        show_img_monsters(df_mobs_ld_only, 4, 'natural_stars')
+                        
+                    with tab3:
+                        show_img_monsters(df_mobs_ld_only, 3, 'natural_stars')
+                    
+                    with tab4:
+                        show_img_monsters(df_mobs_ld_only, 2, 'natural_stars')
+
+                    
+                    
+                    
 
                 
         # ---------------- Comparaison
