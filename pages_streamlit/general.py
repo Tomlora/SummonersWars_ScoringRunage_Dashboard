@@ -91,8 +91,6 @@ def show_img_monsters(data, stars):
     
     st.subheader(f'{stars} etoiles ({data.shape[0]} monstres)')
     
-    data = data[data['*'] == stars]
-    
     return st.image(data['url'].tolist(), width=70, caption=data['name'].tolist())
 
 
@@ -229,8 +227,8 @@ def general_page():
                 df_mobs_name['element_number'] = df_mobs_name['element'].apply(lambda x : key_element(x))
                 
                
-                df_mobs_name.sort_values(by=['natural_stars', 'element_number', '*', 'level', 'element_number', 'name'],
-                                         ascending=[False, False, False, True, True],
+                df_mobs_name.sort_values(by=['element_number', 'natural_stars', '*', 'level', 'name'],
+                                         ascending=[True, False, False, False, True],
                                          inplace=True)
                 
                 
@@ -239,7 +237,7 @@ def general_page():
                 tab1, tab2, tab3, tab4, tab5 = st.tabs(['6 etoiles', '5 etoiles', '4 etoiles', '3 etoiles', '2 etoiles'])
                 
                 
-                
+        
                 with tab1:
                     show_img_monsters(df_mobs_name, 6)
                 
@@ -319,6 +317,7 @@ def general_page():
             fig_guilde = comparaison_graph(df_guilde, st.session_state['guilde'])
             st.plotly_chart(fig_guilde)
 
-    except:
+    except Exception as e:
+        print(e)
         st.subheader('Erreur')
         st.write('Pas de JSON chargé')
