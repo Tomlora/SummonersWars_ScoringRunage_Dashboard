@@ -77,7 +77,7 @@ def lire_bdd_perso(requests: str, format: str = "df", index_col: str = "joueur",
     return df
 
 
-def sauvegarde_bdd(df, nom_table, methode_save='replace'):
+def sauvegarde_bdd(df, nom_table, methode_save='replace', dtype={'Score': Float(), 'serie': BigInteger()}, index=True):
     """Sauvegarde la BDD au format dataframe
 
     Parameters
@@ -94,8 +94,9 @@ def sauvegarde_bdd(df, nom_table, methode_save='replace'):
     if not isinstance(df, pd.DataFrame):
         df = pd.DataFrame(df)
         df = df.transpose()
-    df.to_sql(nom_table, con=conn, if_exists=methode_save, index=True,
-              method='multi', dtype={'Score': Float(), 'serie': BigInteger()})
+    df.to_sql(nom_table, con=conn, if_exists=methode_save, index=index,
+              method='multi', dtype=dtype)
+    conn.commit()
     # conn.close()
 
 
@@ -144,19 +145,9 @@ def update_info_compte(joueur, guildeid, compteid):
     sql1 = text(
         'UPDATE sw_user SET guilde_id = :guilde_id, joueur = :joueur WHERE joueur_id = :joueur_id;')
     conn.execute(sql1, params_sql)
+    conn.commit()
     # conn.close()
 
-
-def get_data_bdd(request: text, dict_params=None):
-    # conn = engine.connect()
-    sql = text(request)
-    if dict_params == None:
-        data = conn.execute(sql)
-    else:
-        data = conn.execute(sql, dict_params)
-    # conn.close()
-
-    return data
 
 
 def requete_perso_bdd(request: text, dict_params: dict):
