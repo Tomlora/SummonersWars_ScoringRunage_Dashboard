@@ -6,9 +6,9 @@ import numpy as np
 from fonctions.visuel import load_lottieurl
 from streamlit_lottie import st_lottie
 from params.coef import coef_set
-import requests
+from fonctions.visualisation import filter_dataframe
 
-from fonctions.gestion_bdd import lire_bdd_perso
+from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd, sauvegarde_bdd
 
 
 def comparaison(guilde_id):  # à changer par guilde_id
@@ -172,34 +172,45 @@ def general_page():
                 st.plotly_chart(fig)
         
         with tab4:
-            with st.expander('Box'):
+            with st.expander('Liste de monstres'):
                 
-                st.warning(body="Pour des raisons de performance, le stockage des monstres n'est pas inclus", icon="🚨")
-                data_mobs = pd.DataFrame.from_dict(
-                                st.session_state['data_json'], orient="index").transpose()
-
-                data_mobs = data_mobs['unit_list']
+                st.warning(body="Pour des raisons de performance, l'autel de scellement n'est inclus que dans l'onglet spécifié", icon="🚨")
                 
-                # data_mobs = data_mobs[data_mobs['class'] > 3]
+                # @st.cache_data(show_spinner=False)
+                def chargement_mobs():
+                    data_mobs = pd.DataFrame.from_dict(
+                                    st.session_state['data_json'], orient="index").transpose()
 
-                # On va boucler et retenir ce qui nous intéresse..
-                list_mobs = []
+                    data_mobs = data_mobs['unit_list']
+                    
+                    # data_mobs = data_mobs[data_mobs['class'] > 3]
+
+                    # On va boucler et retenir ce qui nous intéresse..
+                    list_mobs = []
 
 
-                for monstre in data_mobs[0]:
-                    unit = monstre['unit_id']
-                    master_id = monstre['unit_master_id']
-                    stars = monstre['class']
-                    level = monstre['unit_level']
-                    list_mobs.append([unit, master_id, stars, level])
+                    for monstre in data_mobs[0]:
+                        unit = monstre['unit_id']
+                        master_id = monstre['unit_master_id']
+                        stars = monstre['class']
+                        level = monstre['unit_level']
+                        list_mobs.append([unit, master_id, stars, level])
 
-                # On met ça en dataframe
-                df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre', '*', 'level'])
+                    # On met ça en dataframe
+                    df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre', '*', 'level'])
+                    
+                    return df_mobs
+                
+                df_mobs = chargement_mobs()
 
                 # Maintenant, on a besoin d'identifier les id.
                 # Pour cela, on va utiliser l'api de swarfarm
+                
+                @st.cache_data(show_spinner=False)
+                def load_swarfarm():
+                    return pd.read_excel('swarfarm.xlsx')
 
-                swarfarm = pd.read_excel('swarfarm.xlsx')
+                swarfarm = load_swarfarm()
                 
                 # on merge
                 df_mobs_complet = pd.merge(df_mobs, swarfarm, left_on='id_monstre', right_on='com2us_id')
@@ -232,7 +243,7 @@ def general_page():
                 
                 df_mobs_name['url'] = df_mobs_name.apply(lambda x:  f'https://swarfarm.com/static/herders/images/monsters/{x["image_filename"]}', axis=1)
                 
-                menu1, menu2, menu3 = st.tabs(['Box', '2A', 'LD'])
+                menu1, menu2, menu3, menu4 = st.tabs(['Box', '2A', 'LD', 'Autel de scellement'])
                 
                 with menu1:
                     tab1, tab2, tab3, tab4, tab5 = st.tabs(['6 etoiles', '5 etoiles', '4 etoiles', '3 etoiles', '2 etoiles'])
@@ -290,11 +301,58 @@ def general_page():
                     
                     with tab4:
                         show_img_monsters(df_mobs_ld_only, 2, 'natural_stars')
+                
+                with menu4:
+                    
+                    # autel de scellement
+                    
+                    # @st.cache_data(show_spinner=False)
+                    def chargement_storage():
+                        data_storage = pd.DataFrame(st.session_state['data_json']['unit_storage_list'])
+                        df_storage_complet = pd.merge(data_storage, swarfarm, left_on='unit_master_id', right_on='com2us_id')
+                        
+                        df_storage_complet = df_storage_complet[['unit_master_id','name', 'element', 'class', 'quantity']]
+                        
+                        df_storage_complet.rename(columns={'class' : '*', 'quantity' : 'quantité'}, inplace=True)
+                        
+                        df_storage_complet.sort_values(by='*', ascending=False, inplace=True)
+                        
+                        return df_storage_complet
+                    
+                    df_storage_complet = chargement_storage()
+                    
+                    df_storage_complet_filter = filter_dataframe(
+                        df_storage_complet.drop('unit_master_id', axis=1), 'data_build', type_number='int', disabled=True)
+                    
+                    st.dataframe(df_storage_complet_filter)
+                    
+        # Stockage monstres
+                    
+        df_mobs_copy = df_mobs.copy()
+                    
+        df_mobs_global = df_mobs_copy.groupby(by=['id_monstre']).count()
+                    
+        df_mobs_global['storage'] = False
+                    
+        df_mobs_global.reset_index(inplace=True)
+        df_mobs_global.rename(columns={'id_unit' : 'quantité'}, inplace=True)
+                    
+                                      
+        df_storage_global = df_storage_complet.copy()
+                    
+        df_storage_global['storage'] = True
+        df_storage_global.rename(columns={'unit_master_id': 'id_monstre'}, inplace=True)
+        df_global = pd.concat([df_mobs_global[['id_monstre', 'quantité', 'storage']], df_storage_global[['id_monstre', 'quantité', 'storage']]]).reset_index(drop=True)
+                    
+        df_global['id'] = st.session_state['id_joueur']
+                    
+        # on supprime les informations qu'on avait déjà
+        requete_perso_bdd('''DELETE FROM sw_monsters WHERE "id" = :id''', dict_params={'id' : st.session_state['id_joueur']})
+        # # on insert les nouvelles
+   
+        sauvegarde_bdd(df_global, 'sw_monsters', 'append', index=False)
 
                     
-                    
-                    
-
                 
         # ---------------- Comparaison
 
