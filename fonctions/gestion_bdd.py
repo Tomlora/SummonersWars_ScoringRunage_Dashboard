@@ -127,10 +127,12 @@ def supprimer_data_all(joueur):
     params_sql = {'joueur': joueur}
     sql1 = text(f'''DELETE FROM sw WHERE "id" = :joueur;
                     DELETE FROM sw_score WHERE "id" = :joueur;
-                    DELETE FROM sw_user WHERE "id" = :joueur;
                     DELETE FROM sw_arte WHERE "id" = :joueur;
                     DELETE FROM sw_spd WHERE "id" = :joueur;
-                    DELETE FROM sw_max WHERE "id" = :joueur''')  # :var_name
+                    DELETE FROM sw_max WHERE "id" = :joueur;
+                    DELETE from sw_monsters WHERE "id" = :joueur;
+                    DELETE FROM sw_user WHERE "id" = :joueur;
+                    ''')  # :var_name
     conn.execute(sql1, params_sql)
     conn.commit()
 
@@ -167,20 +169,20 @@ def requete_perso_bdd(request: text, dict_params: dict):
 
 
 def get_user(joueur, type: str = 'name_user', id_compte: int = 0):
-    '''Return l'id, la guilde et la visibilité du joueur demandé
+    '''Return l'id, la guilde, la visibilité et le rank du joueur demandé
     type : name_user ou id'''
-    # à adapter avec l'id du compte quand on aura assez d'infos
     # conn = engine.connect()
     if type == 'name_user':
-        sql = text('SELECT id, guilde_id, visibility , joueur_id, (SELECT guilde from sw_guilde where sw_user.guilde_id = sw_guilde.guilde_id) as guilde FROM sw_user WHERE joueur = :joueur ')
+        sql = text('SELECT id, guilde_id, visibility , joueur_id, rank, (SELECT guilde from sw_guilde where sw_user.guilde_id = sw_guilde.guilde_id) as guilde FROM sw_user WHERE joueur = :joueur ')
         data = conn.execute(sql, {'joueur': joueur})
     elif type == 'id':
-        sql = text('SELECT id, guilde_id, visibility , joueur_id, (SELECT guilde from sw_guilde where sw_user.guilde_id = sw_guilde.guilde_id) as guilde FROM sw_user WHERE joueur_id =:joueur ')
+        sql = text('SELECT id, guilde_id, visibility , joueur_id, rank, (SELECT guilde from sw_guilde where sw_user.guilde_id = sw_guilde.guilde_id) as guilde FROM sw_user WHERE joueur_id =:joueur ')
         data = conn.execute(sql, {'joueur': joueur})
     data = data.mappings().all()
     id_joueur = data[0]['id']
     visibility = data[0]['visibility']
     guildeid = data[0]['guilde_id']
+    rank = data[0]['rank']
     # Dans l'ancien système, on ne prenait pas l'id. On regarde s'il faut maj
     if data[0]['joueur_id'] == 0 and type == 'name_user':
         sql = text(
@@ -188,4 +190,4 @@ def get_user(joueur, type: str = 'name_user', id_compte: int = 0):
         data = conn.execute(sql, {'joueur_id': id_compte, 'joueur': joueur})
         conn.commit()
     # conn.close()
-    return id_joueur, visibility, guildeid
+    return id_joueur, visibility, guildeid, rank

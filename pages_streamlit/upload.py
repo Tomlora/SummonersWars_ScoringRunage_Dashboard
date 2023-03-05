@@ -81,11 +81,11 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
 
         # -------------------------- on enregistre
         try:
-            st.session_state.id_joueur, st.session_state.visibility, guilde_id = get_user(
+            st.session_state.id_joueur, st.session_state.visibility, guilde_id, st.session_state.rank = get_user(
                 st.session_state['compteid'], type='id')
         except IndexError:
             try:
-                st.session_state.id_joueur, st.session_state.visibility, guilde_id = get_user(
+                st.session_state.id_joueur, st.session_state.visibility, guilde_id, st.session_state.rank  = get_user(
                     st.session_state['pseudo'], id_compte=st.session_state['compteid'])
             except IndexError:  # le joueur n'existe pas ou est dans l'ancien système
                 requete_perso_bdd('''INSERT INTO sw_user(joueur, visibility, guilde_id, joueur_id) VALUES (:joueur, 0, :guilde_id, :joueur_id);
@@ -97,7 +97,7 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
                                    'guilde_id': st.session_state['guildeid'],
                                    'joueur_id': st.session_state['compteid']})
 
-                st.session_state.id_joueur, st.session_state.visibility, guilde_id = get_user(
+                st.session_state.id_joueur, st.session_state.visibility, guilde_id, st.session_state.rank  = get_user(
                     st.session_state['pseudo'])
 
         # Enregistrement SQL
@@ -140,6 +140,10 @@ def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd
         df_max['id'] = st.session_state['id_joueur']
         df_max['date'] = date_du_jour()
         
+        # on supprime les anciennes données
+        requete_perso_bdd('''DELETE FROM sw_max WHERE "id" = :id''', dict_params={'id' : st.session_state['id_joueur']})
+        
+        # on met à jour
         sauvegarde_bdd(df_max, 'sw_max', 'append')        
         
         # MAJ guilde

@@ -60,10 +60,16 @@ if st.session_state['submitted'] == False:
 
 else:  # Json upload, la première page n'est plus utile
     if 'guildeid' in st.session_state:  # Si on a l'info sur la guilde
-        menu_selected = ['General', 'Evolution',
-                         'Ranking score', 'Ranking substat', 'Build', 'Timelapse', 'Runes', 'Calculateur', 'Parametres']
-        icons_selected = ["info", 'kanban', 'ladder', 'ladder', 'columns-gap', 'alarm',
-                          'bag-check-fill', 'calculator', 'gear']
+        if st.session_state.rank == 0:
+            menu_selected = ['General', 'Evolution',
+                            'Ranking score', 'Ranking substat', 'Build', 'Timelapse', 'Runes', 'Calculateur', 'Parametres']
+            icons_selected = ["info", 'kanban', 'ladder', 'ladder', 'columns-gap', 'alarm',
+                            'bag-check-fill', 'calculator', 'gear']
+        elif st.session_state.rank == 1:
+            menu_selected = ['General', 'Evolution', 'Suivi',
+                            'Ranking score', 'Ranking substat', 'Build', 'Timelapse', 'Runes', 'Calculateur', 'Parametres']
+            icons_selected = ["info", 'kanban', 'kanban', 'ladder', 'ladder', 'columns-gap', 'alarm',
+                            'bag-check-fill', 'calculator', 'gear']
 
     else:  # si on a pas l'info sur la guilde
         menu_selected = ['General', 'Evolution',
@@ -97,6 +103,12 @@ with st.sidebar:
                                                                                                      'joueur': st.session_state["pseudo"]})
         st.subheader(f'Joueur : {st.session_state["pseudo"]}')
         st.subheader(f'Guilde : {st.session_state["guilde"]}')
+        
+        if 'rank' in st.session_state:
+            if st.session_state.rank == 0:
+                st.text('Role : Membre')
+            elif st.session_state.rank == 1:
+                st.text('Role : Admin')
 
 
 # Pages :

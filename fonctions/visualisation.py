@@ -112,17 +112,18 @@ def plotline_evol_rune_visu(df, color='Set'):
     return fig
 
 
-def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='float') -> pd.DataFrame:
+def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='float', disabled=False) -> pd.DataFrame:
     """
     Adds a UI on top of a dataframe to let viewers filter columns
 
     Args:
         df (pd.DataFrame): Original dataframe
+        disabled = Coché ou non par défault
 
     Returns:
         pd.DataFrame: Filtered dataframe
     """
-    modify = st.checkbox("Add filters", key=key)
+    modify = st.checkbox("Add filters", key=key, value=disabled)
 
     if not modify:
         return df

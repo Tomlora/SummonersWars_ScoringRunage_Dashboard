@@ -626,6 +626,8 @@ class Rune():
     def identify_monsters(self, monsters:dict, data='data_grind'):
         '''Compatible avec data_grind
         
+        data est le nom du df à modifier : [data, data_grind]
+        
         Remplace les id des monstres par leurs noms'''
         
         if data == 'data_grind':
