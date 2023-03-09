@@ -116,7 +116,7 @@ def build(data_class: Rune):
             liste_build = df_build_save['nom_build'].unique().tolist()
             liste_build.append('Aucun')
             build_selected = st.selectbox(
-                'Selection du build', options=liste_build, index=len(liste_build)-1)
+                'Selection du build', options=liste_build, index=len(liste_build)-1, help="En cas de retour à la selection 'Aucun', il faut le selectionner deux fois")
     else:
         build_selected = 'Aucun'
 
@@ -132,16 +132,17 @@ def build(data_class: Rune):
             df_rune_selected = df_mobs[df_mobs['name_monstre']
                                        == monster_selected]
         else:
-            df_rune_selected = df_build_save[df_build_save['monstre']
-                                             == monster_selected.lower()]
+            df_rune_selected = df_build_save[(df_build_save['monstre']
+                                             == monster_selected.lower()) & (df_build_save['nom_build'] == build_selected)]
+
 
         for i in range(1, 7): # par rune
 
             if build_selected == 'Aucun':
                 id_rune = df_rune_selected[f'Rune{i}'].values[0]
             else:
-                id_rune = df_build_save[df_build_save['monstre'] ==
-                                        monster_selected.lower()][f'rune{i}'].values[0]
+                id_rune = df_rune_selected[f'rune{i}'].values[0]
+
             type = data_class.data_build.loc[id_rune][f"Stat principal"]
             dict_stat[type] = dict_stat[type] + \
                 data_class.data_build.loc[id_rune]["Valeur stat principal"]
@@ -164,15 +165,21 @@ def build(data_class: Rune):
         '''Montre la rune et ses différentes caractéristiques
 
         La variable build_selected est pour différencier le build actuel et ceux enregistrés'''
+
         if build_selected == 'Aucun':
             id_rune = df_mobs[df_mobs['name_monstre'] ==
                               monster_selected][f'Rune{num_rune}'].values[0]
+            
+            
             id_rune = st.number_input(
                 label=f'identifiant rune {num_rune}', value=id_rune, format='%i', key=f'number_{num_rune}')
+            
         else:
-            selection = df_build_save[df_build_save['monstre']
-                                      == monster_selected.lower()]
+            selection = df_build_save[(df_build_save['monstre']
+                                             == monster_selected.lower()) & (df_build_save['nom_build'] == build_selected)]
+            
             id_rune = selection[f'rune{num_rune}'].values[0]
+
             st.session_state.number_1 = selection[f'rune1'].values[0]
             st.session_state.number_2 = selection[f'rune2'].values[0]
             st.session_state.number_3 = selection[f'rune3'].values[0]
