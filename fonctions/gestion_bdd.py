@@ -112,7 +112,7 @@ def supprimer_data(joueur, date):
     # conn = engine.connect()
     params_sql = {'joueur': joueur, 'date': date}
     sql1 = text(f'''DELETE FROM sw WHERE "id" = :joueur AND date = :date;
-                    DELETE FROM sw_score WHERE "id" = :joueur AND date = :date;
+                    DELETE FROM sw_score WHERE "id_joueur" = :joueur AND date = :date;
                     DELETE FROM sw_arte WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_spd WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_detail WHERE "id" = :joueur AND date = :date;
@@ -127,7 +127,7 @@ def supprimer_data_all(joueur):
     # conn = engine.connect()
     params_sql = {'joueur': joueur}
     sql1 = text(f'''DELETE FROM sw WHERE "id" = :joueur;
-                    DELETE FROM sw_score WHERE "id" = :joueur;
+                    DELETE FROM sw_score WHERE "id_joueur" = :joueur;
                     DELETE FROM sw_arte WHERE "id" = :joueur;
                     DELETE FROM sw_spd WHERE "id" = :joueur;
                     DELETE FROM sw_max WHERE "id" = :joueur;

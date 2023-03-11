@@ -6,7 +6,7 @@ import numpy as np
 from fonctions.visuel import load_lottieurl
 from streamlit_lottie import st_lottie
 from params.coef import coef_set
-from fonctions.visualisation import filter_dataframe
+from fonctions.visualisation import filter_dataframe, table_with_images
 from streamlit_extras.switch_page_button import switch_page
 from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd, sauvegarde_bdd
 
@@ -16,23 +16,12 @@ from st_pages import add_indentation
 add_indentation()
 
 
-def table_with_images(df: pd.DataFrame, url_columns):
 
-    df_ = df.copy()
-
-    @st.cache_data
-    def _path_to_image_html(path):
-        return '<img src="' + path + '" width="60" >'
-
-    for column in url_columns:
-        df_[column] = df_[column].apply(_path_to_image_html)
-
-    return df_.to_html(escape=False)
 
 def comparaison(guilde_id):  # à changer par guilde_id
     # Lire la BDD
     df_actuel = lire_bdd_perso(
-        'SELECT * from sw_user, sw_score WHERE sw_user.id = sw_score.id')
+        'SELECT * from sw_user, sw_score WHERE sw_user.id = sw_score.id_joueur')
     df_actuel = df_actuel.transpose()
     df_actuel.reset_index(inplace=True)
     df_actuel.drop(['id'], axis=1, inplace=True)

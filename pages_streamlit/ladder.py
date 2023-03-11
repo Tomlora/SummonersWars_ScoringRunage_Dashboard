@@ -81,7 +81,7 @@ def classement():
     def load_data():
         data = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_score.date, sw_score.score_general, sw_score.score_spd, sw_score.score_arte, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user
-                            INNER JOIN sw_score ON sw_user.id = sw_score.id
+                            INNER JOIN sw_score ON sw_user.id = sw_score.id_joueur
                             where sw_user.visibility != 0''').transpose().reset_index()
         return data
 

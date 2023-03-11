@@ -5,7 +5,7 @@ import plotly_express as px
 import pandas as pd
 
 from fonctions.gestion_bdd import lire_bdd_perso, get_user
-from fonctions.visualisation import transformation_stats_visu, plotline_evol_rune_visu, filter_dataframe
+from fonctions.visualisation import transformation_stats_visu, plotline_evol_rune_visu, filter_dataframe, table_with_images
 from streamlit_extras.switch_page_button import switch_page
 
 from st_pages import add_indentation
@@ -45,13 +45,13 @@ def visu_page():
     # si pas de guilde spécifiée, on prend tout
     if guilde_target == '*':
             df = lire_bdd_perso(
-                'SELECT * from sw_user, sw_score WHERE sw_user.id = sw_score.id')
+                'SELECT * from sw_user, sw_score WHERE sw_user.id = sw_score.id_joueur')
     
     # sinon on trie sur la guilde spécifiée        
     else:
             df = lire_bdd_perso(
                 f'''SELECT * from sw_user, sw_score
-                WHERE sw_user.id = sw_score.id
+                WHERE sw_user.id = sw_score.id_joueur
                 AND sw_user.guilde_id = {df_guilde.loc[df_guilde['guilde'] == guilde_target].index.values[0]}''')
         
     # with st.form('Choisir un joueur'):    
@@ -286,8 +286,17 @@ def visu_page():
                     
                     df_storage['quantité'] = df_storage['quantité'].astype('int')
                     
-                        
-                    st.dataframe(df_storage[['name', 'quantité', 'element']])
+                    
+                    tab1, tab2 = st.tabs(['Texte', 'Image'])
+                            
+                    with tab1:    
+                                 
+                        st.dataframe(df_storage[['name', 'quantité', 'element']])
+                            
+                    with tab2:
+                        df_html = table_with_images(df=df_storage[['url_image', 'name', 'quantité']], url_columns=("url_image",))
+                            
+                        st.markdown(df_html, unsafe_allow_html=True)
                 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    

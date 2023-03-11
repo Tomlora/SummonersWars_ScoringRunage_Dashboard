@@ -152,7 +152,7 @@ def timelapse_joueur():
     def recup_data():
         dataset = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_score.date, sw_score.score_general, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user
-                            INNER JOIN sw_score ON sw_user.id = sw_score.id
+                            INNER JOIN sw_score ON sw_user.id = sw_score.id_joueur
                             where sw_user.visibility != 0''').transpose().reset_index()
 
         # on transpose la date au format date

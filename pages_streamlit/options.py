@@ -15,8 +15,8 @@ def params():
     df_actuel.reset_index(inplace=True)
 
 
-    df_actuel = df_actuel[df_actuel['id'] == st.session_state['id_joueur']]
-    df_actuel.drop(['id'], axis=1, inplace=True)
+    df_actuel = df_actuel[df_actuel['id_joueur'] == st.session_state['id_joueur']]
+    df_actuel.drop(['id_joueur'], axis=1, inplace=True)
 
     # Datetime
     df_actuel['datetime'] = pd.to_datetime(

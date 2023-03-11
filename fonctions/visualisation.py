@@ -1,4 +1,4 @@
-from fonctions.gestion_bdd import lire_bdd
+from fonctions.gestion_bdd import lire_bdd, lire_bdd_perso
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -34,7 +34,10 @@ def transformation_stats_visu(nom_table, joueur, distinct: bool = False, score='
         _description_
     """
     # Lire la bdd
-    df_actuel = lire_bdd(nom_table, distinct=distinct)
+    if nom_table == 'sw_score':
+        df_actuel = lire_bdd_perso('''SELECT DISTINCT score_general, date, id_joueur, score_spd, score_arte FROM public.sw_score;''', index_col='id_joueur')
+    else:
+        df_actuel = lire_bdd(nom_table, distinct=distinct)
     df_actuel = df_actuel.transpose()
     df_actuel.reset_index(inplace=True)
 
@@ -48,12 +51,22 @@ def transformation_stats_visu(nom_table, joueur, distinct: bool = False, score='
 
     if nom_table == 'sw':
         df_actuel.sort_values(by=['date', 'Set'], inplace=True)
+        df_actuel = df_actuel[df_actuel['id'] == joueur]
+        df_actuel.drop(['id', 'index'], axis=1, inplace=True)
+        
+    elif nom_table == 'sw_score':
+        df_actuel.sort_values(by='date', inplace=True)
+        # df_actuel.drop(['guilde'], axis=1, inplace=True)
+    # df_actuel = df_actuel[df_actuel['Joueur'] == joueur]
+        df_actuel = df_actuel[df_actuel['id_joueur'] == joueur]
+        df_actuel.drop(['id_joueur'], axis=1, inplace=True)
+        
     else:
         df_actuel.sort_values(by='date', inplace=True)
         # df_actuel.drop(['guilde'], axis=1, inplace=True)
     # df_actuel = df_actuel[df_actuel['Joueur'] == joueur]
-    df_actuel = df_actuel[df_actuel['id'] == joueur]
-    df_actuel.drop(['id', 'index'], axis=1, inplace=True)
+        df_actuel = df_actuel[df_actuel['id'] == joueur]
+        df_actuel.drop(['id', 'index'], axis=1, inplace=True)
 
     # DF final
     if nom_table == 'sw':
@@ -195,3 +208,17 @@ def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='f
                         str).str.contains(user_text_input)]
 
     return df
+
+
+def table_with_images(df: pd.DataFrame, url_columns):
+
+    df_ = df.copy()
+
+    @st.cache_data
+    def _path_to_image_html(path):
+        return '<img src="' + path + '" width="60" >'
+
+    for column in url_columns:
+        df_[column] = df_[column].apply(_path_to_image_html)
+
+    return df_.to_html(escape=False)

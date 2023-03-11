@@ -177,7 +177,8 @@ def palier_page():
                                 color='arte_type', symbol='type')
                 st.plotly_chart(fig100)
 
-    except:
+    except Exception as e:
+        print(e)
         st.subheader('Erreur')
         st.write('Pas de JSON chargé')
 

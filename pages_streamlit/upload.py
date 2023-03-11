@@ -128,11 +128,19 @@ if st.session_state['file'] is not None and st.session_state.submitted:
 
     sauvegarde_bdd(tcd_value, 'sw', 'append')
 
-    df_scoring = pd.DataFrame({'id': [st.session_state['id_joueur']], 'score_general': [st.session_state['score']],
-                                   'date': [date_du_jour()], 'score_spd' : st.session_state['score_spd'], 'score_arte' : st.session_state['score_arte']})
-    df_scoring.set_index('id', inplace=True)
+    # df_scoring = pd.DataFrame({'id': [st.session_state['id_joueur']], 'score_general': [st.session_state['score']],
+    #                                'date': [date_du_jour()], 'score_spd' : st.session_state['score_spd'], 'score_arte' : st.session_state['score_arte']})
+    # df_scoring.set_index('id', inplace=True)
+    
+    requete_perso_bdd('''INSERT INTO public.sw_score(score_general, date, id_joueur, score_spd, score_arte)
+	VALUES (:score_general, :date, :id_joueur, :score_spd, :score_arte);''',
+    {'id_joueur' : int(st.session_state['id_joueur']),
+     'date' : date_du_jour(),
+     'score_general' : int(st.session_state['score']),
+     'score_spd' : int(st.session_state['score_spd']),
+     'score_arte' : int(st.session_state['score_arte'])})
 
-    sauvegarde_bdd(df_scoring, 'sw_score', 'append')
+    # sauvegarde_bdd(df_scoring, 'sw_score', 'append')
         
         # scoring detail
         
