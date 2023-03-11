@@ -5,7 +5,10 @@ import plotly.express as px
 from fonctions.visualisation import transformation_stats_visu, plotline_evol_rune_visu, filter_dataframe
 from fonctions.visuel import load_lottieurl
 from streamlit_lottie import st_lottie
+from streamlit_extras.switch_page_button import switch_page
+from st_pages import add_indentation
 
+add_indentation()
 
 @st.cache_data
 def filter_data(df, selected_options):
@@ -177,3 +180,15 @@ def palier_page():
     except:
         st.subheader('Erreur')
         st.write('Pas de JSON chargé')
+
+
+if 'submitted' in st.session_state:
+    if st.session_state.submitted:    
+
+        palier_page()
+    
+    else:
+        switch_page('Upload JSON')
+
+else:
+    switch_page('Upload JSON')

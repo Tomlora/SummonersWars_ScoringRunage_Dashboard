@@ -1,7 +1,11 @@
 from fonctions.gestion_bdd import lire_bdd_perso
 import pandas as pd
 import streamlit as st
+from streamlit_extras.switch_page_button import switch_page
 
+from st_pages import add_indentation
+
+add_indentation()
 
 def cleaning_only_guilde(x):
     x['private'] = 0
@@ -51,6 +55,7 @@ def mise_en_forme_classement(df, variable='score'):
                  use_container_width=True)
 
     return df
+
 
 
 
@@ -105,3 +110,15 @@ def classement_value():
     data_ranking['date'] = data_ranking['date'].dt.strftime('%d/%m/%Y')
         
     mise_en_forme_classement(data_ranking, value)
+
+
+if 'submitted' in st.session_state:
+    if st.session_state.submitted:    
+
+        classement_value()
+    
+    else:
+        switch_page('Upload JSON')
+
+else:
+    switch_page('Upload JSON')

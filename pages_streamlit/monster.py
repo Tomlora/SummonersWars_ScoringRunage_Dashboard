@@ -1,6 +1,10 @@
 import pandas as pd
 import streamlit as st
+from streamlit_extras.switch_page_button import switch_page
 
+from st_pages import add_indentation
+
+add_indentation()
 
 def find_monsters():
 
@@ -84,3 +88,15 @@ def find_monsters():
 
         st.dataframe(
             data_monsters[data_monsters['id'].isin(list_mob)][column_monsters])
+
+
+if 'submitted' in st.session_state:
+    if st.session_state.submitted:    
+
+        find_monsters()
+    
+    else:
+        switch_page('Upload JSON')
+
+else:
+    switch_page('Upload JSON')

@@ -1,8 +1,12 @@
 from fonctions.gestion_bdd import lire_bdd_perso
 import pandas as pd
 import streamlit as st
-
+from streamlit_extras.switch_page_button import switch_page
 from params.coef import coef_set, coef_set_spd
+
+from st_pages import add_indentation
+
+add_indentation()
 
 
 dict_type = {'Score general' : 'score_general',
@@ -36,27 +40,33 @@ def mise_en_forme_classement(df, variable='score'):
     df.reset_index(inplace=True)
     df.sort_values(variable, ascending=False, inplace=True)
     # on anonymise
-    df['joueur'] = df.apply(
-        lambda x: "***" if x['visibility'] == 1 and st.session_state['pseudo'] != x['joueur'] else x['joueur'], axis=1)
-    # on filtre pour ceux qui veulent only guilde :
-    df = df.apply(cleaning_only_guilde, axis=1)
-    df = df[df['private'] == 0]
+    
+    if not df.empty:
+        df['joueur'] = df.apply(
+            lambda x: "***" if x['visibility'] == 1 and st.session_state['pseudo'] != x['joueur'] else x['joueur'], axis=1)
+        # on filtre pour ceux qui veulent only guilde :
+        df = df.apply(cleaning_only_guilde, axis=1)
+        df = df[df['private'] == 0]
 
-    df = df[['joueur', variable, 'date', 'guilde']]
+        df = df[['joueur', variable, 'date', 'guilde']]
 
-    filtre_guilde = st.checkbox('Filtrer sur ma guilde')
+        filtre_guilde = st.checkbox('Filtrer sur ma guilde')
 
-    if filtre_guilde:
-        df = df[df['guilde']
-                == st.session_state.guilde]
+        if filtre_guilde:
+            df = df[df['guilde']
+                    == st.session_state.guilde]
 
-    df.reset_index(inplace=True, drop=True)
-    height_dataframe = 36 * df.shape[0]
+        df.reset_index(inplace=True, drop=True)
+        height_dataframe = 36 * df.shape[0]
 
-    st.dataframe(df.rename(columns={'score_general' : 'General',
-                                    'score_spd' : 'Speed',
-                                    'score_arte' : 'Artefact'}), height=height_dataframe,
-                 use_container_width=True)
+        
+        st.dataframe(df.rename(columns={'score_general' : 'General',
+                                        'score_spd' : 'Speed',
+                                        'score_arte' : 'Artefact'}), height=height_dataframe,
+                    use_container_width=True)
+    
+    else:
+        st.warning('Pas de données disponibles')
 
     return df
 
@@ -65,6 +75,8 @@ def mise_en_forme_classement(df, variable='score'):
 def classement():
     # On lit la BDD
     # on récupère la data
+    
+    st.success("**Note** : L'intégralité des sets a été rajouté récemment. Par conséquent, seul Violent/Will/Destroy/Despair contiennent les données de tout le monde.", icon="✅")
 
     def load_data():
         data = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_score.date, sw_score.score_general, sw_score.score_spd, sw_score.score_arte, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
@@ -84,14 +96,27 @@ def classement():
     classement = dict_type[choice_radio]
 
     if classement == 'score sur un set':
-        set = st.radio('Quel set ?', options=coef_set.keys(), horizontal=True)
+        # set = st.radio('Quel set ?', options=coef_set.keys(), horizontal=True)
+        set = st.radio('Quel set ?', options=['Violent', 'Will', 'Destroy', 'Despair', 'Swift',
+                                              'Blade', 'Endure', 'Energy', 'Fatal', 'Focus', 'Guard', 'Nemesis',
+                                              'Rage', 'Revenge', 'Shield', 'Tolerance', 'Vampire'], horizontal=True)
 
-        data_set = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw.date, sw."Set", sw."100", sw."110", sw."120", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
+        if set in ['Violent', 'Will', 'Despair', 'Destroy']:
+            data_set = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw.date, sw."Set", sw."100", sw."110", sw."120", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user
                             INNER JOIN sw ON sw_user.id = sw.id
                             where sw_user.visibility != 0
                             and sw."Set" = '{set}';''').transpose().reset_index()
+        
+        else:
+            data_set = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_detail.date, sw_detail."rune_set", sw_detail."100", sw_detail."110", sw_detail."120", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
+                            FROM sw_user
+                            INNER JOIN sw_detail ON sw_user.id = sw_detail.id
+                            where sw_user.visibility != 0
+                            and sw_detail."rune_set" = '{set}';''').transpose().reset_index()
+            
 
+        
         data_set['date'] = pd.to_datetime(data_set['date'], format="%d/%m/%Y")
 
         data_set_grp = data_set.groupby(['joueur', 'guilde']).agg(
@@ -101,7 +126,7 @@ def classement():
 
         # calcul points
         data_set_grp['score'] = (data_set_grp['100'] * 1 + data_set_grp['110']
-                                 * 2 + data_set_grp['120'] * 3) * coef_set[set]
+                                 * 2 + data_set_grp['120'] * 3) * coef_set.get(set,1)
 
         # on restreint à ce qu'on veut afficher
 
@@ -126,7 +151,7 @@ def classement():
 
         data_spd_grp['score'] = (data_spd_grp['23-25'] * 1 + data_spd_grp['26-28'] * 2 +
                                  data_spd_grp['29-31'] * 3 + data_spd_grp['32-35'] *
-                                 4 + data_spd_grp['36+'] * 5) * coef_set_spd[set_spd]
+                                 4 + data_spd_grp['36+'] * 5) * coef_set_spd.get(set_spd,1)
         
        
         mise_en_forme_classement(data_spd_grp)
@@ -143,3 +168,16 @@ def classement():
         data_ranking['date'] = data_ranking['date'].dt.strftime('%d/%m/%Y')
         
         mise_en_forme_classement(data_ranking, classement)
+
+
+
+if 'submitted' in st.session_state:
+    if st.session_state.submitted:    
+
+        classement()
+    
+    else:
+        switch_page('Upload JSON')
+
+else:
+    switch_page('Upload JSON')

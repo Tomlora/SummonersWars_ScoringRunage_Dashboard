@@ -1,5 +1,9 @@
 import streamlit as st
+from streamlit_extras.switch_page_button import switch_page
 
+from st_pages import add_indentation
+
+add_indentation()
 
 
 sub_max_lgd = {'HP': 550, 'HP%': 10, 'ATQ': 30, 'ATQ%': 10, 'DEF': 30, 'DEF%': 10, 'SPD': 5}
@@ -59,6 +63,8 @@ def stats(n):
 sub_max = max_sub_by_proc(4)
 
 def calculateur_efficiency():
+    
+    st.success("Cet onglet n'a pas besoin de json")
       
     column0_0, column0_1 = st.columns(2)
     
@@ -166,4 +172,9 @@ def calculateur_efficiency():
     st.button('Reset', on_click=reset)
         
     
-    
+
+
+
+
+calculateur_efficiency()
+

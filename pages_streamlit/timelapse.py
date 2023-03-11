@@ -5,7 +5,10 @@ import plotly.graph_objects as go
 import plotly_express as px
 from datetime import datetime
 from fonctions.visualisation import filter_dataframe
+from streamlit_extras.switch_page_button import switch_page
+from st_pages import add_indentation
 
+add_indentation()
 
 
 
@@ -216,4 +219,14 @@ def timelapse_joueur():
     except ValueError:
         st.warning('Tu dois au moins selectionner un joueur')
         
-        
+
+if 'submitted' in st.session_state:
+    if st.session_state.submitted:    
+
+        timelapse_joueur()
+    
+    else:
+        switch_page('Upload JSON')
+
+else:
+    switch_page('Upload JSON')

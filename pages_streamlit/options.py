@@ -1,7 +1,11 @@
 import pandas as pd
 import streamlit as st
-
+from streamlit_extras.switch_page_button import switch_page
 from fonctions.gestion_bdd import lire_bdd, supprimer_data, supprimer_data_all
+
+from st_pages import add_indentation
+
+add_indentation()
 
 
 def params():
@@ -41,3 +45,16 @@ def params():
 
         supprimer_data_all(st.session_state['id_joueur'])
         st.text('Supprimé')
+
+
+
+if 'submitted' in st.session_state:
+    if st.session_state.submitted:    
+
+        params()
+    
+    else:
+        switch_page('Upload JSON')
+
+else:
+    switch_page('Upload JSON')

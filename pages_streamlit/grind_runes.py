@@ -7,13 +7,17 @@ from io import BytesIO
 from fonctions.visualisation import filter_dataframe
 import plotly.graph_objects as go
 from fonctions.runes import Rune
-
+from streamlit_extras.switch_page_button import switch_page
 # fix plotly express et Visual Studio Code
 import plotly.io as pio
 pio.renderers.default = "notebook_connected"
 
 # Supprime les Future Warnings sur les copies
 pd.options.mode.chained_assignment = None  # default='warn'
+
+from st_pages import add_indentation
+
+add_indentation()
 
 
 # In[113]:
@@ -112,9 +116,10 @@ def export_excel(data, data_short, data_property, data_count, data_inventaire):
     return processed_data
 
 
-def optimisation_rune(data_class : Rune, category_selected, coef_set):
+def optimisation_rune():
     
 
+    data_class= st.session_state.data_rune
     with st.spinner('Calcul du potentiel des runes...'):
 
         data_class.calcul_potentiel()
@@ -122,20 +127,21 @@ def optimisation_rune(data_class : Rune, category_selected, coef_set):
     st.success('Calcul du potentiel des runes effectué !')
 
     # ## Monstres
-
+    
+    
     data_mobs = pd.DataFrame.from_dict(
         st.session_state['data_json'], orient="index").transpose()
-
+    
     data_mobs = data_mobs['unit_list']
 
     # On va boucler et retenir ce qui nous intéresse..
     list_mobs = []
-    data_mobs[0]
     with st.spinner('Chargement des monstres...'):
         for monstre in data_mobs[0]:
             unit = monstre['unit_id']
             master_id = monstre['unit_master_id']
             list_mobs.append([unit, master_id])
+            
 
         # On met ça en dataframe
         df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre'])
@@ -417,3 +423,15 @@ def optimisation_rune(data_class : Rune, category_selected, coef_set):
     with tab5:
         df_inventaire_filter = filter_dataframe(df_inventaire, 'df_inventaire')
         st.dataframe(df_inventaire_filter)
+
+
+if 'submitted' in st.session_state:
+    if st.session_state.submitted:    
+
+        optimisation_rune()
+    
+    else:
+        switch_page('Upload JSON')
+
+else:
+    switch_page('Upload JSON')

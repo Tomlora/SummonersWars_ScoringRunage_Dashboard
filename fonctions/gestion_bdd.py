@@ -115,6 +115,7 @@ def supprimer_data(joueur, date):
                     DELETE FROM sw_score WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_arte WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_spd WHERE "id" = :joueur AND date = :date;
+                    DELETE FROM sw_detail WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_max WHERE "id" = :joueur AND date = :date;''')  # :var_name
     conn.execute(sql1, params_sql)
     conn.commit()
@@ -131,8 +132,9 @@ def supprimer_data_all(joueur):
                     DELETE FROM sw_spd WHERE "id" = :joueur;
                     DELETE FROM sw_max WHERE "id" = :joueur;
                     DELETE from sw_monsters WHERE "id" = :joueur;
+                    DELETE from sw_detail WHERE "id" = joueur;
                     DELETE FROM sw_user WHERE "id" = :joueur;
-                    ''')  # :var_name
+                    ''')  
     conn.execute(sql1, params_sql)
     conn.commit()
 

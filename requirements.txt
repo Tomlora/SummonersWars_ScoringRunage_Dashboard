@@ -13,3 +13,5 @@ xlsxwriter
 requests
 streamlit-lottie
 protobuf
+st-pages
+streamlit-extras

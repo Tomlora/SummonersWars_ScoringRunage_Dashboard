@@ -6,11 +6,15 @@ from math import ceil
 
 from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd
 
-from fonctions.runes import Rune
 
+from streamlit_extras.switch_page_button import switch_page
+from st_pages import add_indentation
 
-def build(data_class: Rune):
+add_indentation()
 
+def build():
+
+    
     data_mobs = pd.DataFrame.from_dict(
         st.session_state['data_json'], orient="index").transpose()
 
@@ -50,10 +54,10 @@ def build(data_class: Rune):
 
     df_mobs = df_mobs.set_index('id_unit')
 
-    data_class.identify_monsters(monsters=df_mobs.to_dict(
+    st.session_state.data_rune.identify_monsters(monsters=df_mobs.to_dict(
         orient="dict")['name_monstre'], data='data')
 
-    data_class.data_build = data_class.data.copy()
+    st.session_state.data_rune.data_build = st.session_state.data_rune.data.copy()
 
     rename_column = {'rune_set': 'Set rune',
                      'rune_slot': 'Slot',
@@ -70,19 +74,19 @@ def build(data_class: Rune):
                      'fourth_sub_value_total': 'Substat 4 total',
                      }
 
-    data_class.data_build.rename(columns=rename_column, inplace=True)
-    data_class.data_build['Equipé'] = data_class.data_build['Equipé'].astype(
+    st.session_state.data_rune.data_build.rename(columns=rename_column, inplace=True)
+    st.session_state.data_rune.data_build['Equipé'] = st.session_state.data_rune.data_build['Equipé'].astype(
         'str')
-    data_class.data_build['Equipé'].replace({'0': 'Inventaire'}, inplace=True)
+    st.session_state.data_rune.data_build['Equipé'].replace({'0': 'Inventaire'}, inplace=True)
 
-    data_class.data_build = data_class.data_build[['Set rune', 'Slot', 'Equipé', 'Stat principal', 'Valeur stat principal',
+    st.session_state.data_rune.data_build = st.session_state.data_rune.data_build[['Set rune', 'Slot', 'Equipé', 'Stat principal', 'Valeur stat principal',
                                                    'innate_type', 'innate_value',
                                                    'Substat 1', 'Substat 1 total',
                                                    'Substat 2', 'Substat 2 total',
                                                    'Substat 3', 'Substat 3 total',
                                                    'Substat 4', 'Substat 4 total']]
 
-    data_class.data_build = data_class.map_stats(data_class.data_build, [
+    st.session_state.data_rune.data_build = st.session_state.data_rune.map_stats(st.session_state.data_rune.data_build, [
                                                  'Stat principal', 'innate_type', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'])
 
 
@@ -91,7 +95,7 @@ def build(data_class: Rune):
     
     with st.expander('Chercher mes runes'):
         data_build_filter = filter_dataframe(
-            data_class.data_build, 'data_build', type_number='int')
+            st.session_state.data_rune.data_build, 'data_build', type_number='int')
         st.dataframe(data_build_filter)
 
     col1, col2 = st.columns([0.8, 0.2])
@@ -143,19 +147,19 @@ def build(data_class: Rune):
             else:
                 id_rune = df_rune_selected[f'rune{i}'].values[0]
 
-            type = data_class.data_build.loc[id_rune][f"Stat principal"]
+            type = st.session_state.data_rune.data_build.loc[id_rune][f"Stat principal"]
             dict_stat[type] = dict_stat[type] + \
-                data_class.data_build.loc[id_rune]["Valeur stat principal"]
-            set_equiped.append(data_class.data_build.loc[id_rune][f"Set rune"])
+                st.session_state.data_rune.data_build.loc[id_rune]["Valeur stat principal"]
+            set_equiped.append(st.session_state.data_rune.data_build.loc[id_rune][f"Set rune"])
 
-            type = data_class.data_build.loc[id_rune][f"innate_type"]
+            type = st.session_state.data_rune.data_build.loc[id_rune][f"innate_type"]
             dict_stat[type] = dict_stat[type] + \
-                data_class.data_build.loc[id_rune]["innate_value"]
+                st.session_state.data_rune.data_build.loc[id_rune]["innate_value"]
 
             for i in range(1, 5): # par substat
-                type = data_class.data_build.loc[id_rune][f"Substat {i}"]
+                type = st.session_state.data_rune.data_build.loc[id_rune][f"Substat {i}"]
                 dict_stat[type] = dict_stat[type] + \
-                    data_class.data_build.loc[id_rune][f"Substat {i} total"]
+                    st.session_state.data_rune.data_build.loc[id_rune][f"Substat {i} total"]
 
         return dict_stat, set_equiped
 
@@ -189,13 +193,13 @@ def build(data_class: Rune):
 
         # id_rune = st.number_input(label=f'identifiant rune {num_rune}', value=id_rune, format='%i', key=f'number_{num_rune}')
 
-        return f'Rune {num_rune} : :blue[{data_class.data_build.loc[id_rune]["Set rune"]}]\
-        <br><br>Stat principal : :blue[{data_class.data_build.loc[id_rune]["Stat principal"]}] :green[({data_class.data_build.loc[id_rune]["Valeur stat principal"]})]\
-        <br>Innate : :blue[{data_class.data_build.loc[id_rune]["innate_type"]}] :green[({data_class.data_build.loc[id_rune]["innate_value"]})]\
-        <br><br>Sub1 : :blue[{data_class.data_build.loc[id_rune]["Substat 1"]}] :green[({data_class.data_build.loc[id_rune]["Substat 1 total"]})]\
-        <br>Sub2 : :blue[{data_class.data_build.loc[id_rune]["Substat 2"]}] :green[({data_class.data_build.loc[id_rune]["Substat 2 total"]})]\
-        <br>Sub3 : :blue[{data_class.data_build.loc[id_rune]["Substat 3"]}] :green[({data_class.data_build.loc[id_rune]["Substat 3 total"]})]\
-        <br>Sub4 : :blue[{data_class.data_build.loc[id_rune]["Substat 4"]}] :green[({data_class.data_build.loc[id_rune]["Substat 4 total"]})]'
+        return f'Rune {num_rune} : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["Set rune"]}]\
+        <br><br>Stat principal : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["Stat principal"]}] :green[({st.session_state.data_rune.data_build.loc[id_rune]["Valeur stat principal"]})]\
+        <br>Innate : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["innate_type"]}] :green[({st.session_state.data_rune.data_build.loc[id_rune]["innate_value"]})]\
+        <br><br>Sub1 : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["Substat 1"]}] :green[({st.session_state.data_rune.data_build.loc[id_rune]["Substat 1 total"]})]\
+        <br>Sub2 : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["Substat 2"]}] :green[({st.session_state.data_rune.data_build.loc[id_rune]["Substat 2 total"]})]\
+        <br>Sub3 : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["Substat 3"]}] :green[({st.session_state.data_rune.data_build.loc[id_rune]["Substat 3 total"]})]\
+        <br>Sub4 : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["Substat 4"]}] :green[({st.session_state.data_rune.data_build.loc[id_rune]["Substat 4 total"]})]'
 
     with st.expander('Stats'):
         set = ''
@@ -404,3 +408,14 @@ def build(data_class: Rune):
                            'rune3': st.session_state.number_3, 'rune4': st.session_state.number_4,
                            'rune5': st.session_state.number_5, 'rune6': st.session_state.number_6})
         st.success('Build sauvegardé !')
+
+if 'submitted' in st.session_state:
+    if st.session_state.submitted:    
+
+        build()
+    
+    else:
+        switch_page('Upload JSON')
+
+else:
+    switch_page('Upload JSON')
