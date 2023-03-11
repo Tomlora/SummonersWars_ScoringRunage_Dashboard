@@ -105,6 +105,9 @@ Il est également possible de télécharger ces données au format Excel, et mis
   <img width="800" height="700" src="https://github.com/Tomlora/SummonersWars_ScoringRunage_Dashboard/blob/main/img/runes_excel2.png?raw=true">
 </p>
 
+
+D'autres outils sont disponibles :) 
+
 # Lien
 
 https://scoringsw.herokuapp.com/
