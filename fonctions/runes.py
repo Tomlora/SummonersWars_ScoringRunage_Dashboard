@@ -2,7 +2,6 @@
 import pandas as pd
 import numpy as np
 
-
 class Rune():
     def __init__(self, data_json):
         self.data_json = data_json
@@ -463,18 +462,19 @@ class Rune():
     
     def map_stats(self, df : pd.DataFrame, columns : list):
         '''Transforme les substats numériques en string'''
-        for c in columns:
-            df[c] = df[c].map(self.property)
+
+        df[columns] = df[columns].applymap(lambda x : self.property[x])
                 
         return df
         
     
     def calcul_value_max(self):
+
         self.data_max = self.data.copy()
         
 
         self.data_max = self.map_stats(self.data_max, ['innate_type', 'first_sub', 'second_sub', 'third_sub', 'fourth_sub', 'main_type'])
-                
+    
                 
         self.data_max['first_sub_value_total'] = (
             self.data_max['first_sub_value'] + self.data_max['first_sub_grinded_value'])
@@ -484,6 +484,8 @@ class Rune():
             self.data_max['third_sub_value'] + self.data_max['third_sub_grinded_value'])
         self.data_max['fourth_sub_value_total'] = (
             self.data_max['fourth_sub_value'] + self.data_max['fourth_sub_grinded_value'])
+
+        
                 
         def prepare_data(data_max, aggfunc):        
             df_first = pd.pivot_table(data_max, index=['first_sub', 'rune_set'], values='first_sub_value_total', aggfunc=aggfunc).reset_index()
@@ -497,11 +499,16 @@ class Rune():
             
             df_max = df_max[df_max['first_sub'] != 'Aucun']
             
+
             return df_max
+        
+
         
         # MAX
         
+        
         self.df_max = prepare_data(self.data_max, 'max')
+
             
         self.df_max.drop(['second_sub', 'third_sub', 'fourth_sub'], axis=1, inplace=True)
         
@@ -512,10 +519,11 @@ class Rune():
         self.df_max = self.df_max[['rune_set', 'max_value']]
         
 
-        
+
         
         # AVG
         
+        # NOTE : Cette partie prend trop de temps
         def calcul_avg(data_max, n):
             df_avg = prepare_data(data_max, lambda x: x.nlargest(n).tolist())
             df_avg['value'] = df_avg[['first_sub_value_total', 'second_sub_value_total', 'third_sub_value_total', 'fourth_sub_value_total']].sum(axis=1)
@@ -592,6 +600,7 @@ class Rune():
                                                     + self.data_grind['third_sub_value_total_max_lgd'] / self.data_grind['third_sub_value_max']
                                                     + self.data_grind['fourth_sub_value_total_max_lgd'] / self.data_grind['fourth_sub_value_max'])
                                                     / 2.8)*100, 2))
+
 
         self.data_grind['efficiency_max_hero'] = np.where(self.data_grind['innate_type'] != 0,
                                             round(((1+self.data_grind['innate_value'] / self.data_grind['innate_value_max']

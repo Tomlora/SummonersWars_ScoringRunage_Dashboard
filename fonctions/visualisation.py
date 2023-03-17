@@ -55,7 +55,7 @@ def transformation_stats_visu(nom_table, joueur, distinct: bool = False, score='
         df_actuel.drop(['id', 'index'], axis=1, inplace=True)
         
     elif nom_table == 'sw_score':
-        df_actuel.sort_values(by='date', inplace=True)
+        df_actuel.sort_values(by=['date'], inplace=True)
         # df_actuel.drop(['guilde'], axis=1, inplace=True)
     # df_actuel = df_actuel[df_actuel['Joueur'] == joueur]
         df_actuel = df_actuel[df_actuel['id_joueur'] == joueur]
