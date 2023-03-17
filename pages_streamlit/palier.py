@@ -185,7 +185,7 @@ def palier_page():
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    
-
+        st.title('Evolution des stats')
         palier_page()
     
     else:

@@ -76,7 +76,8 @@ def classement():
     # On lit la BDD
     # on récupère la data
     
-    st.success("**Note** : L'intégralité des sets a été rajouté récemment. Par conséquent, seul Violent/Will/Destroy/Despair contiennent les données de tout le monde.", icon="✅")
+    st.info("**Note** : L'intégralité des sets a été rajouté récemment. Par conséquent, seul Violent/Will/Destroy/Despair contiennent les données de tout le monde.", icon="✅")
+
 
     def load_data():
         data = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_score.date, sw_score.score_general, sw_score.score_spd, sw_score.score_arte, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
@@ -86,8 +87,6 @@ def classement():
         return data
 
     data = load_data()
-
-    st.subheader('Ranking')
 
     choice_radio = st.radio('Type de classement', options=[
                           'Score general', 'Score sur un set', 'Score speed', 'Score speed sur un set', 'Score artefact'], index=0, horizontal=True)
@@ -173,7 +172,7 @@ def classement():
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    
-
+        st.title('Classement Scoring')
         classement()
     
     else:

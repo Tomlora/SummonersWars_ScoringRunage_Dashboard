@@ -12,6 +12,7 @@ from st_pages import add_indentation
 
 add_indentation()
 
+st.title('Création de build')
 def build():
 
     
@@ -43,10 +44,9 @@ def build():
     # Maintenant, on a besoin d'identifier les id.
     # Pour cela, on va utiliser l'api de swarfarm
 
-    swarfarm = pd.read_excel('swarfarm.xlsx')
     # swarfarm
 
-    swarfarm = swarfarm[['com2us_id', 'name', 'image_filename', 'url']].set_index('com2us_id')
+    swarfarm = st.session_state.swarfarm[['com2us_id', 'name', 'image_filename', 'url']].set_index('com2us_id')
     df_mobs['name_monstre'] = df_mobs['id_monstre'].map(
         swarfarm.to_dict(orient="dict")['name'])
 
@@ -87,7 +87,11 @@ def build():
                                                    'Substat 4', 'Substat 4 total']]
 
     st.session_state.data_rune.data_build = st.session_state.data_rune.map_stats(st.session_state.data_rune.data_build, [
-                                                 'Stat principal', 'innate_type', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'])
+                                                 'Stat principal', 'innate_type', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4']).reset_index()
+    
+    
+    
+    st.session_state.data_rune.data_build.rename(columns={'index': 'id_rune'}, inplace=True)
 
 
     # on peut préparer la page
@@ -95,7 +99,7 @@ def build():
     
     with st.expander('Chercher mes runes'):
         data_build_filter = filter_dataframe(
-            st.session_state.data_rune.data_build, 'data_build', type_number='int')
+            st.session_state.data_rune.data_build.drop('id_rune', axis=1), 'data_build', type_number='int')
         st.dataframe(data_build_filter)
 
     col1, col2 = st.columns([0.8, 0.2])
@@ -123,6 +127,8 @@ def build():
                 'Selection du build', options=liste_build, index=len(liste_build)-1, help="En cas de retour à la selection 'Aucun', il faut le selectionner deux fois")
     else:
         build_selected = 'Aucun'
+        
+        
 
     def calcul_substats(monster_selected, build_selected):
         '''Calcule le total de substat pour les 6 runes
@@ -139,27 +145,31 @@ def build():
             df_rune_selected = df_build_save[(df_build_save['monstre']
                                              == monster_selected.lower()) & (df_build_save['nom_build'] == build_selected)]
 
-
         for i in range(1, 7): # par rune
 
             if build_selected == 'Aucun':
                 id_rune = df_rune_selected[f'Rune{i}'].values[0]
             else:
                 id_rune = df_rune_selected[f'rune{i}'].values[0]
+                
+                
+            if id_rune == 0:
+                continue
+            type = st.session_state.data_rune.data_build.loc[st.session_state.data_rune.data_build['id_rune'] == id_rune][f"Stat principal"].values[0]
 
-            type = st.session_state.data_rune.data_build.loc[id_rune][f"Stat principal"]
             dict_stat[type] = dict_stat[type] + \
-                st.session_state.data_rune.data_build.loc[id_rune]["Valeur stat principal"]
-            set_equiped.append(st.session_state.data_rune.data_build.loc[id_rune][f"Set rune"])
+                st.session_state.data_rune.data_build.loc[st.session_state.data_rune.data_build['id_rune'] == id_rune]["Valeur stat principal"].values[0]
+            set_equiped.append(st.session_state.data_rune.data_build.loc[st.session_state.data_rune.data_build['id_rune'] == id_rune][f"Set rune"].values[0])
 
-            type = st.session_state.data_rune.data_build.loc[id_rune][f"innate_type"]
+            type = st.session_state.data_rune.data_build.loc[st.session_state.data_rune.data_build['id_rune'] == id_rune][f"innate_type"].values[0]
             dict_stat[type] = dict_stat[type] + \
-                st.session_state.data_rune.data_build.loc[id_rune]["innate_value"]
+                st.session_state.data_rune.data_build.loc[st.session_state.data_rune.data_build['id_rune'] == id_rune]["innate_value"].values[0]
 
             for i in range(1, 5): # par substat
-                type = st.session_state.data_rune.data_build.loc[id_rune][f"Substat {i}"]
+                type = st.session_state.data_rune.data_build.loc[st.session_state.data_rune.data_build['id_rune'] == id_rune][f"Substat {i}"].values[0]
                 dict_stat[type] = dict_stat[type] + \
-                    st.session_state.data_rune.data_build.loc[id_rune][f"Substat {i} total"]
+                    st.session_state.data_rune.data_build.loc[st.session_state.data_rune.data_build['id_rune'] == id_rune][f"Substat {i} total"].values[0]
+
 
         return dict_stat, set_equiped
 
@@ -174,9 +184,22 @@ def build():
             id_rune = df_mobs[df_mobs['name_monstre'] ==
                               monster_selected][f'Rune{num_rune}'].values[0]
             
+            if id_rune != 0 and id_rune != -1:
+                index_rune = st.session_state.data_rune.data_build.loc[st.session_state.data_rune.data_build['id_rune'] == id_rune].index[0]
+                            
+                id_rune = st.number_input(
+                        label=f'identifiant rune {num_rune}', value=index_rune, format='%i', key=f'number_{num_rune}')
+                    
+                id_rune = st.session_state.data_rune.data_build.loc[id_rune]['id_rune']
             
-            id_rune = st.number_input(
-                label=f'identifiant rune {num_rune}', value=id_rune, format='%i', key=f'number_{num_rune}')
+            else:
+                
+                index_rune = 0
+                
+                id_rune = st.number_input(
+                        label=f'identifiant rune {num_rune}', value=-1, format='%i', key=f'number_{num_rune}')
+                    
+                id_rune = st.session_state.data_rune.data_build.loc[id_rune]['id_rune']
             
         else:
             selection = df_build_save[(df_build_save['monstre']
@@ -190,16 +213,26 @@ def build():
             st.session_state.number_4 = selection[f'rune4'].values[0]
             st.session_state.number_5 = selection[f'rune5'].values[0]
             st.session_state.number_6 = selection[f'rune6'].values[0]
+        
+        
 
-        # id_rune = st.number_input(label=f'identifiant rune {num_rune}', value=id_rune, format='%i', key=f'number_{num_rune}')
+        df_rune = st.session_state.data_rune.data_build.loc[st.session_state.data_rune.data_build['id_rune'] == id_rune]
+        
 
-        return f'Rune {num_rune} : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["Set rune"]}]\
-        <br><br>Stat principal : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["Stat principal"]}] :green[({st.session_state.data_rune.data_build.loc[id_rune]["Valeur stat principal"]})]\
-        <br>Innate : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["innate_type"]}] :green[({st.session_state.data_rune.data_build.loc[id_rune]["innate_value"]})]\
-        <br><br>Sub1 : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["Substat 1"]}] :green[({st.session_state.data_rune.data_build.loc[id_rune]["Substat 1 total"]})]\
-        <br>Sub2 : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["Substat 2"]}] :green[({st.session_state.data_rune.data_build.loc[id_rune]["Substat 2 total"]})]\
-        <br>Sub3 : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["Substat 3"]}] :green[({st.session_state.data_rune.data_build.loc[id_rune]["Substat 3 total"]})]\
-        <br>Sub4 : :blue[{st.session_state.data_rune.data_build.loc[id_rune]["Substat 4"]}] :green[({st.session_state.data_rune.data_build.loc[id_rune]["Substat 4 total"]})]'
+        if id_rune != 0 and id_rune != -1:
+            if num_rune != df_rune['Slot'].values[0]:
+                st.warning(f'Slot de cette rune : {df_rune["Slot"].values[0]}', icon="🚨")
+
+            return f'Rune {num_rune} : :blue[{df_rune["Set rune"].values[0]}] :orange[(Equipé sur {df_rune["Equipé"].values[0]})]\
+            <br><br>Stat principal : :blue[{df_rune["Stat principal"].values[0]}] :green[({df_rune["Valeur stat principal"].values[0]})]\
+            <br>Innate : :blue[{df_rune["innate_type"].values[0]}] :green[({df_rune["innate_value"].values[0]})]\
+            <br><br>Sub1 : :blue[{df_rune["Substat 1"].values[0]}] :green[({df_rune["Substat 1 total"].values[0]})]\
+            <br>Sub2 : :blue[{df_rune["Substat 2"].values[0]}] :green[({df_rune["Substat 2 total"].values[0]})]\
+            <br>Sub3 : :blue[{df_rune["Substat 3"].values[0]}] :green[({df_rune["Substat 3 total"].values[0]})]\
+            <br>Sub4 : :blue[{df_rune["Substat 4"].values[0]}] :green[({df_rune["Substat 4 total"].values[0]})]'
+            
+        else:
+            return ''
 
     with st.expander('Stats'):
         set = ''
@@ -361,6 +394,7 @@ def build():
 
         if set != '':
             st.write(f'Sets : {set}')
+   
 
     col3, col4 = st.columns(2)
     # Rune 1/3/5 à gauche. 2/4/6 à droite
@@ -370,8 +404,11 @@ def build():
                 try:
                     st.write(show_rune(i, monster_selected,
                              build_selected), unsafe_allow_html=True)
-                except KeyError:
-                    st.warning("Cette rune n'existe pas", icon="🚨")
+                except KeyError as e:
+                    if e.args[0] == -1:
+                        st.info("Pas de rune sur ce slot", icon="🚨")
+                    else:
+                        st.warning("Cette rune n'existe pas", icon="🚨")
 
     with col4: # Rune 2/4/6
         with st.container():
@@ -379,8 +416,11 @@ def build():
                 try:
                     st.write(show_rune(i, monster_selected,
                              build_selected), unsafe_allow_html=True)
-                except KeyError:
-                    st.warning("Cette rune n'existe pas", icon="🚨")
+                except KeyError as e:
+                    if e.args[0] == -1:
+                        st.info("Pas de rune sur ce slot", icon="🚨")
+                    else:
+                        st.warning("Cette rune n'existe pas", icon="🚨")
 
     # Si le build est personnalisé, on affiche un bouton pour le supprimer.
     if build_selected != 'Aucun':
@@ -400,14 +440,26 @@ def build():
 
     if submitted_build:
         # on enregistre si formulaire validé.
-        requete_perso_bdd('''INSERT INTO public.sw_build(
-	                        id, monstre, nom_build, rune1, rune2, rune3, rune4, rune5, rune6)
-	                        VALUES (:id, :monstre, :nom_build, :rune1, :rune2, :rune3, :rune4, :rune5, :rune6); ''',
-                          {'id': st.session_state.id_joueur, 'monstre': monster_selected.lower(),
-                           'nom_build': build_name, 'rune1': st.session_state.number_1, 'rune2': st.session_state.number_2,
-                           'rune3': st.session_state.number_3, 'rune4': st.session_state.number_4,
-                           'rune5': st.session_state.number_5, 'rune6': st.session_state.number_6})
-        st.success('Build sauvegardé !')
+        df_checking = lire_bdd_perso(f'''SELECT id, monstre, nom_build, id_build FROM sw_build
+                                     where monstre = '{monster_selected.lower()}'
+                                     and id = {st.session_state.id_joueur}
+                                     and nom_build = '{build_name}' ''', index_col='id_build').transpose()
+
+        if df_checking.empty:
+            requete_perso_bdd('''INSERT INTO public.sw_build(
+                                id, monstre, nom_build, rune1, rune2, rune3, rune4, rune5, rune6)
+                                VALUES (:id, :monstre, :nom_build, :rune1, :rune2, :rune3, :rune4, :rune5, :rune6); ''',
+                            {'id': st.session_state.id_joueur, 'monstre': monster_selected.lower(),
+                            'nom_build': build_name,
+                            'rune1': int(st.session_state.data_rune.data_build.loc[st.session_state.number_1]['id_rune']),
+                            'rune2': int(st.session_state.data_rune.data_build.loc[st.session_state.number_2]['id_rune']),
+                            'rune3': int(st.session_state.data_rune.data_build.loc[st.session_state.number_3]['id_rune']), 
+                            'rune4': int(st.session_state.data_rune.data_build.loc[st.session_state.number_4]['id_rune']),
+                            'rune5': int(st.session_state.data_rune.data_build.loc[st.session_state.number_5]['id_rune']),
+                            'rune6': int(st.session_state.data_rune.data_build.loc[st.session_state.number_6]['id_rune'])})
+            st.success('Build sauvegardé !')
+        else:
+            st.warning('Nom de build déjà utilisé pour ce monstre', icon="⚠️")
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    

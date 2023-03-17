@@ -162,7 +162,7 @@ def timelapse_joueur():
     
     dataset = recup_data()
     
-    st.subheader('Timelapse (Experimental !)')
+    st.warning('Experimental')
     
     filtre_guilde = st.checkbox('Filtrer sur ma guilde')
     
@@ -222,7 +222,7 @@ def timelapse_joueur():
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    
-
+        st.title('Timelapse')
         timelapse_joueur()
     
     else:

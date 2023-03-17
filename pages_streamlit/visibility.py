@@ -13,7 +13,7 @@ def visibility():
         # Visibilité
         list_visibility = ['Non-visible', 'Caché', 'Visible']  # Liste de choix
         # slider avec, par défaut, la value dans la bdd
-        slider_visibility = st.radio('Visibilité Classement', [
+        slider_visibility = st.radio('Visibilité du compte Classement', [
                                         'Non-visible', 'Caché', 'Visible à ma guilde', 'Visible à tous'], index=st.session_state.visibility)
         dict_visibility = {'Non-visible': 0,
                             'Caché': 1,
@@ -29,7 +29,7 @@ def visibility():
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    
-
+        st.title('Visibilité du compte')
         visibility()
     
     else:

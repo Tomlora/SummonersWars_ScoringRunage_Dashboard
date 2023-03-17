@@ -92,7 +92,7 @@ def find_monsters():
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    
-
+        st.title('Bestiaire')
         find_monsters()
     
     else:

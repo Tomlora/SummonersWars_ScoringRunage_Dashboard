@@ -114,7 +114,7 @@ def classement_value():
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    
-
+        st.title('Classement des valeurs de runes')
         classement_value()
     
     else:

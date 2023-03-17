@@ -7,6 +7,7 @@ import pandas as pd
 from fonctions.gestion_bdd import lire_bdd_perso, get_user
 from fonctions.visualisation import transformation_stats_visu, plotline_evol_rune_visu, filter_dataframe, table_with_images
 from streamlit_extras.switch_page_button import switch_page
+from fonctions.compare import comparaison
 
 from st_pages import add_indentation
 
@@ -65,6 +66,9 @@ def visu_page():
     id_joueur, visibility, guildeid, rank = get_user(joueur_target)
     
     submitted_joueur = True
+    
+    size_general, avg_score_general, max_general, size_guilde, avg_score_guilde, max_guilde, df_max, df_guilde_compare = comparaison(
+                    guildeid)
 
     if submitted_joueur:
         
@@ -84,7 +88,7 @@ def visu_page():
         new_index = ['Autre', 'Despair', 'Destroy', 'Violent', 'Will', 'Total']
         
         
-        st.caption(f'Guilde : :blue[{guilde}]')
+        st.caption(f'Guilde : :blue[{guilde}] ({size_guilde} membres)')
         st.caption(f"Dernière analyse : :blue[{data_scoring['date'].max()}]")
         st.caption(f'Visibilité dans les onglets : :blue[{dict_visibility[visibility]}] ')
         
@@ -92,8 +96,14 @@ def visu_page():
         tab_stats, tab_evo, tab_box, tab_storage = st.tabs(['Stats', 'Evolution', 'Box', 'Storage'])
         
         
-        with tab_stats:                      
-            st.dataframe(data_detail.pivot_table(values='Nombre', index='Set', columns='Palier', aggfunc='max').reindex(new_index))
+        with tab_stats:
+            col1, col2 = st.columns([0.6, 0.4]) 
+            with col1:                     
+                st.dataframe(data_detail.pivot_table(values='Nombre', index='Set', columns='Palier', aggfunc='max').reindex(new_index))
+            with col2:
+                st.metric('Score Rune', data_scoring['score_general'].max())
+                st.metric(f'Moyenne Guilde ({size_guilde} joueurs)', avg_score_guilde)
+                
             
             
             
@@ -115,6 +125,7 @@ def visu_page():
                 st.dataframe(data_scoring.set_index('date').rename(columns={'score_general' : 'General',
                                                                             'score_spd' : 'Speed',
                                                                             'score_arte' : 'Artefact'}))
+                
 
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(
@@ -244,7 +255,7 @@ def visu_page():
             
             if not df.empty:
             
-                swarfarm = pd.read_excel('swarfarm.xlsx')
+                swarfarm = st.session_state.swarfarm.copy()
                 swarfarm.drop('id', axis=1, inplace=True) # inutile ici
                 
                 df_mob = pd.merge(df, swarfarm, left_on='id_monstre', right_on='com2us_id')
@@ -300,7 +311,7 @@ def visu_page():
                 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    
-
+        st.title('Visualisation')
         if st.session_state.rank == 1:
             visu_page()
         else:

@@ -64,7 +64,7 @@ sub_max = max_sub_by_proc(4)
 
 def calculateur_efficiency():
     
-    st.success("Cet onglet n'a pas besoin de json")
+    st.info("Cet onglet n'a pas besoin de json", icon="ℹ️")
       
     column0_0, column0_1 = st.columns(2)
     
@@ -175,6 +175,6 @@ def calculateur_efficiency():
 
 
 
-
+st.title("Calculateur d'efficience")
 calculateur_efficiency()
 

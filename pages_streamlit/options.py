@@ -50,7 +50,7 @@ def params():
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    
-
+        st.title('Options')
         params()
     
     else:

@@ -149,10 +149,9 @@ def optimisation_rune():
         # Maintenant, on a besoin d'identifier les id.
         # Pour cela, on va utiliser l'api de swarfarm
 
-        swarfarm = pd.read_excel('swarfarm.xlsx')
         # swarfarm
 
-        swarfarm = swarfarm[['com2us_id', 'name']].set_index('com2us_id')
+        swarfarm = st.session_state.swarfarm[['com2us_id', 'name']].set_index('com2us_id')
         df_mobs['name_monstre'] = df_mobs['id_monstre'].map(
             swarfarm.to_dict(orient="dict")['name'])
 
@@ -373,7 +372,7 @@ def optimisation_rune():
 
     st.success('Terminé !')
 
-    st.title('Summary')
+    st.subheader('Summary')
     st.text("Note : Aucune donnée n'est conservée")
     data_short_filter = filter_dataframe(data_short, 'data_short')
     st.dataframe(data_short_filter)
@@ -427,7 +426,7 @@ def optimisation_rune():
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    
-
+        st.title('Optimisation Runes')
         optimisation_rune()
     
     else:
