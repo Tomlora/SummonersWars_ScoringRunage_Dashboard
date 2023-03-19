@@ -193,3 +193,7 @@ def get_user(joueur, type: str = 'name_user', id_compte: int = 0):
         conn.commit()
     # conn.close()
     return id_joueur, visibility, guildeid, rank
+
+
+def cancel():
+    conn.rollback()

@@ -1,5 +1,5 @@
 import streamlit as st
-
+import os
 import plotly.graph_objects as go
 import plotly_express as px
 import pandas as pd
@@ -290,7 +290,15 @@ def visu_page():
                         
                 with tab_box:
                     
-                    st.image(image=df_mob_actif['url_image'].tolist(), width=70, caption=df_mob_actif['name'].tolist())
+                    taille_image = st.slider('Taille des images', 30, 200, 70, step=5)
+                    
+                    if taille_image <= 50:
+                    
+                        st.image(image=df_mob_actif['url_image'].tolist(), width=taille_image)
+                    
+                    else:
+                        
+                        st.image(image=df_mob_actif['url_image'].tolist(), width=taille_image, caption=df_mob_actif['name'].tolist())
                     
                 with tab_storage:
                     
@@ -313,7 +321,13 @@ if 'submitted' in st.session_state:
     if st.session_state.submitted:    
         st.title('Visualisation')
         if st.session_state.rank == 1:
-            visu_page()
+            mdp = st.text_input('mot de passe', '', type='password')
+            if mdp == os.environ.get('pass_visual'):
+                visu_page()
+            elif mdp == '':
+                st.write('')
+            else:
+                st.warning('Mot de passe incorrect')
         else:
             st.warning('Non-autorisé')
 

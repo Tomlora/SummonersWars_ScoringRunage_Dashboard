@@ -1,6 +1,7 @@
 
 import pandas as pd
 import numpy as np
+from time import time
 
 class Rune():
     def __init__(self, data_json):
@@ -520,9 +521,9 @@ class Rune():
         
 
 
-        
+
         # AVG
-        
+
         # NOTE : Cette partie prend trop de temps
         def calcul_avg(data_max, n):
             df_avg = prepare_data(data_max, lambda x: x.nlargest(n).tolist())
@@ -534,7 +535,8 @@ class Rune():
         
         for i in [5,10,15,25]:
             self.df_max[f'top{i}'] = calcul_avg(self.data_max, i)
-
+        
+        
 
         
         return self.df_max
@@ -829,4 +831,28 @@ class Rune():
                                    2: 'Meules (hero) manquantes pour la stat max', 3: 'Propriété Gemmes', 4: 'Gemmes (hero) manquantes'})
         
         
+    def calcul_efficiency_describe(self):
+        self.data_avg_efficiency : pd.DataFrame = self.data.groupby('rune_set').agg({'efficiency' : ['mean', 'max', 'median', 'count']})
+        self.data_avg_efficiency = self.data_avg_efficiency.droplevel(level=0, axis=1)
+        self.data_avg_efficiency = self.data_avg_efficiency.rename(columns={'mean' : 'moyenne',
+                                                            'median' : 'mediane',
+                                                            'count' : 'Nombre runes'})
+        
+
+        return self.data_avg_efficiency
+        
+
+    def calcul_efficiency_describe_top(self, top : int=25): # TODO : A tester
+        self.data_avg_asc : pd.DataFrame = self.data.sort_values(by='efficiency', ascending=False)
+        
+        a = time()
+        data_avg_top = self.data_avg_asc.groupby('type_rune')['efficience'].nlargest(top).reset_index()
+        
+        print(data_avg_top)
+        
+        data_avg_top_avg = data_avg_top.groupby('type_rune')['efficience'].mean().reset_index()
+        
+        print(data_avg_top_avg)
+        
+        print(time()-a)
         

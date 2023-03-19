@@ -10,6 +10,7 @@ from fonctions.visualisation import filter_dataframe, table_with_images
 from streamlit_extras.switch_page_button import switch_page
 from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd, sauvegarde_bdd
 from fonctions.compare import comparaison, comparaison_graph
+import traceback
 
 
 from st_pages import add_indentation
@@ -40,13 +41,16 @@ def highlight_max(data, color='yellow'):
                             index=data.index, columns=data.columns)
         
 
-def show_img_monsters(data, stars, variable='*'):
+def show_img_monsters(data, stars, variable='*', width=70):
     
     data = data[data[variable] == stars]
     
     st.subheader(f'{stars} etoiles ({data.shape[0]} monstres)')
     
-    return st.image(data['url'].tolist(), width=70, caption=data['name'].tolist())
+    if width <= 50:
+        return st.image(data['url'].tolist(), width=width)
+    else:
+        return st.image(data['url'].tolist(), width=width, caption=data['name'].tolist())
 
 
 
@@ -117,16 +121,11 @@ if 'submitted' in st.session_state:
             with tab3:
                 with st.expander('Efficience par set'):
 
-        
-                    data_grp : pd.DataFrame = st.session_state['data_avg'].groupby('rune_set').agg({'efficiency' : ['mean', 'max', 'median', 'count']})
-                    data_grp = data_grp.droplevel(level=0, axis=1)
-                    st.dataframe(data_grp.rename(columns={'mean' : 'moyenne',
-                                                            'median' : 'mediane',
-                                                            'count' : 'Nombre runes'}))
+                    st.dataframe(st.session_state.data_avg)
 
                     fig = go.Figure()
-                    fig.add_trace(go.Histogram(y=data_grp['max'], x=data_grp.index, histfunc='avg', name='max'))
-                    fig.add_trace(go.Histogram(y=data_grp['mean'], x=data_grp.index, histfunc='avg', name='mean'))
+                    fig.add_trace(go.Histogram(y=st.session_state.data_avg['max'], x=st.session_state.data_avg.index, histfunc='avg', name='max'))
+                    fig.add_trace(go.Histogram(y=st.session_state.data_avg['moyenne'], x=st.session_state.data_avg.index, histfunc='avg', name='mean'))
                     fig.update_layout(
                     barmode="overlay",
                     bargap=0.1)
@@ -203,6 +202,8 @@ if 'submitted' in st.session_state:
                         
                         
                     df_mobs_name['url'] = df_mobs_name.apply(lambda x:  f'https://swarfarm.com/static/herders/images/monsters/{x["image_filename"]}', axis=1)
+                    
+                    taille_image = st.slider('Taille des images', 30, 200, 70, step=5)
                         
                     menu1, menu2, menu3, menu4 = st.tabs(['Box', '2A', 'LD', 'Autel de scellement'])
                         
@@ -210,19 +211,19 @@ if 'submitted' in st.session_state:
                         tab1, tab2, tab3, tab4, tab5 = st.tabs(['6 etoiles', '5 etoiles', '4 etoiles', '3 etoiles', '2 etoiles'])
                             
                         with tab1:
-                            show_img_monsters(df_mobs_name, 6)
+                            show_img_monsters(df_mobs_name, 6, width=taille_image)
                             
                         with tab2:
-                            show_img_monsters(df_mobs_name, 5)
+                            show_img_monsters(df_mobs_name, 5, width=taille_image)
                                 
                         with tab3:
-                            show_img_monsters(df_mobs_name, 4)
+                            show_img_monsters(df_mobs_name, 4, width=taille_image)
                             
                         with tab4:
-                            show_img_monsters(df_mobs_name, 3)
+                            show_img_monsters(df_mobs_name, 3, width=taille_image)
                                 
                         with tab5:
-                            show_img_monsters(df_mobs_name, 2)
+                            show_img_monsters(df_mobs_name, 2, width=taille_image)
                         
                     with menu2:
                         tab1, tab2, tab3, tab4, tab5 = st.tabs(['6 etoiles', '5 etoiles', '4 etoiles', '3 etoiles', '2 etoiles'])
@@ -230,19 +231,19 @@ if 'submitted' in st.session_state:
                         df_mobs_2a_only = df_mobs_name[df_mobs_name['awaken_level'] == 2]
                             
                         with tab1:
-                            show_img_monsters(df_mobs_2a_only, 6)
+                            show_img_monsters(df_mobs_2a_only, 6, width=taille_image)
                             
                         with tab2:
-                            show_img_monsters(df_mobs_2a_only, 5)
+                            show_img_monsters(df_mobs_2a_only, 5, width=taille_image)
                                 
                         with tab3:
-                            show_img_monsters(df_mobs_2a_only, 4)
+                            show_img_monsters(df_mobs_2a_only, 4, width=taille_image)
                             
                         with tab4:
-                            show_img_monsters(df_mobs_2a_only, 3)
+                            show_img_monsters(df_mobs_2a_only, 3, width=taille_image)
                                 
                         with tab5:
-                            show_img_monsters(df_mobs_2a_only, 2)
+                            show_img_monsters(df_mobs_2a_only, 2, width=taille_image)
                             
                             
                     with menu3:
@@ -252,16 +253,16 @@ if 'submitted' in st.session_state:
                         tab1, tab2, tab3, tab4 = st.tabs(['5 etoiles naturel', '4 etoiles naturel', '3 etoiles naturel', '2 etoiles naturel'])
                             
                         with tab1:
-                            show_img_monsters(df_mobs_ld_only, 5, 'natural_stars')
+                            show_img_monsters(df_mobs_ld_only, 5, 'natural_stars', width=taille_image)
                             
                         with tab2:
-                            show_img_monsters(df_mobs_ld_only, 4, 'natural_stars')
+                            show_img_monsters(df_mobs_ld_only, 4, 'natural_stars', width=taille_image)
                                 
                         with tab3:
-                            show_img_monsters(df_mobs_ld_only, 3, 'natural_stars')
+                            show_img_monsters(df_mobs_ld_only, 3, 'natural_stars', width=taille_image)
                             
                         with tab4:
-                            show_img_monsters(df_mobs_ld_only, 2, 'natural_stars')
+                            show_img_monsters(df_mobs_ld_only, 2, 'natural_stars', width=taille_image)
                         
                     with menu4:
                             
@@ -392,7 +393,7 @@ if 'submitted' in st.session_state:
                 st.plotly_chart(fig_guilde)
 
         except Exception as e:
-            print(e)
+            traceback.print_exception(type(e), e, e.__traceback__)
             st.subheader('Erreur')
             st.write('Pas de JSON chargé')
     
