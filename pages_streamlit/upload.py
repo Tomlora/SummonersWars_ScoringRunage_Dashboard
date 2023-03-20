@@ -11,7 +11,7 @@ from fonctions.gestion_bdd import sauvegarde_bdd, update_info_compte, get_user, 
 from fonctions.runes import Rune
 from fonctions.artefact import Artefact
 from st_pages import add_indentation
-from psycopg2 import Error, InternalError
+from sqlalchemy.exc import InternalError, OperationalError
 
 
 
@@ -227,7 +227,13 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             st.session_state['submitted'] = True
                 
             switch_page('General')
-        except (Error, InternalError) as e:
+        except InternalError as e:
+            print(e)
+            cancel()
+            st.warning('Erreur')
+            st.session_state['submitted'] = False
+
+        except OperationalError as e:
             print(e)
             cancel()
             st.warning('Erreur')
