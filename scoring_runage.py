@@ -52,17 +52,23 @@ show_pages([
                     Page('pages_streamlit/timelapse.py', 'Timelapse', ':bookmark_tabs:'), 
                     Section(name='Classement', icon=':trophy:'),
                     Page('pages_streamlit/ladder.py', 'Scoring', icon='🥇'),
-                    Page('pages_streamlit/ladder_value.py', 'Rune', icon=':trophy:'), 
+                    Page('pages_streamlit/ladder_value.py', 'Rune', icon=':trophy:'),
+                    Page('pages_streamlit/ladder_arte.py', 'Artefact', icon=':trophy:'), 
                     Section(name='Runages', icon=':crossed_swords:'),
                     Page('pages_streamlit/grind_runes.py', 'Optimisation', icon=':mag:'),
                     Page('pages_streamlit/build.py', 'Créer un build', icon=':clipboard:'),
-                    Page('pages_streamlit/calculator.py', 'Calculateur efficience', icon=':crown:'),
+                    Page('pages_streamlit/calculator.py', 'Calculateur efficience', icon=':1234:'),
+                    Section(name='Artefacts', icon=':gem:'),
+                    Page('pages_streamlit/inventaire_artefact.py', 'Inventaire', icon=':open_file_folder:'),
+                    Page('pages_streamlit/stats_artefact.py', 'Statistiques', icon=':bar_chart:'),
                     Section(name='Paramètres', icon=':gear:'),
                     Page('pages_streamlit/visibility.py', 'Ma visibilité', icon=':eyes:'),
                     Page('pages_streamlit/options.py', 'Mes données', icon=':iphone:'),
                     Section(name='Administration', icon=':star:'),
                     Page('pages_streamlit/visualisation_joueur.py', 'Visualisation', icon=':mag:'),
+                    Page('pages_streamlit/box.py', 'Box guilde', icon=':briefcase:' )
                     ])
+
 
 
 # import streamlit upload st.session_state.file (data)

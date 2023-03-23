@@ -1,66 +1,75 @@
 import pandas as pd
 import numpy as np
+import re
 
 dict_arte_type = {
     1: 'ELEMENT',
     2: 'ARCHETYPE',
 }
 
+dict_arte_element = {
+    1 : 'EAU',
+    2 : 'FEU',
+    3 : 'VENT',
+    4 : 'LUMIERE',
+    5 : 'TENEBRE'
+}
+
 dict_arte_effect = {
-    200: {'name': 'EFFECT_ATK_LOST_HP', 'max': 14},
-    201: {'name': 'EFFECT_DEF_LOST_HP', 'max': 14},
-    202: {'name': 'EFFECT_SPD_LOST_HP', 'max': 14},
-    203: {'name': 'EFFECT_SPD_INABILITY', 'max': 6},
-    204: {'name': 'EFFECT_ATK', 'max': 5},
-    205: {'name': 'EFFECT_DEF', 'max': 4},
-    206: {'name': 'EFFECT_SPD', 'max': 6},
-    207: {'name': 'EFFECT_CRIT_RATE', 'max': 6},
-    208: {'name': 'EFFECT_COUNTER_DMG', 'max': 4},
-    209: {'name': 'EFFECT_COOP_ATTACK_DMG', 'max': 4},
-    210: {'name': 'EFFECT_BOMB_DMG', 'max': 4},
-    211: {'name': 'EFFECT_REFLECT_DMG', 'max': 3},
-    212: {'name': 'EFFECT_CRUSHING_HIT_DMG', 'max': 4},
-    213: {'name': 'EFFECT_DMG_RECEIVED_INABILITY', 'max': 3},
-    214: {'name': 'EFFECT_CRIT_DMG_RECEIVED', 'max': 4},
-    215: {'name': 'EFFECT_LIFE_DRAIN', 'max': 8},
-    216: {'name': 'EFFECT_HP_REVIVE', 'max': 6},
-    217: {'name': 'EFFECT_ATB_REVIVE', 'max': 6},
-    218: {'name': 'EFFECT_DMG_PCT_OF_HP', 'max': 0.3},
-    219: {'name': 'EFFECT_DMG_PCT_OF_ATK', 'max': 4},
-    220: {'name': 'EFFECT_DMG_PCT_OF_DEF', 'max': 4},
-    221: {'name': 'EFFECT_DMG_PCT_OF_SPD', 'max': 40},
-    222: {'name': 'EFFECT_CRIT_DMG_UP_ENEMY_HP_GOOD', 'max': 6},
-    223: {'name': 'EFFECT_CRIT_DMG_UP_ENEMY_HP_BAD', 'max': 12},
-    224: {'name': 'EFFECT_CRIT_DMG_SINGLE_TARGET', 'max': 4},
-    300: {'name': 'EFFECT_DMG_TO_FIRE', 'max': 5},
-    301: {'name': 'EFFECT_DMG_TO_WATER', 'max': 5},
-    302: {'name': 'EFFECT_DMG_TO_WIND', 'max': 5},
-    303: {'name': 'EFFECT_DMG_TO_LIGHT', 'max': 5},
-    304: {'name': 'EFFECT_DMG_TO_DARK', 'max': 5},
-    305: {'name': 'EFFECT_DMG_FROM_FIRE', 'max': 6},
-    306: {'name': 'EFFECT_DMG_FROM_WATER', 'max': 6},
-    307: {'name': 'EFFECT_DMG_FROM_WIND', 'max': 6},
-    308: {'name': 'EFFECT_DMG_FROM_LIGHT', 'max': 6},
-    309: {'name': 'EFFECT_DMG_FROM_DARK', 'max': 6},
-    400: {'name': 'EFFECT_SK1_CRIT_DMG', 'max': 6},
-    401: {'name': 'EFFECT_SK2_CRIT_DMG', 'max': 6},
-    402: {'name': 'EFFECT_SK3_CRIT_DMG', 'max': 6},
-    403: {'name': 'EFFECT_SK4_CRIT_DMG', 'max': 6},
-    404: {'name': 'EFFECT_SK1_RECOVERY', 'max': 6},
-    405: {'name': 'EFFECT_SK2_RECOVERY', 'max': 6},
-    406: {'name': 'EFFECT_SK3_RECOVERY', 'max': 6},
-    407: {'name': 'EFFECT_SK1_ACCURACY', 'max': 6},
-    408: {'name': 'EFFECT_SK2_ACCURACY', 'max': 6},
-    409: {'name': 'EFFECT_SK3_ACCURACY', 'max': 6},
+    200: {'name': 'ATK EN FONCTION HP PERDUS', 'max': 14},
+    201: {'name': 'DEF EN FONCTION HP PERDUS', 'max': 14},
+    202: {'name': 'SPD EN FONCTION HP PERDUS', 'max': 14},
+    203: {'name': "SPD EN CAS D'INCAPACITE", 'max': 6},
+    204: {'name': 'RENFORCEMENT ATK', 'max': 5},
+    205: {'name': 'RENFORCEMENT DEF', 'max': 4},
+    206: {'name': 'RENFORCEMENT SPD', 'max': 6},
+    207: {'name': 'RENFORCEMENT CRITRATE', 'max': 6},
+    208: {'name': 'REVENGE', 'max': 4},
+    209: {'name': 'COOP DMG', 'max': 4},
+    210: {'name': 'BOMBE DMG', 'max': 4},
+    211: {'name': 'DMG RENVOYE', 'max': 3},
+    212: {'name': 'CRUSHING DMG', 'max': 4},
+    213: {'name': "DMG RECU EN CAS D'INCAPACITE", 'max': 3},
+    214: {'name': 'CRIT DMG RECU', 'max': 4},
+    215: {'name': 'VOL DE VIE', 'max': 8},
+    216: {'name': 'HP REVIVE', 'max': 6},
+    217: {'name': 'ATB REVIVE', 'max': 6},
+    218: {'name': 'DMG SUPP EN FONCTION DES HP', 'max': 0.3},
+    219: {'name': "DMG SUPP EN FONCTION DE L'ATQ", 'max': 4},
+    220: {'name': 'DMG SUPP EN FONCTION DE LA DEF', 'max': 4},
+    221: {'name': 'DMG SUPP EN FONCTION DE LA SPD', 'max': 40},
+    222: {'name': 'CRIT DMG EN FONCTION DES HP ELEVES', 'max': 6},
+    223: {'name': 'CRIT DMG EN FONCTION DES HP FAIBLES', 'max': 12},
+    224: {'name': 'CRIT DMG SUR CIBLE UNIQUE', 'max': 4},
+    300: {'name': 'DMG SUR FEU', 'max': 5},
+    301: {'name': 'DMG SUR EAU', 'max': 5},
+    302: {'name': 'DMG SUR VENT', 'max': 5},
+    303: {'name': 'DMG SUR LUMIERE', 'max': 5},
+    304: {'name': 'DMG SUR DARK', 'max': 5},
+    305: {'name': 'REDUCTION SUR FEU', 'max': 6},
+    306: {'name': 'REDUCTION SUR EAU', 'max': 6},
+    307: {'name': 'REDUCTION SUR VENT', 'max': 6},
+    308: {'name': 'REDUCTION SUR LUMIERE', 'max': 6},
+    309: {'name': 'REDUCTION SUR DARK', 'max': 6},
+    400: {'name': 'CRIT DMG S1', 'max': 6},
+    401: {'name': 'CRIT DMG S2', 'max': 6},
+    402: {'name': 'CRIT DMG S3', 'max': 6},
+    403: {'name': 'CRIT DMG S4', 'max': 6},
+    404: {'name': 'SOIN S1', 'max': 6},
+    405: {'name': 'SOIN S2', 'max': 6},
+    406: {'name': 'SOIN S3', 'max': 6},
+    407: {'name': 'PRECISION S1', 'max': 6},
+    408: {'name': 'PRECISION S2', 'max': 6},
+    409: {'name': 'PRECISION S3', 'max': 6},
 }
 
 dict_arte_archetype = {
-    0: 'ARCHETYPE_NONE',
-    1: 'ARCHETYPE_ATTACK',
-    2: 'ARCHETYPE_DEFENSE',
-    3: 'ARCHETYPE_HP',
-    4: 'ARCHETYPE_SUPPORT',
-    5: 'ARCHETYPE_MATERIAL'
+    0: 'NONE',
+    1: 'ATTACK',
+    2: 'DEFENSE',
+    3: 'HP',
+    4: 'SUPPORT',
+    5: 'MATERIAL'
 }
 
 dict_arte_main_stat = {
@@ -88,6 +97,7 @@ class Artefact():
             arte_type = arte['type']
             arte_attribut = arte['attribute']
             arte_equiped = arte['occupied_id']
+            arte_unit_style = arte['unit_style']
             level = arte['level']
             efficiency = 0
 
@@ -110,7 +120,7 @@ class Artefact():
                 fourth_sub = arte['sec_effects'][3][0]
                 fourth_sub_value = arte['sec_effects'][3][1]
 
-            self.player_arte[arte_id] = [arte_type, arte_attribut, arte_equiped, level, efficiency,
+            self.player_arte[arte_id] = [arte_type, arte_attribut, arte_equiped, arte_unit_style, level, efficiency,
                                          main_type, main_value,
                                          first_sub, first_sub_value, second_sub, second_sub_value, third_sub, third_sub_value,
                                          fourth_sub, fourth_sub_value]
@@ -137,6 +147,7 @@ class Artefact():
                         arte_type = arte['type']
                         arte_attribut = arte['attribute']
                         arte_equiped = arte['occupied_id']
+                        arte_unit_style = arte['unit_style']
 
                         level = arte['level']
                         efficiency = 0
@@ -161,27 +172,34 @@ class Artefact():
                             fourth_sub = arte['sec_effects'][3][0]
                             fourth_sub_value = arte['sec_effects'][3][1]
 
-                        self.player_arte[arte_id] = [arte_type, arte_attribut, arte_equiped, level, efficiency,
+                        self.player_arte[arte_id] = [arte_type, arte_attribut, arte_equiped, arte_unit_style, level, efficiency,
                                                      main_type, main_value,
                                                      first_sub, first_sub_value, second_sub, second_sub_value,
                                                      third_sub, third_sub_value, fourth_sub, fourth_sub_value]
 
-        self.data_a = pd.DataFrame.from_dict(self.player_arte, orient="index", columns=['arte_type', 'arte_attribut', 'arte_equiped', 'level', 'efficiency', 'main_type', 'main_value',
+        self.data_a = pd.DataFrame.from_dict(self.player_arte, orient="index", columns=['arte_type', 'arte_attribut', 'arte_equiped', 'unit_style', 'level', 'efficiency', 'main_type', 'main_value',
                                                                                         'first_sub', 'first_sub_value',  'second_sub', 'second_sub_value',
                                                                                         'third_sub', 'third_sub_value',
                                                                                         'fourth_sub', 'fourth_sub_value'])
 
         # on prend que les arté montés
 
-        self.data_a = self.data_a[self.data_a['level'] == 15]
+        self.data_a = self.data_a[self.data_a['level'] >= 12]
 
         # on map les identifiants par les mots pour plus de lisibilités
 
         self.data_a['arte_type'] = self.data_a['arte_type'].map(dict_arte_type)
-        self.data_a['arte_attribut'] = self.data_a['arte_attribut'].map(
-            dict_arte_archetype)
+        
         self.data_a['main_type'] = self.data_a['main_type'].map(
             dict_arte_main_stat)
+        
+        def identification_attribut(x):
+            if x['arte_type'] == 'ARCHETYPE':
+                return dict_arte_archetype[x['unit_style']]
+            elif x['arte_type'] == 'ELEMENT':
+                return dict_arte_element[x['arte_attribut']]
+            
+        self.data_a['arte_attribut'] = self.data_a.apply(lambda x : identification_attribut(x), axis=1)
 
         def value_max(x):
             return dict_arte_effect[x]['max']  # first proc + 4 upgrades
@@ -200,7 +218,10 @@ class Artefact():
                                             self.data_a['third_sub_value_max']
                                             + self.data_a['fourth_sub_value'] / self.data_a['fourth_sub_value_max'])
                                            / 8)*100, 2)
-
+        
+        self.data_a.reset_index(inplace=True)
+        
+        
     def scoring_arte(self):
         self.data_eff = self.data_a[['efficiency', 'arte_type', 'main_type']]
 
@@ -268,3 +289,70 @@ class Artefact():
                                       total_85, total_90, total_95, total_100]
 
         return self.tcd_arte, self.score_a
+    
+    
+    def identify_monsters(self, monsters:dict):
+        
+        self.data_a['arte_equiped'] = self.data_a['arte_equiped'].replace({0 : 'Inventaire'})
+        self.data_a['arte_equiped'] = self.data_a['arte_equiped'].replace(monsters)
+        
+
+    def calcul_value_max(self):
+
+        self.data_max = self.data_a.copy()
+                
+        def prepare_data(data_max, aggfunc):        
+            df_first = pd.pivot_table(data_max, index=['first_sub', 'arte_type', 'arte_attribut'], values='first_sub_value', aggfunc=aggfunc).reset_index()
+            df_second = pd.pivot_table(data_max, index=['second_sub', 'arte_type', 'arte_attribut'], values='second_sub_value', aggfunc=aggfunc).reset_index()
+            df_third = pd.pivot_table(data_max, index=['third_sub', 'arte_type', 'arte_attribut'], values='third_sub_value', aggfunc=aggfunc).reset_index()
+            df_fourth = pd.pivot_table(data_max, index=['fourth_sub', 'arte_type', 'arte_attribut'], values='fourth_sub_value', aggfunc=aggfunc).reset_index()
+
+            df_max = df_first.merge(df_second, left_on=['first_sub', 'arte_type', 'arte_attribut'], right_on=['second_sub', 'arte_type', 'arte_attribut'])
+            df_max = df_max.merge(df_third, left_on=['first_sub', 'arte_type', 'arte_attribut'], right_on=['third_sub', 'arte_type', 'arte_attribut'])
+            df_max = df_max.merge(df_fourth, left_on=['first_sub', 'arte_type', 'arte_attribut'], right_on=['fourth_sub', 'arte_type', 'arte_attribut'])
+            
+            df_max = df_max[df_max['first_sub'] != 'Aucun']
+            
+
+            return df_max
+        
+
+        
+        # MAX
+        
+        
+        self.df_max = prepare_data(self.data_max, 'max')
+
+            
+        self.df_max.drop(['second_sub', 'third_sub', 'fourth_sub'], axis=1, inplace=True)
+        
+        self.df_max['max_value'] = self.df_max[['first_sub_value', 'second_sub_value', 'third_sub_value', 'fourth_sub_value']].max(axis=1)
+        self.df_max.rename(columns={'first_sub' : 'substat'}, inplace=True)
+        self.df_max.set_index('substat', inplace=True)
+               
+        self.df_max = self.df_max[['arte_type', 'arte_attribut', 'max_value']]
+        self.df_max_arte_type = self.df_max.groupby(['arte_type', 'substat']).agg({'max_value' : 'max'})
+        self.df_max_element = self.df_max.groupby(['arte_attribut', 'substat']).agg({'max_value' : 'max'})
+        self.df_max_substat = self.df_max.groupby(['substat']).agg({'max_value' : 'max'})
+        
+    # def count_substat(self, mot_cle, nb_mot_cle):
+    #     data_count = self.data_a.copy()
+    #     data_count.reset_index(inplace=True)
+    #     data_count['totalsub'] = data_count['first_sub'] + data_count['second_sub'] + data_count['third_sub'] + data_count['fourth_sub']
+        
+    #     data_grp = data_count.groupby(['index']).agg({'totalsub':lambda x: ', '.join(tuple(x.tolist()))})
+    #     data_grp['critere'] = data_grp['totalsub'].str.count(mot_cle)
+        
+    #     data_count = data_grp.merge(data_grp, on='index')
+        
+    #     data_count = data_grp[data_grp['critere'] >= nb_mot_cle]
+        
+    #     return data_count, data_count.shape[0]
+    
+    def count_substat(self, mot_cle, nb_mot_cle):
+        data = self.data_a.copy()
+        data['totalsub'] = data['first_sub'] + data['second_sub'] + data['third_sub'] + data['fourth_sub']
+        data_grp = data.groupby(['index']).agg({'totalsub':lambda x: ', '.join(tuple(x.tolist()))})
+        data_grp['critere'] = data_grp['totalsub'].apply(lambda x: len(re.findall(mot_cle, x)))
+        data_count = data_grp[data_grp['critere'] >= nb_mot_cle]
+        return data_count, data_count.shape[0]

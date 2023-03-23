@@ -26,8 +26,12 @@ def box():
     swarfarm = st.session_state.swarfarm.copy()
     swarfarm.drop('id', axis=1, inplace=True)
     
-    
+    storage_bool = st.checkbox('Inclure autel de scellement', value=True)
+
     df_mob = pd.merge(df_box, swarfarm, left_on='id_monstre', right_on='com2us_id')
+    
+    if not storage_bool:
+        df_mob = df_mob[df_mob['storage'] == False]
 
     df_mob_complet = df_mob.groupby(['joueur', 'name']).agg({'quantité' :'sum'})
     
@@ -38,11 +42,21 @@ def box():
     
     selected_players = df_mob_complet.loc[([joueur for joueur in df_mob_complet.index.levels[0]], select_monsters), ['quantité']] 
     
-    tcd = selected_players.pivot_table(values='quantité', index='joueur', columns='name', fill_value=0)
+    tcd = selected_players.pivot_table(values='quantité',
+                                       index='joueur',
+                                       columns='name',
+                                       fill_value=0,
+                                       aggfunc='sum'
+                                       )
     
-    # st.dataframe(selected_players)
+    # on ajoute le total
+    tcd['Total'] = tcd.sum(axis=1)
+    tcd.loc['total'] = tcd.sum(axis=0)
+
     
-    st.dataframe(tcd)
+    # # st.dataframe(selected_players)
+    
+    st.dataframe(tcd, use_container_width=True)
     
     
 
@@ -67,3 +81,6 @@ if 'submitted' in st.session_state:
 
 else:
     switch_page('Upload JSON')
+    
+    
+st.caption('Made by Tomlora')

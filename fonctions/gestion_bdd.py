@@ -116,7 +116,8 @@ def supprimer_data(joueur, date):
                     DELETE FROM sw_arte WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_spd WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_detail WHERE "id" = :joueur AND date = :date;
-                    DELETE FROM sw_max WHERE "id" = :joueur AND date = :date;''')  # :var_name
+                    DELETE FROM sw_max WHERE "id" = :joueur AND date = :date;
+                    DELETE FROM sw_arte_max WHERe "id" =:joueur AND date = :date;''')  # :var_name
     conn.execute(sql1, params_sql)
     conn.commit()
 
@@ -132,7 +133,8 @@ def supprimer_data_all(joueur):
                     DELETE FROM sw_spd WHERE "id" = :joueur;
                     DELETE FROM sw_max WHERE "id" = :joueur;
                     DELETE from sw_monsters WHERE "id" = :joueur;
-                    DELETE from sw_detail WHERE "id" = joueur;
+                    DELETE from sw_detail WHERE "id" = :joueur;
+                    DELETE from sw_arte_max WHERE "id" = :joueur;
                     DELETE FROM sw_user WHERE "id" = :joueur;
                     ''')  
     conn.execute(sql1, params_sql)
@@ -167,6 +169,7 @@ def requete_perso_bdd(request: text, dict_params: dict):
     sql = text(request)
     conn.execute(sql, dict_params)
     conn.commit()
+
     # conn.close()
 
 

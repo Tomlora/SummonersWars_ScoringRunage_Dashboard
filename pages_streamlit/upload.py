@@ -56,6 +56,13 @@ if not st.session_state.submitted:
 
 if st.session_state['file'] is not None and st.session_state.submitted:
     
+    # on charge swarfarm
+    @st.cache_data(show_spinner=False)
+    def load_swarfarm():
+        return pd.read_excel('swarfarm.xlsx')
+
+    st.session_state.swarfarm = load_swarfarm()
+    
     with st.spinner('Chargement du json...'):
         try:
         # On charge le json
@@ -79,7 +86,7 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             st.session_state.data_rune = data_rune
 
 
-            data_arte = Artefact(data_json)
+            st.session_state.data_arte = Artefact(data_json)
             
 
 
@@ -102,7 +109,7 @@ if st.session_state['file'] is not None and st.session_state.submitted:
 
                 # calcul score arte
 
-            st.session_state.tcd_arte, st.session_state.score_arte = data_arte.scoring_arte()
+            st.session_state.tcd_arte, st.session_state.score_arte = st.session_state.data_arte.scoring_arte()
             
 
 
@@ -144,9 +151,6 @@ if st.session_state['file'] is not None and st.session_state.submitted:
 
             sauvegarde_bdd(tcd_value, 'sw', 'append')
 
-            # df_scoring = pd.DataFrame({'id': [st.session_state['id_joueur']], 'score_general': [st.session_state['score']],
-            #                                'date': [date_du_jour()], 'score_spd' : st.session_state['score_spd'], 'score_arte' : st.session_state['score_arte']})
-            # df_scoring.set_index('id', inplace=True)
             
             requete_perso_bdd('''INSERT INTO public.sw_score(score_general, date, id_joueur, score_spd, score_arte)
             VALUES (:score_general, :date, :id_joueur, :score_spd, :score_arte);''',
@@ -200,6 +204,18 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             tcd_arte_save['date'] = date_du_jour()
                 
             sauvegarde_bdd(tcd_arte_save, 'sw_arte', 'append')
+            
+            st.session_state.data_arte.calcul_value_max()
+            
+            arte_max_save : pd.DataFrame = st.session_state.data_arte.df_max.copy()
+            
+            arte_max_save['id'] = st.session_state['id_joueur']
+            arte_max_save['date'] = date_du_jour()
+            
+            # on supprime les anciennes données
+            requete_perso_bdd('''DELETE FROM sw_arte_max WHERE "id" = :id''', dict_params={'id' : st.session_state['id_joueur']})
+            
+            sauvegarde_bdd(arte_max_save, 'sw_arte_max', 'append')
                 
                 # Scoring max_value
                 
@@ -207,6 +223,7 @@ if st.session_state['file'] is not None and st.session_state.submitted:
                 
             df_max['id'] = st.session_state['id_joueur']
             df_max['date'] = date_du_jour()
+            
                 
                 # on supprime les anciennes données
             requete_perso_bdd('''DELETE FROM sw_max WHERE "id" = :id''', dict_params={'id' : st.session_state['id_joueur']})
@@ -220,6 +237,44 @@ if st.session_state['file'] is not None and st.session_state.submitted:
 
             update_info_compte(st.session_state['pseudo'], st.session_state['guildeid'],
                                 st.session_state['compteid'])  # on update le compte
+            
+                # Base monsters
+                
+            data_mobs = pd.DataFrame.from_dict(
+                    st.session_state['data_json'], orient="index").transpose()
+
+            data_mobs = data_mobs['unit_list']
+
+                # On va boucler et retenir ce qui nous intéresse..
+            list_mobs = []
+
+            for monstre in data_mobs[0]:
+                unit = monstre['unit_id']
+                master_id = monstre['unit_master_id']
+                list_mobs.append([unit, master_id])
+
+                    # On met ça en dataframe
+            df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre'])
+
+                # Maintenant, on a besoin d'identifier les id.
+                # Pour cela, on va utiliser l'api de swarfarm
+
+                    # swarfarm
+
+            swarfarm = st.session_state.swarfarm[[
+                        'com2us_id', 'name']].set_index('com2us_id')
+            df_mobs['name_monstre'] = df_mobs['id_monstre'].map(
+                        swarfarm.to_dict(orient="dict")['name'])
+
+                    # On peut faire le mapping...
+
+            df_identification = df_mobs[['id_unit', 'name_monstre']].set_index('id_unit')
+            
+            st.session_state.identification_monsters = df_identification.to_dict(orient="dict")['name_monstre']
+            
+            
+
+        
 
             st.subheader(f'Validé pour le joueur {st.session_state["pseudo"]} !')
             st.write('Tu peux désormais aller sur les autres onglets disponibles')
@@ -239,3 +294,5 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             st.warning('Erreur')
             st.session_state['submitted'] = False
             
+            
+st.caption('Made by Tomlora')

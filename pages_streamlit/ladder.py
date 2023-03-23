@@ -78,6 +78,8 @@ def classement():
     
     st.info("**Note** : L'intégralité des sets a été rajouté récemment. Par conséquent, seul Violent/Will/Destroy/Despair contiennent les données de tout le monde.", icon="✅")
 
+    if st.session_state.visibility == 0:
+        st.warning('Vous avez choisi de ne pas apparaitre Vous pouvez changer cela dans les paramètres.', icon="ℹ️")
 
     def load_data():
         data = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_score.date, sw_score.score_general, sw_score.score_spd, sw_score.score_arte, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
@@ -180,3 +182,6 @@ if 'submitted' in st.session_state:
 
 else:
     switch_page('Upload JSON')
+    
+    
+st.caption('Made by Tomlora')

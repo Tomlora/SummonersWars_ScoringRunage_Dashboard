@@ -38,13 +38,18 @@ def palier_page():
         data_scoring = transformation_stats_visu(
             'sw_score', st.session_state['id_joueur'], distinct=True)
 
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns([40,60])
 
         with col2:
             img = load_lottieurl(
                 'https://assets10.lottiefiles.com/packages/lf20_sfiiilbf.json')
             st_lottie(img, width=40, height=40)
             options_date = data_scoring['date'].unique().tolist()
+            
+            if len(options_date) > 30:
+                list_tail = st.slider('Selectionner les derniers reportings:', 5, len(options_date), 30, help="Cette option s'affiche lorsque vous avez plus de 30 reportings différents")
+                options_date = options_date[-list_tail:]
+
             options_select = st.multiselect(
                 'Selectionner les dates à afficher :', options_date, options_date)
 
@@ -193,3 +198,7 @@ if 'submitted' in st.session_state:
 
 else:
     switch_page('Upload JSON')
+    
+    
+    
+st.caption('Made by Tomlora')

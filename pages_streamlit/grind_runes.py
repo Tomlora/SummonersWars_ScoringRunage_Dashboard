@@ -1,3 +1,4 @@
+from st_pages import add_indentation
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -15,7 +16,6 @@ pio.renderers.default = "notebook_connected"
 # Supprime les Future Warnings sur les copies
 pd.options.mode.chained_assignment = None  # default='warn'
 
-from st_pages import add_indentation
 
 add_indentation()
 
@@ -117,9 +117,8 @@ def export_excel(data, data_short, data_property, data_count, data_inventaire):
 
 
 def optimisation_rune():
-    
 
-    data_class= st.session_state.data_rune
+    data_class = st.session_state.data_rune
     with st.spinner('Calcul du potentiel des runes...'):
 
         data_class.calcul_potentiel()
@@ -127,11 +126,10 @@ def optimisation_rune():
     st.success('Calcul du potentiel des runes effectué !')
 
     # ## Monstres
-    
-    
+
     data_mobs = pd.DataFrame.from_dict(
         st.session_state['data_json'], orient="index").transpose()
-    
+
     data_mobs = data_mobs['unit_list']
 
     # On va boucler et retenir ce qui nous intéresse..
@@ -141,7 +139,6 @@ def optimisation_rune():
             unit = monstre['unit_id']
             master_id = monstre['unit_master_id']
             list_mobs.append([unit, master_id])
-            
 
         # On met ça en dataframe
         df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre'])
@@ -151,7 +148,8 @@ def optimisation_rune():
 
         # swarfarm
 
-        swarfarm = st.session_state.swarfarm[['com2us_id', 'name']].set_index('com2us_id')
+        swarfarm = st.session_state.swarfarm[[
+            'com2us_id', 'name']].set_index('com2us_id')
         df_mobs['name_monstre'] = df_mobs['id_monstre'].map(
             swarfarm.to_dict(orient="dict")['name'])
 
@@ -160,40 +158,33 @@ def optimisation_rune():
         df_mobs = df_mobs[['id_unit', 'name_monstre']].set_index('id_unit')
     st.success('Chargement des monstres effectués !')
 
-
-    data_class.identify_monsters(df_mobs.to_dict(orient="dict")['name_monstre'])
-    
-
+    data_class.identify_monsters(st.session_state.identification_monsters)
 
     # # Indicateurs
     # ## Runes +15
 
     with st.spinner('Vérification des runes et des modifications possibles  ...'):
         data_class.grind()
-        
+
     st.success('Vérification des runes et des modifications possibles effectué !')
 
     data = data_class.data_grind
     data_short = data_class.data_short
 
-    
     # ## Meules manquantes par stat (total)
     with st.spinner('Calcul des stats manquantes...'):
         df_property = data_class.count_meules_manquantes()
-        
 
     st.success('Calcul des stats manquantes effectués !')
 
     # Même calcul mais par set
     with st.spinner('Ajout des informations pour identifier les runes...'):
-        
-        data_class.count_rune_with_potentiel_left()
-        
-        df_rune = data_class.df_rune
-        
-        df_count = data_class.df_count
-        
 
+        data_class.count_rune_with_potentiel_left()
+
+        df_rune = data_class.df_rune
+
+        df_count = data_class.df_count
 
         # Graphique
         fig_hero_manquante = px.histogram(df_count, x='Set', y='Meules (hero) manquantes pour la stat max',
@@ -210,8 +201,6 @@ def optimisation_rune():
             st.session_state['data_json'], orient='index').transpose()
 
         df_inventaire = df_inventaire['rune_craft_item_list']
-        
-
 
         # id des crafts
 
@@ -242,7 +231,6 @@ def optimisation_rune():
         # Combien de gemmes/meules différentes ?
 
         nb_boucle = len(df_inventaire[0])
-        
 
         for i in range(0, nb_boucle):
             objet = str(df_inventaire[0][i]['craft_type_id'])
@@ -264,14 +252,13 @@ def optimisation_rune():
     #     rune : 15
     #     stat : 8
     #     quality : 14
-    
 
     @st.cache_data(show_spinner=False)
     def charge_data(data, data_short, df_rune, df_count, df_inventaire):
         with st.spinner('Chargement des données concaténées...Prévoir quelques secondes'):
 
             df_inventaire = pd.DataFrame(df_inventaire)
-            
+
             # découpe le dictionnaire imbriqué en un dict = une variable
             df_inventaire = extraire_variables_imbriquees(
                 df_inventaire, 'rune_craft_item_list')
@@ -295,53 +282,53 @@ def optimisation_rune():
             # on sort values
 
             df_inventaire.sort_values(by=['rune'],  inplace=True)
-            
-            rename_column = {'rune_set' : 'Set rune',
-                             'rune_slot' : 'Slot',
-                             'rune_equiped' : 'Equipé',
-                             'efficiency' : 'Efficience',
-                             'efficiency_max_hero' : 'Efficience_max_hero',
-                             'efficiency_max_lgd' : 'Efficience_max_lgd',
-                             'quality' : 'qualité',
-                             'amount' : 'montant',
-                             'main_type' : 'Stat principal',
-                             'main_value' : 'Valeur stat principal',
-                             'first_sub' : 'Substat 1',
-                             'second_sub' : 'Substat 2',
-                             'third_sub' : 'Substat 3', 
-                             'fourth sub' : 'Substat 4',
-                             'first_sub_value' : 'Substat valeur 1',
-                             'second_sub_value' : 'Substat valeur 2',
-                             'third_sub_value' : 'Substat valeur 3',
-                             'fourth_sub_value' : 'Substat valeur 4',
-                             'first_gemme_bool' : 'Gemmé 1 ?',
-                             'second_gemme_bool' : 'Gemmé 2 ?',
-                             'third_gemme_bool' : 'Gemmé 3 ?',
-                             'fourth_gemme_bool' : 'Gemmé 4 ?',
-                             'first_sub_grinded_value' : 'Valeur meule 1',
-                             'second_sub_grinded_value' : 'Valeur meule 2',
-                             'third_sub_grinded_value' : 'Valeur meule 3',
-                             'fourth_sub_grinded_value' : 'Valeur meule 4',
-                             'first_sub_value_max' : 'Substat 1 max',
-                             'second_sub_value_max' : 'Substat 2 max',
-                             'third_sub_value_max' : 'Substat 3 max',
-                             'fourth_sub_value_max' : 'Substat 4 max',
-                             'first_sub_value_total' : 'Substat 1 total',
-                             'second_sub_value_total' : 'Substat 2 total',
-                             'third_sub_value_total' : 'Substat 3 total',
-                             'fourth_sub_value_total' : 'Substat 4 total',
-                             'first_grind_value_max_lgd' : 'Meule 1 lgd Max',
-                             'second_grind_value_max_lgd' : 'Meule 2 lgd Max',
-                             'third_grind_value_max_lgd' : 'Meule 3 lgd Max',
-                             'fourth_grind_value_max_lgd' : 'Meule 4 lgd Max',
-                             'first_grind_value_max_hero' : 'Meule 1 hero Max',
-                             'second_grind_value_max_hero' : 'Meule 2 hero Max',
-                             'third_grind_value_max_hero' : 'Meule 3 hero Max',
-                             'fourth_grind_value_max_hero' : 'Meule 4 hero Max'}
-            
+
+            rename_column = {'rune_set': 'Set rune',
+                             'rune_slot': 'Slot',
+                             'rune_equiped': 'Equipé',
+                             'efficiency': 'Efficience',
+                             'efficiency_max_hero': 'Efficience_max_hero',
+                             'efficiency_max_lgd': 'Efficience_max_lgd',
+                             'quality': 'qualité',
+                             'amount': 'montant',
+                             'main_type': 'Stat principal',
+                             'main_value': 'Valeur stat principal',
+                             'first_sub': 'Substat 1',
+                             'second_sub': 'Substat 2',
+                             'third_sub': 'Substat 3',
+                             'fourth sub': 'Substat 4',
+                             'first_sub_value': 'Substat valeur 1',
+                             'second_sub_value': 'Substat valeur 2',
+                             'third_sub_value': 'Substat valeur 3',
+                             'fourth_sub_value': 'Substat valeur 4',
+                             'first_gemme_bool': 'Gemmé 1 ?',
+                             'second_gemme_bool': 'Gemmé 2 ?',
+                             'third_gemme_bool': 'Gemmé 3 ?',
+                             'fourth_gemme_bool': 'Gemmé 4 ?',
+                             'first_sub_grinded_value': 'Valeur meule 1',
+                             'second_sub_grinded_value': 'Valeur meule 2',
+                             'third_sub_grinded_value': 'Valeur meule 3',
+                             'fourth_sub_grinded_value': 'Valeur meule 4',
+                             'first_sub_value_max': 'Substat 1 max',
+                             'second_sub_value_max': 'Substat 2 max',
+                             'third_sub_value_max': 'Substat 3 max',
+                             'fourth_sub_value_max': 'Substat 4 max',
+                             'first_sub_value_total': 'Substat 1 total',
+                             'second_sub_value_total': 'Substat 2 total',
+                             'third_sub_value_total': 'Substat 3 total',
+                             'fourth_sub_value_total': 'Substat 4 total',
+                             'first_grind_value_max_lgd': 'Meule 1 lgd Max',
+                             'second_grind_value_max_lgd': 'Meule 2 lgd Max',
+                             'third_grind_value_max_lgd': 'Meule 3 lgd Max',
+                             'fourth_grind_value_max_lgd': 'Meule 4 lgd Max',
+                             'first_grind_value_max_hero': 'Meule 1 hero Max',
+                             'second_grind_value_max_hero': 'Meule 2 hero Max',
+                             'third_grind_value_max_hero': 'Meule 3 hero Max',
+                             'fourth_grind_value_max_hero': 'Meule 4 hero Max'}
+
             for c in ['first_gemme_bool', 'second_gemme_bool', 'third_gemme_bool', 'fourth_gemme_bool']:
-                data[c] = data[c].map({0 : 'Non', 1 : 'Oui'})
-            
+                data[c] = data[c].map({0: 'Non', 1: 'Oui'})
+
             data.rename(columns=rename_column, inplace=True)
             data_short.rename(columns=rename_column, inplace=True)
             df_rune.rename(columns=rename_column, inplace=True)
@@ -355,7 +342,8 @@ def optimisation_rune():
 
             data['Equipé'] = data['Equipé'].astype('str')
             data_short['Equipé'] = data['Equipé'].astype('str')
-            data_short['Equipé'] = data_short['Equipé'].replace({'0': 'Inventaire'})
+            data_short['Equipé'] = data_short['Equipé'].replace(
+                {'0': 'Inventaire'})
 
             data_short['Efficience'] = np.round(data_short['Efficience'], 2)
 
@@ -365,7 +353,6 @@ def optimisation_rune():
                 pass
 
             return data_xlsx, data, data_short, df_rune, df_count, df_inventaire
-
 
     data_xlsx, data, data_short, df_rune, df_count, df_inventaire = charge_data(
         data, data_short, df_rune, df_count, df_inventaire)
@@ -380,35 +367,39 @@ def optimisation_rune():
     st.download_button('Télécharger la data (Excel)', data_xlsx, file_name='grind.xlsx',
                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(
+        ['Potentiel max hero', 'Potentiel max lgd', 'Nombre de runes (Grid max Hero)', 'Meules/Gemmes nécessaires', 'Inventaire'])
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(['Potentiel max hero', 'Potentiel max lgd', 'Nombre de runes (Grid max Hero)', 'Meules/Gemmes nécessaires', 'Inventaire'])
-    
     def potentiel_max(variable):
-        data_grp : pd.DataFrame = data_short.groupby('Set rune').agg({f'Efficience_max_{variable}' : ['mean', 'max', 'median'],
-                                                                      f'potentiel_max_{variable}' : ['mean', 'max', 'median']})
-        data_grp.columns.set_levels(['Moyenne', 'Max', 'Mediane'], level = 1, inplace=True)
+        data_grp: pd.DataFrame = data_short.groupby('Set rune').agg({f'Efficience_max_{variable}': ['mean', 'max', 'median'],
+                                                                     f'potentiel_max_{variable}': ['mean', 'max', 'median']})
+        data_grp.columns.set_levels(
+            ['Moyenne', 'Max', 'Mediane'], level=1, inplace=True)
         # data_grp = data_grp.droplevel(level=0, axis=1)
         st.dataframe(data_grp)
 
         fig = go.Figure()
         # on calcule ce que ça donnerait avec le potentiel
-        data_grp['total'] = data_grp[f'Efficience_max_{variable}']['Moyenne'] + data_grp[f'potentiel_max_{variable}']['Moyenne']
-        fig.add_trace(go.Histogram(y=data_grp['total'], x=data_grp.index, histfunc='avg', name=f'potentiel {variable}'))
-        fig.add_trace(go.Histogram(y=data_grp[f'Efficience_max_{variable}']['Moyenne'], x=data_grp.index, histfunc='avg', name='efficience actuelle'))
+        data_grp['total'] = data_grp[f'Efficience_max_{variable}']['Moyenne'] + \
+            data_grp[f'potentiel_max_{variable}']['Moyenne']
+        fig.add_trace(go.Histogram(
+            y=data_grp['total'], x=data_grp.index, histfunc='avg', name=f'potentiel {variable}'))
+        fig.add_trace(go.Histogram(
+            y=data_grp[f'Efficience_max_{variable}']['Moyenne'], x=data_grp.index, histfunc='avg', name='efficience actuelle'))
         fig.update_layout(
-        barmode="overlay",
-        title=f'Potentiel {variable}',
-        bargap=0.1)
-        
+            barmode="overlay",
+            title=f'Potentiel {variable}',
+            bargap=0.1)
+
         return fig
 
     with tab1:
         fig_max_hero = potentiel_max('hero')
-        st.plotly_chart(fig_max_hero)   
-        
+        st.plotly_chart(fig_max_hero)
+
     with tab2:
         fig_max_lgd = potentiel_max('lgd')
-        st.plotly_chart(fig_max_lgd)                    
+        st.plotly_chart(fig_max_lgd)
     with tab3:
         df_rune_filter = filter_dataframe(df_rune, 'df_rune')
         st.dataframe(df_rune_filter)
@@ -425,12 +416,15 @@ def optimisation_rune():
 
 
 if 'submitted' in st.session_state:
-    if st.session_state.submitted:    
+    if st.session_state.submitted:
         st.title('Optimisation Runes')
         optimisation_rune()
-    
+
     else:
         switch_page('Upload JSON')
 
 else:
     switch_page('Upload JSON')
+
+
+st.caption('Made by Tomlora')

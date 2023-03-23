@@ -10,6 +10,7 @@ from streamlit_extras.switch_page_button import switch_page
 from fonctions.compare import comparaison
 
 from st_pages import add_indentation
+from streamlit_extras.add_vertical_space import add_vertical_space
 
 add_indentation()
 
@@ -286,19 +287,42 @@ def visu_page():
                 
                 df_mob_actif = df_mob[df_mob['storage'] == False]
                 
+                df_mob_actif['monsters_q'] = df_mob_actif['name'] + ' x' + df_mob_actif['quantité'].astype('str')
+                
                 df_storage = df_mob[df_mob['storage'] == True]
-                        
+                
+                       
                 with tab_box:
+                    
                     
                     taille_image = st.slider('Taille des images', 30, 200, 70, step=5)
                     
+                    awaken_column, star_columns = st.columns(2)
+                    
+                    with awaken_column:
+                        awaken_level = st.checkbox('Exclure les monstres non-évolués', value=True)
+                    
+                    with star_columns:
+                        stars_naturel = st.slider('Exclure les nats naturels', 0, 5, 1, step=1)
+                    
+                                            
+                    if awaken_level:
+                        df_mob_actif = df_mob_actif[df_mob_actif['awaken_level'] > 0]
+                        
+
+                    df_mob_actif = df_mob_actif[df_mob_actif['natural_stars'] > stars_naturel]   
+                        
+                    add_vertical_space(2)        
+                        
                     if taille_image <= 50:
                     
                         st.image(image=df_mob_actif['url_image'].tolist(), width=taille_image)
+
                     
                     else:
                         
-                        st.image(image=df_mob_actif['url_image'].tolist(), width=taille_image, caption=df_mob_actif['name'].tolist())
+                        st.image(image=df_mob_actif['url_image'].tolist(), width=taille_image, caption=df_mob_actif['monsters_q'].tolist())
+
                     
                 with tab_storage:
                     
@@ -336,6 +360,9 @@ if 'submitted' in st.session_state:
 
 else:
     switch_page('Upload JSON')
+    
+    
+st.caption('Made by Tomlora')
     
     
     

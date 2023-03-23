@@ -230,3 +230,6 @@ if 'submitted' in st.session_state:
 
 else:
     switch_page('Upload JSON')
+    
+    
+st.caption('Made by Tomlora')

@@ -447,8 +447,8 @@ class Rune():
             self.df_value_spd, 'rune_set', 'spd_binned', 'sum')['spd']
 
         # pas besoin du multiindex
-        self.tcd_value_spd .columns.name = "spd"
-        self.tcd_value_spd .index.name = 'Set'
+        self.tcd_value_spd.columns.name = "spd"
+        self.tcd_value_spd.index.name = 'Set'
 
         total_23_spd = self.tcd_value_spd['23-25'].sum()
         total_26_spd = self.tcd_value_spd['26-28'].sum()
@@ -458,7 +458,7 @@ class Rune():
 
         self.tcd_value_spd.loc['Total'] = [
             total_23_spd, total_26_spd, total_29_spd, total_32_spd, total_36_spd]
-
+        
         return self.tcd_value_spd, self.score_spd
     
     def map_stats(self, df : pd.DataFrame, columns : list):

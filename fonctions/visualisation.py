@@ -163,6 +163,7 @@ def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='f
             left, right = st.columns((1, 20))
             # Treat columns with < 10 unique values as categorical
             if is_categorical_dtype(df[column]) or df[column].nunique() < nunique:
+                left.write("↳")
                 user_cat_input = right.multiselect(
                     f"Valeurs pour {column}",
                     df[column].unique(),
@@ -171,10 +172,12 @@ def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='f
                 df = df[df[column].isin(user_cat_input)]
             elif is_numeric_dtype(df[column]):
                 if type_number == 'float':
+                    left.write("↳")
                     _min = float(df[column].min())
                     _max = float(df[column].max())
                     step = (_max - _min) / 100
                 elif type_number == 'int':
+                    left.write("↳")
                     _min = int(df[column].min())
                     _max = int(df[column].max())
                     step = 1
@@ -187,6 +190,7 @@ def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='f
                 )
                 df = df[df[column].between(*user_num_input)]
             elif is_datetime64_any_dtype(df[column]):
+                left.write("↳")
                 user_date_input = right.date_input(
                     f"Valeurs pour {column}",
                     value=(
@@ -200,6 +204,7 @@ def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='f
                     start_date, end_date = user_date_input
                     df = df.loc[df[column].between(start_date, end_date)]
             else:
+                left.write("↳")
                 user_text_input = right.text_input(
                     f"Mot ou partie de mot dans {column}",
                 )
@@ -208,6 +213,7 @@ def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='f
                         str).str.contains(user_text_input)]
 
     return df
+
 
 
 def table_with_images(df: pd.DataFrame, url_columns):
