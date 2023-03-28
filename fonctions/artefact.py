@@ -437,7 +437,7 @@ class Artefact():
         return self.df_top
     
     
-def visualisation_top_arte(df, column, use_container_width=True):
+def visualisation_top_arte(df, column, use_container_width=True, order=None):
         
     df_filter = df[df['substat'] == column]
         
@@ -446,5 +446,10 @@ def visualisation_top_arte(df, column, use_container_width=True):
     if not tcd.empty:
         
         st.write(f'Top 5 {column.capitalize()}')
+        
+        if order != None:
+        # Sélectionner les colonnes existantes dans l'ordre souhaité
+            existing_cols = [col for col in order if col in tcd.columns]
+            tcd = tcd.loc[:, existing_cols]
             
         st.dataframe(tcd, use_container_width=use_container_width)

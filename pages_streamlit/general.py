@@ -379,6 +379,7 @@ if 'submitted' in st.session_state:
                     st.warning('Cette combinaison est impossible')
                 
                 
+                order = ['EAU', 'FEU', 'VENT', 'LUMIERE', 'TENEBRE', 'ATTACK', 'DEFENSE', 'HP', 'SUPPORT']
                 # df_arte_filter = filter_dataframe(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], 'filter_arte', type_number='int', disabled=True)
                 def show_arte_table(keyword, substat, exclure='None'):
                     
@@ -395,11 +396,13 @@ if 'submitted' in st.session_state:
                             element = index_keyword[n]
                             col_arte1, _, col_arte2 = st.columns([0.4,0.1,0.4])
                             with col_arte1:
-                                visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[element])
+                                visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[element],
+                                                       order=order)
                             try:
                                 if keyword in substat[element+1]:
                                     with col_arte2:
-                                        visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[element+1])
+                                        visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[element+1],
+                                                               order=order)
                             except IndexError: # il n'y en a plus
                                 pass
 
