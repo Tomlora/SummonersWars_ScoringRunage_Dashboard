@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 from time import time
+from fonctions.gestion_bdd import optimisation_int
 
 class Rune():
     def __init__(self, data_json):
@@ -226,6 +227,9 @@ class Rune():
                                                    + self.data['fourth_sub_value_total'] / self.data['fourth_sub_value_max'])
                                                   / 2.8)*100, 2))
         
+
+        self.data = optimisation_int(self.data, ['int64'])
+        # self.data = optimisation_int(self.data, ['float64'], 'float16')
 
         self.data_spd = self.data.copy()
 
@@ -537,7 +541,8 @@ class Rune():
             self.df_max[f'top{i}'] = calcul_avg(self.data_max, i)
         
         
-
+        self.df_max = optimisation_int(self.df_max, ['int64'])
+        # self.df_max = optimisation_int(self.df_max, ['float64'], 'float16')
         
         return self.df_max
     
@@ -620,6 +625,8 @@ class Rune():
         self.data_grind['potentiel_max_lgd'] = self.data_grind['efficiency_max_lgd'] - self.data_grind['efficiency']
 
         self.data_grind['potentiel_max_hero'] = self.data_grind['efficiency_max_hero'] - self.data_grind['efficiency']
+        
+
 
         self.data_grind.drop(['max_efficiency', 'max_efficiency_reachable',
                 'gain'], axis=1, inplace=True)
@@ -633,6 +640,9 @@ class Rune():
         for c in ['innate_type', 'first_sub', 'second_sub', 'third_sub', 'fourth_sub', 'main_type']:
             self.data_grind[c] = self.data_grind[c].map(self.property)
             
+        self.data_grind = optimisation_int(self.data_grind, ['int64'])
+        # self.data_grind = optimisation_int(self.data_grind, ['float64'], 'float16')
+            
             
     def identify_monsters(self, monsters:dict, data='data_grind'):
         '''Compatible avec data_grind
@@ -640,6 +650,8 @@ class Rune():
         data est le nom du df à modifier : [data, data_grind]
         
         Remplace les id des monstres par leurs noms'''
+        
+
         
         if data == 'data_grind':
             self.data_grind['rune_equiped'] = self.data_grind['rune_equiped'].replace(monsters)
@@ -760,6 +772,12 @@ class Rune():
         self.data_short = self.data_grind[['rune_set', 'rune_slot', 'rune_equiped', 'efficiency', 'efficiency_max_hero',
                        'efficiency_max_lgd', 'potentiel_max_lgd', 'potentiel_max_hero', 'Commentaires', 'Grind_lgd', 'Grind_hero']]
         
+        self.data_grind = optimisation_int(self.data_grind, ['int64'])
+        self.data_short = optimisation_int(self.data_short, ['int64'])
+        # self.data_grind = optimisation_int(self.data_grind, ['float64'], 'float16')
+        # self.data_short = optimisation_int(self.data_short, ['float64'], 'float16')
+        
+        
     def count_meules_manquantes(self):
         '''Calcule le nombre de meules manquantes'''
 
@@ -831,6 +849,9 @@ class Rune():
                                    2: 'Meules (hero) manquantes pour la stat max', 3: 'Propriété Gemmes', 4: 'Gemmes (hero) manquantes'})
         
         
+        self.df_count = optimisation_int(self.df_count, ['int64'])
+        
+        
     def calcul_efficiency_describe(self):
         self.data_avg_efficiency : pd.DataFrame = self.data.groupby('rune_set').agg({'efficiency' : ['mean', 'max', 'median', 'count']})
         self.data_avg_efficiency = self.data_avg_efficiency.droplevel(level=0, axis=1)
@@ -838,7 +859,8 @@ class Rune():
                                                             'median' : 'mediane',
                                                             'count' : 'Nombre runes'})
         
-
+        self.data_avg_efficiency = optimisation_int(self.data_avg_efficiency, ['int64'])
+        # self.data_avg_efficiency = optimisation_int(self.data_avg_efficiency, ['float64'], 'float16')
         return self.data_avg_efficiency
         
 

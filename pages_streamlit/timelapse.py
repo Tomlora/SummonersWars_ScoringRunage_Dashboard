@@ -3,10 +3,12 @@ import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 import plotly_express as px
-from datetime import datetime
+from datetime import datetime, timedelta
 from fonctions.visualisation import filter_dataframe
 from streamlit_extras.switch_page_button import switch_page
 from st_pages import add_indentation
+from fonctions.visuel import css
+css()
 
 add_indentation()
 
@@ -148,7 +150,8 @@ def timelapse_joueur():
     # On lit la BDD
     # on récupère la data
     
-    @st.cache_data
+    st.info('Mise à jour 1 fois par jour', icon="ℹ️")
+    @st.cache_data(ttl=timedelta(days=1))
     def recup_data():
         dataset = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_score.date, sw_score.score_general, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user

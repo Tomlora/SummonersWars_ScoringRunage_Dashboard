@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import re
+import streamlit as st
 
 dict_arte_type = {
     1: 'ELEMENT',
@@ -300,16 +301,17 @@ class Artefact():
     def calcul_value_max(self):
 
         self.data_max = self.data_a.copy()
-                
+        
+               
         def prepare_data(data_max, aggfunc):        
             df_first = pd.pivot_table(data_max, index=['first_sub', 'arte_type', 'arte_attribut'], values='first_sub_value', aggfunc=aggfunc).reset_index()
             df_second = pd.pivot_table(data_max, index=['second_sub', 'arte_type', 'arte_attribut'], values='second_sub_value', aggfunc=aggfunc).reset_index()
             df_third = pd.pivot_table(data_max, index=['third_sub', 'arte_type', 'arte_attribut'], values='third_sub_value', aggfunc=aggfunc).reset_index()
             df_fourth = pd.pivot_table(data_max, index=['fourth_sub', 'arte_type', 'arte_attribut'], values='fourth_sub_value', aggfunc=aggfunc).reset_index()
 
-            df_max = df_first.merge(df_second, left_on=['first_sub', 'arte_type', 'arte_attribut'], right_on=['second_sub', 'arte_type', 'arte_attribut'])
-            df_max = df_max.merge(df_third, left_on=['first_sub', 'arte_type', 'arte_attribut'], right_on=['third_sub', 'arte_type', 'arte_attribut'])
-            df_max = df_max.merge(df_fourth, left_on=['first_sub', 'arte_type', 'arte_attribut'], right_on=['fourth_sub', 'arte_type', 'arte_attribut'])
+            df_max = df_first.merge(df_second, how='outer', left_on=['first_sub', 'arte_type', 'arte_attribut'], right_on=['second_sub', 'arte_type', 'arte_attribut'])
+            df_max = df_max.merge(df_third, how='outer', left_on=['first_sub', 'arte_type', 'arte_attribut'], right_on=['third_sub', 'arte_type', 'arte_attribut'])
+            df_max = df_max.merge(df_fourth, how='outer', left_on=['first_sub', 'arte_type', 'arte_attribut'], right_on=['fourth_sub', 'arte_type', 'arte_attribut'])
             
             df_max = df_max[df_max['first_sub'] != 'Aucun']
             
@@ -320,17 +322,31 @@ class Artefact():
         
         # MAX
         
-        
-        self.df_max = prepare_data(self.data_max, 'max')
 
+        self.df_max = prepare_data(self.data_max, 'max')
+        
+
+
+        # En regroupant, il y a des positions où il n'y a pas la substat qu'on cherche.
+        self.df_max['third_sub'] = self.df_max['third_sub'].fillna(self.df_max['fourth_sub'])
+        self.df_max['second_sub'] = self.df_max['second_sub'].fillna(self.df_max['third_sub'])
+        self.df_max['first_sub'] = self.df_max['first_sub'].fillna(self.df_max['second_sub'])
+        
             
         self.df_max.drop(['second_sub', 'third_sub', 'fourth_sub'], axis=1, inplace=True)
+    
+        # on remplace les valeurs nulles par 0
+        self.df_max.select_dtypes(include='number').fillna(0, inplace=True)    
         
         self.df_max['max_value'] = self.df_max[['first_sub_value', 'second_sub_value', 'third_sub_value', 'fourth_sub_value']].max(axis=1)
         self.df_max.rename(columns={'first_sub' : 'substat'}, inplace=True)
         self.df_max.set_index('substat', inplace=True)
+        
+
                
         self.df_max = self.df_max[['arte_type', 'arte_attribut', 'max_value']]
+        
+        self.df_max.to_excel('df_max2.xlsx')
         self.df_max_arte_type = self.df_max.groupby(['arte_type', 'substat']).agg({'max_value' : 'max'})
         self.df_max_element = self.df_max.groupby(['arte_attribut', 'substat']).agg({'max_value' : 'max'})
         self.df_max_substat = self.df_max.groupby(['substat']).agg({'max_value' : 'max'})
@@ -356,3 +372,79 @@ class Artefact():
         data_grp['critere'] = data_grp['totalsub'].apply(lambda x: len(re.findall(mot_cle, x)))
         data_count = data_grp[data_grp['critere'] >= nb_mot_cle]
         return data_count, data_count.shape[0]
+    
+    
+    def top(self):
+        
+        def prepare_data(data_max, aggfunc):        
+            df_first = pd.pivot_table(data_max, index=['first_sub', 'arte_attribut',], values='first_sub_value', aggfunc=aggfunc).reset_index()
+            df_second = pd.pivot_table(data_max, index=['second_sub', 'arte_attribut'], values='second_sub_value', aggfunc=aggfunc).reset_index()
+            df_third = pd.pivot_table(data_max, index=['third_sub', 'arte_attribut'], values='third_sub_value', aggfunc=aggfunc).reset_index()
+            df_fourth = pd.pivot_table(data_max, index=['fourth_sub', 'arte_attribut'], values='fourth_sub_value', aggfunc=aggfunc).reset_index()
+
+            df_max = df_first.merge(df_second, how='outer', left_on=['first_sub', 'arte_attribut'], right_on=['second_sub', 'arte_attribut'])
+            df_max = df_max.merge(df_third, how='outer', left_on=['first_sub', 'arte_attribut'], right_on=['third_sub', 'arte_attribut'])
+            df_max = df_max.merge(df_fourth, how='outer', left_on=['first_sub', 'arte_attribut'], right_on=['fourth_sub', 'arte_attribut'])
+            
+            df_max = df_max[df_max['first_sub'] != 'Aucun']
+            
+            df_max['third_sub'] = df_max['third_sub'].fillna(df_max['fourth_sub'])
+            df_max['second_sub'] = df_max['second_sub'].fillna(df_max['third_sub'])
+            df_max['first_sub'] = df_max['first_sub'].fillna(df_max['second_sub'])
+            
+            df_max[['first_sub_value', 'second_sub_value', 'third_sub_value', 'fourth_sub_value']] = df_max[['first_sub_value', 'second_sub_value', 'third_sub_value', 'fourth_sub_value']].fillna(0)
+            
+            
+
+            return df_max
+        
+        def fill_avg(x):
+            long = len(x)
+            if long < 5:
+                for i in range(5-long): 
+                    x.append(0) 
+            return x
+        
+        def calcul_avg(data_max, n):
+            
+            df_avg = prepare_data(data_max, lambda x: x.nlargest(n).tolist())
+            df_avg = df_avg.applymap(lambda x: [0] if x == 0 else x)
+            df_avg['value'] = df_avg[['first_sub_value', 'second_sub_value', 'third_sub_value', 'fourth_sub_value']].sum(axis=1)
+            df_avg['value'] = df_avg['value'].apply(lambda x: fill_avg(x))
+            df_avg[f'top{n}'] = df_avg['value'].apply(lambda liste: np.sort(np.array(liste))[-n:])
+            
+            
+            return df_avg
+
+        self.df_top = calcul_avg(self.data_max, 5)
+        
+
+         
+        self.df_top[['5', '4', '3', '2', '1']] = self.df_top['top5'].apply(lambda x: pd.Series(list(x))) 
+        
+        self.df_top = self.df_top[['first_sub', 'arte_attribut', '1', '2', '3', '4', '5']]
+                    
+        self.df_top.rename(columns={'first_sub' : 'substat'}, inplace=True)
+        
+        self.df_top.sort_values(by=['arte_attribut', 'substat'], inplace=True)
+   
+        
+        self.df_top.reset_index(inplace=True, drop=True)
+        
+        
+
+
+        return self.df_top
+    
+    
+def visualisation_top_arte(df, column):
+        
+    df_filter = df[df['substat'] == column]
+        
+    tcd = pd.pivot_table(values=['5','4','3','2','1'], columns=['arte_attribut'], data=df_filter, aggfunc='max')
+    
+    if not tcd.empty:
+        
+        st.write(f'Top 5 {column.capitalize()}')
+            
+        st.dataframe(tcd)

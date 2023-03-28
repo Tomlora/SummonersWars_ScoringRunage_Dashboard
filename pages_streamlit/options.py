@@ -4,6 +4,8 @@ from streamlit_extras.switch_page_button import switch_page
 from fonctions.gestion_bdd import lire_bdd, supprimer_data, supprimer_data_all
 
 from st_pages import add_indentation
+from fonctions.visuel import css
+css()
 
 add_indentation()
 

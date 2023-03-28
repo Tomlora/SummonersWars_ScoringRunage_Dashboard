@@ -2,10 +2,10 @@ import pandas as pd
 
 import streamlit as st
 import json
-from datetime import datetime
-from fonctions.visuel import load_lottieurl
+from datetime import datetime, timedelta
+from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
-from params.coef import coef_set, coef_set_spd
+from params.coef import coef_set, coef_set_spd, liste_substat_arte
 from streamlit_extras.switch_page_button import switch_page
 from fonctions.gestion_bdd import sauvegarde_bdd, update_info_compte, get_user, requete_perso_bdd, cancel
 from fonctions.runes import Rune
@@ -13,10 +13,19 @@ from fonctions.artefact import Artefact
 from st_pages import add_indentation
 from sqlalchemy.exc import InternalError, OperationalError
 
+try:
+    st.set_page_config(layout='wide')
+except:
+    pass
 
 
-st.title('Scoring SW')
+css()
+
+
+
+
 add_indentation()
+
 @st.cache_data
 def chargement_params():
     category_selected = ['Violent', 'Will', 'Destroy', 'Despair']
@@ -30,6 +39,7 @@ def chargement_params():
 
 st.session_state.category_selected, st.session_state.category_selected_spd, st.session_state.coef_set, st.session_state.coef_set_spd = chargement_params()
 
+@st.cache_data(ttl=timedelta(minutes=30))
 def date_du_jour():
     currentMonth = str(datetime.now().month)
     currentYear = str(datetime.now().year)
@@ -40,19 +50,26 @@ if 'submitted' not in st.session_state:
     st.session_state.submitted = False
 
 
+
 # def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd):
-with st.form('Data du compte'):
-    st.session_state.file = st.file_uploader(
-            'Choisis un json', type=['json'], help='Json SW Exporter')
-    st.session_state['submitted'] = st.form_submit_button(
-            'Calcule mon score')
-    st.info(body='Vous serez redirigé automatiquement à la fin du téléchargement.', icon="🚨")
+
+col1, col2, col3 = st.columns([0.25,0.50,0.25])
+
+with col2:
+    st.title('Scoring SW')
+    with st.form('Data du compte'):
+        st.session_state.file = st.file_uploader(
+                'Choisis un json', type=['json'], help='Json SW Exporter')
+        st.session_state['submitted'] = st.form_submit_button(
+                'Calcule mon score')
+        st.info(body='Vous serez redirigé automatiquement à la fin du téléchargement.', icon="🚨")
+        st.warning(body="L'application est par defaut en mode elargi. L'affichage est modifiable dans le menu en haut à droite", icon="⚠️")
 
 if not st.session_state.submitted:
     col1, col2, col3 = st.columns(3)
     with col2:
         img = load_lottieurl('https://assets5.lottiefiles.com/packages/lf20_ABViugg18Y.json')
-        st_lottie(img, height=200, width=200)
+        st_lottie(img, height=300, width=300)
 
 if st.session_state['file'] is not None and st.session_state.submitted:
     
@@ -84,12 +101,9 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             data_rune = Rune(data_json)
                 
             st.session_state.data_rune = data_rune
-
-
+    
             st.session_state.data_arte = Artefact(data_json)
             
-
-
             # st.session_state.data_grind = data_rune.data.copy()
             st.session_state.data_avg = st.session_state.data_rune.calcul_efficiency_describe()
 
@@ -147,9 +161,11 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             tcd_value['id'] = st.session_state['id_joueur']
             tcd_value['date'] = date_du_jour()
                 
-            st.session_state.tcd = tcd_value
+            st.session_state.tcd = tcd_value.copy()
 
             sauvegarde_bdd(tcd_value, 'sw', 'append')
+            
+            del tcd_value
 
             
             requete_perso_bdd('''INSERT INTO public.sw_score(score_general, date, id_joueur, score_spd, score_arte)
@@ -160,7 +176,6 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             'score_spd' : int(st.session_state['score_spd']),
             'score_arte' : int(st.session_state['score_arte'])})
 
-            # sauvegarde_bdd(df_scoring, 'sw_score', 'append')
                 
                 # scoring detail
                 
@@ -186,6 +201,9 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             tcd_detail_score_save.loc['Total', 'nb'] = st.session_state.data_avg['Nombre runes'].sum()   
             sauvegarde_bdd(tcd_detail_score_save, 'sw_detail', 'append')
             
+            
+            del tcd_detail_score_save
+            
             # st.session_state.data_rune.calcul_efficiency_describe_top()
                 
                 # Scoring speed
@@ -195,6 +213,8 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             tcd_spd_save['date'] = date_du_jour()
                 
             sauvegarde_bdd(tcd_spd_save, 'sw_spd', 'append')
+            
+            del tcd_spd_save
                 
                 # Scoring arte
                 
@@ -216,7 +236,55 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             requete_perso_bdd('''DELETE FROM sw_arte_max WHERE "id" = :id''', dict_params={'id' : st.session_state['id_joueur']})
             
             sauvegarde_bdd(arte_max_save, 'sw_arte_max', 'append')
+            
+            del arte_max_save
+            
+            # count arte
+
+            
+            count2 = []
+            count3 = []
+            count4 = []
+
+            for substat in liste_substat_arte:
+                df, count_sub2 = st.session_state.data_arte.count_substat(substat, 2)
+                count2.append(count_sub2)
+                df, count_sub3 = st.session_state.data_arte.count_substat(substat, 3)
+                count3.append(count_sub3)
+                df, count_sub4 = st.session_state.data_arte.count_substat(substat, 4)
+                count4.append(count_sub4)
+            
+            st.session_state.arte_count = pd.DataFrame([liste_substat_arte, count2, count3, count4], index=['substat', 'count2', 'count3', 'count4']).T
+            
+            arte_count = st.session_state.arte_count.copy()
+
+            
+            arte_count['id'] = st.session_state['id_joueur']
+            arte_count['date'] = date_du_jour()
+            
+            del df, count_sub2, count_sub3, count_sub4, count2, count3, count4
+            
+            df_top = st.session_state.data_arte.top()
+            
+            df_top.fillna(0, inplace=True)
+            
+            df_top['id'] = st.session_state['id_joueur']
+            
+            requete_perso_bdd('''DELETE from sw_arte_top
+                                WHERE id = :id_joueur''', dict_params={'id_joueur' : st.session_state['id_joueur']})
+            
+            sauvegarde_bdd(df_top, 'sw_arte_top', 'append', index=False)
+            
+            del df_top
+
+            # on veut éviter les doublons donc :  
                 
+            requete_perso_bdd('''DELETE from sw_arte_substats
+                                WHERE id = :id_joueur AND date = :date''', dict_params={'id_joueur' : st.session_state['id_joueur'],
+                                                                                            'date' : date_du_jour()})
+
+            sauvegarde_bdd(arte_count, 'sw_arte_substats', 'append', index=False)
+        
                 # Scoring max_value
                 
             df_max = st.session_state.df_max.copy()
@@ -230,6 +298,8 @@ if st.session_state['file'] is not None and st.session_state.submitted:
                 
             #     # on met à jour
             sauvegarde_bdd(df_max, 'sw_max', 'append')
+            
+            del df_max
             
             
                 
@@ -271,10 +341,6 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             df_identification = df_mobs[['id_unit', 'name_monstre']].set_index('id_unit')
             
             st.session_state.identification_monsters = df_identification.to_dict(orient="dict")['name_monstre']
-            
-            
-
-        
 
             st.subheader(f'Validé pour le joueur {st.session_state["pseudo"]} !')
             st.write('Tu peux désormais aller sur les autres onglets disponibles')

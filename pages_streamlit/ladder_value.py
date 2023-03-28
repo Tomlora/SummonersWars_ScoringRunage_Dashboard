@@ -1,19 +1,16 @@
-from fonctions.gestion_bdd import lire_bdd_perso
+from fonctions.gestion_bdd import lire_bdd_perso, cleaning_only_guilde
 import pandas as pd
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
+from datetime import timedelta
 
 from st_pages import add_indentation
+from fonctions.visuel import css
+css()
 
 add_indentation()
 
-def cleaning_only_guilde(x):
-    x['private'] = 0
-    if x['visibility'] == 2:
-        if x['guilde'] != st.session_state.guilde:
-            x['private'] = 1
 
-    return x
 
 
 def mise_en_forme_classement(df, variable='score'):
@@ -34,6 +31,8 @@ def mise_en_forme_classement(df, variable='score'):
     # on anonymise
     df['joueur'] = df.apply(
         lambda x: "***" if x['visibility'] == 1 and st.session_state['pseudo'] != x['joueur'] else x['joueur'], axis=1)
+    df['joueur'] = df.apply(
+            lambda x: "***" if x['visibility'] == 4 and st.session_state['pseudo'] != x['joueur'] and st.session_state['guilde'] != x['guilde'] else x['joueur'], axis=1)
     # on filtre pour ceux qui veulent only guilde :
     df = df.apply(cleaning_only_guilde, axis=1)
     df = df[df['private'] == 0]
@@ -50,8 +49,12 @@ def mise_en_forme_classement(df, variable='score'):
     height_dataframe = 50 * df.shape[0]
 
 
-    st.dataframe(df.rename(columns={'max_value' : 'Max substat',
-                                    variable : f'Moyenne {variable.capitalize()}'}), height=height_dataframe,
+    if variable == 'max_value':
+        column_rename = {'max_value' : 'Max substat'}
+    else:
+        column_rename = {variable : f'Moyenne {variable.capitalize()}'}
+        
+    st.dataframe(df.rename(columns=column_rename), height=height_dataframe,
                  use_container_width=True)
 
     return df
@@ -66,17 +69,20 @@ def classement_value():
     if st.session_state.visibility == 0:
         st.warning('Vous avez choisi de ne pas apparaitre. Vous pouvez changer cela dans les paramètres.', icon="ℹ️")
     
+    st.info("**Note** : Données mises à jour toutes les **10** minutes", icon="ℹ️")
+    
     type_ranking = st.radio('Type de ranking', ['Max', 'Moyenne'], horizontal=True)
 
-    def load_data():
+    @st.cache_data(ttl=timedelta(minutes=10), show_spinner='Chargement des données...')
+    def load_data_value():
         data = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_max.date, sw_max.substat, sw_max.max_value, sw_max.rune_set, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user
                             INNER JOIN sw_max ON sw_user.id = sw_max.id
                             where sw_user.visibility != 0 and sw_max.substat != 'Aucun' ''').transpose().reset_index()
-        
         return data
     
-    def load_data_avg(top):
+    @st.cache_data(ttl=timedelta(minutes=10), show_spinner='Chargement des données...')
+    def load_data_value_avg(top):
         data = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_max.date, sw_max.substat, sw_max.{top}, sw_max.rune_set, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user
                             INNER JOIN sw_max ON sw_user.id = sw_max.id
@@ -84,13 +90,13 @@ def classement_value():
         return data        
 
     if type_ranking == 'Max':
-        data = load_data()
+        data = load_data_value()
         value = 'max_value'
     
     elif type_ranking == 'Moyenne':
         var_top = st.radio('Top', [5,10,15,25], horizontal=True)
         value = f'top{var_top}' 
-        data = load_data_avg(value)
+        data = load_data_value_avg(value)
 
     st.subheader('Ranking value')
 

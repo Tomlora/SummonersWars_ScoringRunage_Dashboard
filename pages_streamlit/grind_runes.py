@@ -13,15 +13,14 @@ from streamlit_extras.switch_page_button import switch_page
 import plotly.io as pio
 pio.renderers.default = "notebook_connected"
 
+from fonctions.visuel import css
+css()
+
 # Supprime les Future Warnings sur les copies
 pd.options.mode.chained_assignment = None  # default='warn'
 
 
 add_indentation()
-
-
-# In[113]:
-
 
 def extraire_variables_imbriquees(df, colonne):
     df[colonne] = [ast.literal_eval(str(item))
@@ -156,6 +155,8 @@ def optimisation_rune():
         # On peut faire le mapping...
 
         df_mobs = df_mobs[['id_unit', 'name_monstre']].set_index('id_unit')
+        
+
     st.success('Chargement des monstres effectués !')
 
     data_class.identify_monsters(st.session_state.identification_monsters)
@@ -414,6 +415,7 @@ def optimisation_rune():
         df_inventaire_filter = filter_dataframe(df_inventaire, 'df_inventaire')
         st.dataframe(df_inventaire_filter)
 
+    del data, data_short, df_rune, df_count, df_inventaire
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:

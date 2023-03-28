@@ -9,6 +9,8 @@ import pandas as pd
 from fonctions.export import export_excel
 
 from st_pages import add_indentation
+from fonctions.visuel import css
+css()
 
 add_indentation()
 

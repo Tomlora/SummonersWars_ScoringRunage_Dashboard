@@ -11,8 +11,11 @@ from fonctions.compare import comparaison
 
 from st_pages import add_indentation
 from streamlit_extras.add_vertical_space import add_vertical_space
+from fonctions.visuel import css
+css()
 
 add_indentation()
+
 
 @st.cache_data
 def filter_data(df, selected_options):
@@ -84,7 +87,8 @@ def visu_page():
         dict_visibility = {0: 'Non-visible',
                            1: 'Caché',
                            2: 'Visible à ma guilde',
-                           3: 'Visible à tous'}
+                           3: 'Visible à tous',
+                           4 : 'Caché au public mais visible à ma guilde'}
         
         new_index = ['Autre', 'Despair', 'Destroy', 'Violent', 'Will', 'Total']
         
@@ -166,9 +170,9 @@ def visu_page():
                 st.subheader('Speed')
 
                 data_detail_spd = transformation_stats_visu(
-                    'sw_spd', st.session_state['id_joueur'], distinct=True)
+                    'sw_spd', id_joueur, distinct=True)
                 data_scoring_spd = transformation_stats_visu(
-                    'sw_score', st.session_state['id_joueur'], distinct=True, score='score_spd')
+                    'sw_score', id_joueur, distinct=True, score='score_spd')
 
                 fig2 = go.Figure()
                 fig2.add_trace(go.Scatter(
@@ -208,9 +212,9 @@ def visu_page():
 
                 st.subheader('Artefact')
                 data_detail_arte = transformation_stats_visu(
-                    'sw_arte', st.session_state['id_joueur'], distinct=True)
+                    'sw_arte', id_joueur, distinct=True)
                 data_scoring_arte = transformation_stats_visu(
-                    'sw_score', st.session_state['id_joueur'], distinct=True, score='score_arte')
+                    'sw_score', id_joueur, distinct=True, score='score_arte')
 
                 fig3 = go.Figure()
                 fig3.add_trace(go.Scatter(
@@ -256,7 +260,7 @@ def visu_page():
             
             if not df.empty:
             
-                swarfarm = st.session_state.swarfarm.copy()
+                swarfarm = pd.read_excel('swarfarm.xlsx')
                 swarfarm.drop('id', axis=1, inplace=True) # inutile ici
                 
                 df_mob = pd.merge(df, swarfarm, left_on='id_monstre', right_on='com2us_id')
@@ -301,6 +305,7 @@ def visu_page():
                     
                     with awaken_column:
                         awaken_level = st.checkbox('Exclure les monstres non-évolués', value=True)
+                        ld_only = st.checkbox('LD seulement')
                     
                     with star_columns:
                         stars_naturel = st.slider('Exclure les nats naturels', 0, 5, 1, step=1)
@@ -309,8 +314,12 @@ def visu_page():
                     if awaken_level:
                         df_mob_actif = df_mob_actif[df_mob_actif['awaken_level'] > 0]
                         
+                    if ld_only:
+                        df_mob_actif = df_mob_actif[df_mob_actif['element_number'].isin([3,4])]
+                        
 
-                    df_mob_actif = df_mob_actif[df_mob_actif['natural_stars'] > stars_naturel]   
+                    df_mob_actif = df_mob_actif[df_mob_actif['natural_stars'] > stars_naturel]
+
                         
                     add_vertical_space(2)        
                         
@@ -341,25 +350,17 @@ def visu_page():
                             
                         st.markdown(df_html, unsafe_allow_html=True)
                 
-if 'submitted' in st.session_state:
-    if st.session_state.submitted:    
-        st.title('Visualisation')
-        if st.session_state.rank == 1:
-            mdp = st.text_input('mot de passe', '', type='password')
-            if mdp == os.environ.get('pass_visual'):
-                visu_page()
-            elif mdp == '':
-                st.write('')
-            else:
-                st.warning('Mot de passe incorrect')
-        else:
-            st.warning('Non-autorisé')
 
-    else:
-        switch_page('Upload JSON')
+st.title('Visualisation')
 
+mdp = st.text_input('mot de passe', '', type='password')
+if mdp == os.environ.get('pass_visual'):
+    visu_page()
+elif mdp == '':
+    st.write('')
 else:
-    switch_page('Upload JSON')
+    st.warning('Mot de passe incorrect')
+
     
     
 st.caption('Made by Tomlora')

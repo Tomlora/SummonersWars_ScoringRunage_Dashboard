@@ -3,6 +3,9 @@ from streamlit_extras.switch_page_button import switch_page
 
 from st_pages import add_indentation
 
+from fonctions.visuel import css
+css()
+
 add_indentation()
 
 
@@ -11,7 +14,7 @@ sub_max_lgd = {'HP': 550, 'HP%': 10, 'ATQ': 30,
 sub_max_heroique = {'HP': 450, 'HP%': 7, 'ATQ': 22,
                     'ATQ%': 7, 'DEF': 22, 'DEF%': 7, 'SPD': 4}
 
-
+@st.cache_data
 def max_sub_by_proc(proc):
     "1 à 4"
 

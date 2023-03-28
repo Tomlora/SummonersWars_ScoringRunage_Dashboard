@@ -200,3 +200,28 @@ def get_user(joueur, type: str = 'name_user', id_compte: int = 0):
 
 def cancel():
     conn.rollback()
+    
+
+
+def optimisation_int(data, int_cols_before:list, int_cols_after:str='int16'): 
+
+    if 'rune_equiped' in data.columns:  # on la retire car elle pose pb pour l'identification des monstres
+        int_cols = data.drop('rune_equiped', axis=1).select_dtypes(include=int_cols_before).columns
+    else:
+        int_cols = data.select_dtypes(include=int_cols_before).columns
+
+    data[int_cols] = data[int_cols].astype(int_cols_after)
+    
+    if int_cols_before.count('float64')>0:
+        float_cols = data.select_dtypes(include=['float64']).columns
+        data[float_cols] = data[float_cols].astype('float32')
+
+    return data
+
+
+def cleaning_only_guilde(x):
+    x['private'] = 0
+    if x['visibility'] == 2:
+        if x['guilde'] != st.session_state.guilde:
+            x['private'] = 1
+    return x

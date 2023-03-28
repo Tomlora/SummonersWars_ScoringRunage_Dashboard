@@ -3,19 +3,24 @@ import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
-from fonctions.visuel import load_lottieurl
+from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
 from params.coef import coef_set
 from fonctions.visualisation import filter_dataframe, table_with_images
 from streamlit_extras.switch_page_button import switch_page
-from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd, sauvegarde_bdd
+from fonctions.gestion_bdd import requete_perso_bdd, sauvegarde_bdd
 from fonctions.compare import comparaison, comparaison_graph
 import traceback
+from fonctions.artefact import visualisation_top_arte
 
 
 from st_pages import add_indentation
 
+css()
 add_indentation()
+
+with open('style.css') as f:
+    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 
 st.title('Scoring SW')
@@ -57,12 +62,12 @@ if 'submitted' in st.session_state:
 
         # -------------- Scoring du compte
         try:
-            tcd_column, score_column = st.columns(2)
+            tcd_column, _, score_column = st.columns([0.4,0.2,0.4])
 
             with tcd_column:
                 # Stat du joueur
                 st.dataframe(
-                    st.session_state.tcd[[100, 110, 120]].reindex(new_index))
+                    st.session_state.tcd[[100, 110, 120]].reindex(new_index), use_container_width=True)
 
             with score_column:
                 # Score du joueur
@@ -72,15 +77,15 @@ if 'submitted' in st.session_state:
             size_general, avg_score_general, max_general, size_guilde, avg_score_guilde, max_guilde, df_max, df_guilde = comparaison(
                 st.session_state['guildeid'])
 
-            tab1, tab2, tab3, tab4 = st.tabs(
-                ['Autre scorings', 'Detail du scoring', 'Efficience moyenne par set', 'Monstres'])
+            tab1, tab2, tab3, tab4, tab_arte = st.tabs(
+                ['Autre scorings', 'Detail du scoring', 'Efficience moyenne par set', 'Monstres', 'Artefacts'])
 
             with tab1:
                 with st.expander('Autre scorings'):
 
                     # ---------------- Scoring arte + speed
 
-                    tcd_column_spd, score_column_arte = st.columns(2)
+                    tcd_column_spd, _, score_column_arte = st.columns([0.4,0.1,0.4])
 
                     with tcd_column_spd:
                         st.metric('Score Speed', st.session_state['score_spd'])
@@ -90,23 +95,22 @@ if 'submitted' in st.session_state:
 
                         # ---------------- Df arte + speed
 
-                    tcd_column_df_spd, score_column_df_arte = st.columns(2)
+                    tcd_column_df_spd, _, score_column_df_arte = st.columns([0.4,0.1,0.4])
                     #  df.style.highlight_max(axis=0)
                     with tcd_column_df_spd:
                         st.dataframe(
-                            st.session_state.tcd_spd.reindex(new_index_spd))
+                            st.session_state.tcd_spd.reindex(new_index_spd), use_container_width=True)
 
                     with score_column_df_arte:
-                        st.dataframe(st.session_state.tcd_arte)
+                        st.dataframe(st.session_state.tcd_arte, use_container_width=True)
 
             with tab2:
                 with st.expander('Detail du scoring'):
 
-                    column_detail_scoring1, column_detail_scoring2 = st.columns(
-                        2)
+                    column_detail_scoring1, _, column_detail_scoring2 = st.columns([0.4,0.1,0.4])
 
                     with column_detail_scoring1:
-                        st.dataframe(st.session_state.tcd_detail_score)
+                        st.dataframe(st.session_state.tcd_detail_score, use_container_width=True)
 
                     with column_detail_scoring2:
                         txt = 'Une rune 100 vaut 1 point \nUne rune 110 vaut 2 points\nUne Rune 120 vaut 3 points\n\n\nCoefficient : \n'
@@ -118,18 +122,21 @@ if 'submitted' in st.session_state:
 
             with tab3:
                 with st.expander('Efficience par set'):
+                    col1_tab3, _, col2_tab3 = st.columns([0.4,0.05,0.4])
+                    
+                    with col1_tab3:
+                        st.dataframe(st.session_state.data_avg, use_container_width=True)
 
-                    st.dataframe(st.session_state.data_avg)
-
-                    fig = go.Figure()
-                    fig.add_trace(go.Histogram(
-                        y=st.session_state.data_avg['max'], x=st.session_state.data_avg.index, histfunc='avg', name='max'))
-                    fig.add_trace(go.Histogram(
-                        y=st.session_state.data_avg['moyenne'], x=st.session_state.data_avg.index, histfunc='avg', name='mean'))
-                    fig.update_layout(
-                        barmode="overlay",
-                        bargap=0.1)
-                    st.plotly_chart(fig)
+                    with col2_tab3:
+                        fig = go.Figure()
+                        fig.add_trace(go.Histogram(
+                            y=st.session_state.data_avg['max'], x=st.session_state.data_avg.index, histfunc='avg', name='max'))
+                        fig.add_trace(go.Histogram(
+                            y=st.session_state.data_avg['moyenne'], x=st.session_state.data_avg.index, histfunc='avg', name='mean'))
+                        fig.update_layout(
+                            barmode="overlay",
+                            bargap=0.1)
+                        st.plotly_chart(fig)
 
             with tab4:
                 with st.expander('Liste de monstres'):
@@ -346,6 +353,48 @@ if 'submitted' in st.session_state:
             # # on insert les nouvelles
 
             sauvegarde_bdd(df_global, 'sw_monsters', 'append', index=False)
+            
+            with tab_arte:
+                
+                st.info('Tu peux cocher le mode élargi dans le menu en haut à droite pour mieux voir les tableaux')
+                
+                liste_substat = st.session_state.data_arte.df_top['substat'].unique()
+                df_arte = st.session_state.data_arte.df_top.copy()
+                
+                liste_elementaire = ['FEU', 'EAU', 'VENT', 'LUMIERE', 'TENEBRE']
+                liste_attribut = ['ATTACK', 'DEFENSE', 'HP', 'SUPPORT']
+                
+                col_elem, col_att = st.columns(2)
+                
+                with col_elem:
+                    elem_only = st.checkbox('Elementaire seulement')
+                with col_att:
+                    attribut_only = st.checkbox('Attribut seulement')
+                
+                if elem_only:
+                    df_arte = df_arte[df_arte['arte_attribut'].isin(liste_elementaire)]
+                
+                if attribut_only:
+                    df_arte = df_arte[df_arte['arte_attribut'].isin(liste_attribut)]
+                    
+                if elem_only and attribut_only:
+                    st.warning('Cette combinaison est impossible')
+                
+                
+                df_arte_filter = filter_dataframe(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], 'filter_arte', type_number='int', disabled=True)
+                               
+                
+                    
+                for i in range (0, len(liste_substat), 2):
+                    col_arte1, col_arte2 = st.columns(2)
+                    with col_arte1:
+                        visualisation_top_arte(df_arte_filter, liste_substat[i])
+                    try:
+                        with col_arte2:
+                            visualisation_top_arte(df_arte_filter, liste_substat[i+1])
+                    except IndexError: # il n'y en a plus
+                        continue
+
 
             # ---------------- Comparaison
 
@@ -357,11 +406,11 @@ if 'submitted' in st.session_state:
                     'https://assets4.lottiefiles.com/packages/lf20_yMpiqXia1k.json')
                 st_lottie(img, width=60, height=60)
 
-            tab1, tab2 = st.tabs(['General', st.session_state['guilde']])
+            tab_general, tab_guilde = st.tabs(['General', st.session_state['guilde']])
             # Par rapport à tous les joueurs
-            with tab1:
+            with tab_general:
 
-                comparaison1_1, comparaison1_2, comparaison1_3 = st.columns(3)
+                comparaison1_1, comparaison1_2, comparaison1_3 , comparaison1_4 = st.columns(4)
 
                 with comparaison1_1:
                     st.metric('Joueurs', size_general)
@@ -377,7 +426,7 @@ if 'submitted' in st.session_state:
 
                 rank2_1, rank2_2 = st.columns(2)
 
-                with rank2_1:
+                with comparaison1_4:
                     rank_general = int(
                         df_max.loc[st.session_state['pseudo']]['rank'])
                     st.metric('Classement', rank_general)
@@ -387,9 +436,9 @@ if 'submitted' in st.session_state:
                 st.plotly_chart(fig_general)
 
                 # Par rapport à sa guilde
-            with tab2:
+            with tab_guilde:
 
-                comparaison2_1, comparaison2_2, comparaison2_3 = st.columns(3)
+                comparaison2_1, comparaison2_2, comparaison2_3, comparaison2_4 = st.columns(4)
 
                 with comparaison2_1:
                     st.metric('Joueurs', size_guilde)
@@ -403,14 +452,12 @@ if 'submitted' in st.session_state:
                     delta2_3 = int(st.session_state['score']) - max_guilde
                     st.metric('Record score', max_guilde, delta2_3)
 
-                rank2_1, rank2_2 = st.columns(2)
+                with comparaison2_4:
 
-                with rank2_1:
                     rank_guilde = int(
                         df_guilde.loc[st.session_state['pseudo']]['rank'])
                     st.metric('Classement', rank_guilde)
 
-                    # with rank2_2:
                 fig_guilde = comparaison_graph(
                     df_guilde, st.session_state['guilde'])
                 st.plotly_chart(fig_guilde)

@@ -1,7 +1,6 @@
 from fonctions.gestion_bdd import lire_bdd, lire_bdd_perso
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
 
 from pandas.api.types import (
@@ -12,6 +11,8 @@ from pandas.api.types import (
 )
 import pandas as pd
 import streamlit as st
+
+
 
 
 def transformation_stats_visu(nom_table, joueur, distinct: bool = False, score='score_general'):
@@ -228,3 +229,7 @@ def table_with_images(df: pd.DataFrame, url_columns):
         df_[column] = df_[column].apply(_path_to_image_html)
 
     return df_.to_html(escape=False)
+
+
+
+    

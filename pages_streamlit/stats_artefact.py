@@ -1,13 +1,12 @@
 
 import streamlit as st
-from fonctions.gestion_bdd import requete_perso_bdd
-from fonctions.artefact import Artefact
 from streamlit_extras.switch_page_button import switch_page
-from streamlit_extras.dataframe_explorer import dataframe_explorer
 from fonctions.visualisation import filter_dataframe
 import pandas as pd
 
 from st_pages import add_indentation
+from fonctions.visuel import css
+css()
 
 add_indentation()
 
@@ -34,22 +33,8 @@ def grind_arte():
         st.dataframe(st.session_state.data_arte.df_max_substat.sort_values(by=['substat'], ascending=True))
         
     with tab4:
-        liste_substat = ['DMG SUPP', 'REDUCTION', 'DMG SUR', 'HP PERDUS', 'CRIT DMG']
-        count2 = []
-        count3 = []
-        count4 = []
-
-        for substat in liste_substat:
-            df, count_sub2 = st.session_state.data_arte.count_substat(substat, 2)
-            count2.append(count_sub2)
-            df, count_sub3 = st.session_state.data_arte.count_substat(substat, 3)
-            count3.append(count_sub3)
-            df, count_sub4 = st.session_state.data_arte.count_substat(substat, 4)
-            count4.append(count_sub4)
-            
-        df_count = pd.DataFrame([liste_substat, count2, count3, count4], index=['Substat', '2', '3', '4']).T
-        
-        st.dataframe(df_count)
+        st.dataframe(st.session_state.arte_count[['substat', 'count2', 'count3', 'count4']].rename(
+            columns={'count2': '2', 'count3': '3', 'count4': '4'}))
 
 
 

@@ -3,13 +3,15 @@ import streamlit as st
 from fonctions.visualisation import filter_dataframe
 import requests
 from math import ceil
-from io import BytesIO
 from fonctions.export import export_excel
 from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd
 
 
 from streamlit_extras.switch_page_button import switch_page
 from st_pages import add_indentation
+
+from fonctions.visuel import css
+css()
 
 add_indentation()
 
@@ -106,7 +108,7 @@ def build():
     with st.expander('Chercher mes runes'):
         data_build_filter = filter_dataframe(
             st.session_state.data_rune.data_build.drop('id_rune', axis=1), 'data_build', type_number='int')
-        st.dataframe(data_build_filter)
+        st.dataframe(data_build_filter, use_container_width=True)
 
 
         data_xlsx = export_excel(data_build_filter, 'Id_rune', 'Runes')

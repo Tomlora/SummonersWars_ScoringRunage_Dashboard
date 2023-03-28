@@ -3,11 +3,12 @@ import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
 from fonctions.visualisation import transformation_stats_visu, plotline_evol_rune_visu, filter_dataframe
-from fonctions.visuel import load_lottieurl
+from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
 from streamlit_extras.switch_page_button import switch_page
 from st_pages import add_indentation
 
+css()
 add_indentation()
 
 @st.cache_data
@@ -38,7 +39,7 @@ def palier_page():
         data_scoring = transformation_stats_visu(
             'sw_score', st.session_state['id_joueur'], distinct=True)
 
-        col1, col2 = st.columns([40,60])
+        col1, _, col2 = st.columns([40,5, 60])
 
         with col2:
             img = load_lottieurl(
@@ -60,7 +61,8 @@ def palier_page():
             st.subheader('Evolution')
             st.dataframe(data_scoring.set_index('date').rename(columns={'score_general' : 'General',
                                                                         'score_spd' : 'Speed',
-                                                                        'score_arte' : 'Artefact'}))
+                                                                        'score_arte' : 'Artefact'}),
+                         use_container_width=True)
 
             fig = go.Figure()
             fig.add_trace(go.Scatter(
