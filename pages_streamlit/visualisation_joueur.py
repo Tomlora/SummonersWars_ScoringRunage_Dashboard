@@ -3,19 +3,22 @@ import os
 import plotly.graph_objects as go
 import plotly_express as px
 import pandas as pd
+from datetime import timedelta
 
 from fonctions.gestion_bdd import lire_bdd_perso, get_user
-from fonctions.visualisation import transformation_stats_visu, plotline_evol_rune_visu, filter_dataframe, table_with_images
-from streamlit_extras.switch_page_button import switch_page
-from fonctions.compare import comparaison
+from fonctions.visualisation import transformation_stats_visu, plotline_evol_rune_visu, table_with_images
+from fonctions.artefact import visualisation_top_arte
+from params.coef import order
 
+from fonctions.compare import comparaison
+from streamlit_extras.metric_cards import style_metric_cards
 from st_pages import add_indentation
 from streamlit_extras.add_vertical_space import add_vertical_space
 from fonctions.visuel import css
+
 css()
-
 add_indentation()
-
+style_metric_cards(background_color='#03152A', border_color='#0083B9', border_left_color='#0083B9', border_size_px=0, box_shadow=False)
 
 @st.cache_data
 def filter_data(df, selected_options):
@@ -36,9 +39,61 @@ def filter_data(df, selected_options):
     df_filtered = df[df['date'].isin(selected_options)]
     return df_filtered
 
-def visu_page():
+@st.cache_data(ttl=timedelta(minutes=5))
+def chargement_data_joueur(df_guilde, guilde_target):
+    if guilde_target == '*':
+        df = lire_bdd_perso(
+                'SELECT * from sw_user, sw_score WHERE sw_user.id = sw_score.id_joueur').transpose()
+        df_complet = lire_bdd_perso(
+                'SELECT sw_user.*, sw_detail.rune_set, sw_detail."100", sw_detail."110", sw_detail."120" from sw_user, sw_detail WHERE sw_user.id = sw_detail.id').transpose()
+        
+    
+    # sinon on trie sur la guilde spécifiée        
+    else:
+        df = lire_bdd_perso(
+                f'''SELECT * from sw_user, sw_score
+                WHERE sw_user.id = sw_score.id_joueur
+                AND sw_user.guilde_id = {df_guilde.loc[df_guilde['guilde'] == guilde_target].index.values[0]}''').transpose()
+            
+        df_complet = lire_bdd_perso(
+                f'''SELECT sw_user.*, sw_detail.rune_set, sw_detail."100", sw_detail."110", sw_detail."120" from sw_user, sw_detail
+                WHERE sw_user.id = sw_detail.id
+                AND sw_user.guilde_id = {df_guilde.loc[df_guilde['guilde'] == guilde_target].index.values[0]}''').transpose()
+        
+    
+    df_arte = lire_bdd_perso(
+                '''SELECT sw_user.joueur, sw_arte_top.* from sw_user, sw_arte_top
+                WHERE sw_user.id = sw_arte_top.id''').transpose()    
 
+        
+    try:
+        df.drop(['id', 'guilde_id'], axis=1, inplace=True)
+            # sort l'index : Majuscule -> Minuscule -> caractères spéciaux
+    except:
+        pass
+    
+    try:
+        df_complet.drop(['id', 'guilde_id'], axis=1, inplace=True)
+            # sort l'index : Majuscule -> Minuscule -> caractères spéciaux
+    except:
+        pass
+    
+    df.sort_index(axis=0, inplace=True)
+    
+    df_complet_grp = df_complet.groupby(['joueur', 'rune_set']).max()
+        
+    return df, df_complet_grp, df_arte
+        
+@st.cache_data
+def chargement_guilde():
     df_guilde = lire_bdd_perso(f'''SELECT * from sw_guilde''', index_col='guilde_id').transpose()
+    return df_guilde
+
+def visu_page():
+    
+    st.info('Actualisé toutes les 5 minutes')
+
+    df_guilde = chargement_guilde()
     
     df_guilde.sort_values(by=['guilde'], ascending=True, inplace=True)
         
@@ -48,27 +103,17 @@ def visu_page():
     guilde_target = st.selectbox('Guilde (peut être vide)', liste_guildes, index=len(liste_guildes)-1)
     
     # si pas de guilde spécifiée, on prend tout
-    if guilde_target == '*':
-            df = lire_bdd_perso(
-                'SELECT * from sw_user, sw_score WHERE sw_user.id = sw_score.id_joueur')
+
+    df, df_complet, df_arte = chargement_data_joueur(df_guilde, guilde_target)            
+
     
-    # sinon on trie sur la guilde spécifiée        
-    else:
-            df = lire_bdd_perso(
-                f'''SELECT * from sw_user, sw_score
-                WHERE sw_user.id = sw_score.id_joueur
-                AND sw_user.guilde_id = {df_guilde.loc[df_guilde['guilde'] == guilde_target].index.values[0]}''')
-        
-    # with st.form('Choisir un joueur'):    
-    df = df.transpose()
-            # df.set_index('joueur', inplace=True)
-    df.drop(['id', 'guilde_id'], axis=1, inplace=True)
-            # sort l'index : Majuscule -> Minuscule -> caractères spéciaux
-    df.sort_index(axis=0, inplace=True)
+
     liste_joueurs = df.index.unique().values.tolist()
     joueur_target = st.selectbox('Joueur', liste_joueurs)
     id_joueur, visibility, guildeid, rank = get_user(joueur_target)
     
+    df_arte = df_arte[df_arte['id'] == id_joueur]
+
     submitted_joueur = True
     
     size_general, avg_score_general, max_general, size_guilde, avg_score_guilde, max_guilde, df_max, df_guilde_compare = comparaison(
@@ -93,22 +138,145 @@ def visu_page():
         new_index = ['Autre', 'Despair', 'Destroy', 'Violent', 'Will', 'Total']
         
         
+        
+        date = pd.to_datetime(data_scoring['date'], format="%d/%m/%Y").max().strftime('%d/%m/%Y')
         st.caption(f'Guilde : :blue[{guilde}] ({size_guilde} membres)')
-        st.caption(f"Dernière analyse : :blue[{data_scoring['date'].max()}]")
+        st.caption(f"Dernière analyse : :blue[{date}]")
         st.caption(f'Visibilité dans les onglets : :blue[{dict_visibility[visibility]}] ')
         
         
-        tab_stats, tab_evo, tab_box, tab_storage = st.tabs(['Stats', 'Evolution', 'Box', 'Storage'])
+        tab_stats, tab_arte, tab_evo, tab_box, tab_storage = st.tabs(['Stats', 'Artefact', 'Evolution', 'Box', 'Storage'])
         
         
         with tab_stats:
-            col1, col2 = st.columns([0.6, 0.4]) 
+            col1, _, col2 = st.columns([0.5, 0.1, 0.4]) 
             with col1:                     
-                st.dataframe(data_detail.pivot_table(values='Nombre', index='Set', columns='Palier', aggfunc='max').reindex(new_index))
+                st.dataframe(data_detail.pivot_table(values='Nombre', index='Set', columns='Palier', aggfunc='max').reindex(new_index), use_container_width=True)
             with col2:
                 st.metric('Score Rune', data_scoring['score_general'].max())
                 st.metric(f'Moyenne Guilde ({size_guilde} joueurs)', avg_score_guilde)
                 
+            
+            with st.expander('Details'):
+                try:
+                    st.dataframe(df_complet.loc[joueur_target, ['100', '110', '120']].drop('Total', axis=0), use_container_width=True)
+                except KeyError:
+                    st.warning('Pas de détails pour ce joueur')
+            
+            
+        with tab_arte:
+
+               
+            liste_substat = df_arte['substat'].unique()
+                
+            liste_elementaire = ['FEU', 'EAU', 'VENT', 'LUMIERE', 'TENEBRE']
+            liste_attribut = ['ATTACK', 'DEFENSE', 'HP', 'SUPPORT']
+                
+            col_elem, col_att = st.columns(2)
+                
+            with col_elem:
+                elem_only = st.checkbox('Elementaire seulement')
+            with col_att:
+                attribut_only = st.checkbox('Attribut seulement')
+                
+            if elem_only:
+                df_arte = df_arte[df_arte['arte_attribut'].isin(liste_elementaire)]
+                
+            if attribut_only:
+                df_arte = df_arte[df_arte['arte_attribut'].isin(liste_attribut)]
+                    
+            if elem_only and attribut_only:
+                st.warning('Cette combinaison est impossible')
+                
+                
+                
+                
+            def show_arte_table(keyword, substat, exclure='None'):
+                    
+                i = 0
+                index_keyword = []
+                    
+                for i in range(len(substat)):
+                    if keyword in substat[i] and not exclure in substat[i]:
+                        index_keyword.append(i)
+                            
+                if len(index_keyword) >= 1:
+                        
+                    for n in range(0,len(index_keyword), 2):
+                        element = index_keyword[n]
+                        col_arte1, _, col_arte2 = st.columns([0.4,0.1,0.4])
+                        with col_arte1:
+                            visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[element],
+                                                       order=order)
+                        try:
+                            if keyword in substat[element+1]:
+                                with col_arte2:
+                                    visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[element+1],
+                                                               order=order)
+                        except IndexError: # il n'y en a plus
+                            pass
+            
+
+            tab_reduc, tab_dmg, tab_dmg_supp, tab_precision, tab_crit, tab_soin, tab_renforcement, tab_perdus, tab_autres = st.tabs(['Réduction',
+                                                                                     'Dégâts élémentaire',
+                                                                                     'Degats supp',
+                                                                                     'Précision',
+                                                                                     'CRIT',
+                                                                                     'SOIN',
+                                                                                     'RENFORCEMENT',
+                                                                                     'EN FONCTION PERDUS',
+                                                                                     'AUTRES'])    
+
+                    
+            with tab_reduc:
+
+                show_arte_table('REDUCTION', liste_substat)
+                        
+            with tab_dmg:
+
+                show_arte_table('DMG SUR', liste_substat, 'CRIT')
+                    
+                    
+            with tab_dmg_supp:
+
+                show_arte_table('DMG SUPP', liste_substat)
+
+                    
+            with tab_precision:
+
+                show_arte_table('PRECISION', liste_substat)
+
+                    
+            with tab_crit:
+
+                show_arte_table('CRIT', liste_substat)
+
+
+            with tab_renforcement:
+
+                show_arte_table('RENFORCEMENT', liste_substat)
+
+            with tab_soin:
+
+                show_arte_table('SOIN', liste_substat)
+                    
+            with tab_perdus:
+                show_arte_table('PERDUS', liste_substat)
+                show_arte_table('DEF EN FONCTION', liste_substat)
+
+
+            with tab_autres:
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    show_arte_table('REVIVE', liste_substat)
+                    show_arte_table('BOMBE', liste_substat)
+                    show_arte_table('COOP', liste_substat)
+                with col2:
+                    show_arte_table('REVENGE', liste_substat)
+                    show_arte_table('VOL', liste_substat)
+                    show_arte_table('INCAPACITE', liste_substat)
+        
             
             
             
@@ -347,9 +515,37 @@ def visu_page():
                             
                     with tab2:
                         df_html = table_with_images(df=df_storage[['url_image', 'name', 'quantité']], url_columns=("url_image",))
+                        try:    
+                            st.markdown(df_html, unsafe_allow_html=True)
+                        except:
+                            st.info('Non-disponible')
                             
-                        st.markdown(df_html, unsafe_allow_html=True)
-                
+                            
+                            
+
+        
+        try:
+            del df_storage
+        except:
+            pass    
+        
+        try:
+            del df_mob_actif, df_mob, df            
+        except:
+            pass
+        
+        try:
+            del df, tab80, tab85, tab90, tab95, tab100, data_80, data_85, data_90, data_95, data_100, fig3, fig80, fig85, fig90, fig95, fig100
+        except UnboundLocalError:
+            pass
+        
+        try:
+            del df_html
+        except:
+            pass
+        
+
+                        
 
 st.title('Visualisation')
 

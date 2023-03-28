@@ -5,13 +5,15 @@ import pandas as pd
 import numpy as np
 from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
-from params.coef import coef_set
+from params.coef import coef_set, order
 from fonctions.visualisation import filter_dataframe, table_with_images
 from streamlit_extras.switch_page_button import switch_page
 from fonctions.gestion_bdd import requete_perso_bdd, sauvegarde_bdd
-from fonctions.compare import comparaison, comparaison_graph
+from fonctions.compare import comparaison, comparaison_rune_graph
+from streamlit_extras.colored_header import colored_header
 import traceback
 from fonctions.artefact import visualisation_top_arte
+from streamlit_extras.metric_cards import style_metric_cards
 
 
 from st_pages import add_indentation
@@ -19,12 +21,19 @@ from st_pages import add_indentation
 css()
 add_indentation()
 
-with open('style.css') as f:
-    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
+col1, col2 = st.columns([0.6,0.4])
 
-st.title('Scoring SW')
+with col1:
+    st.title('Scoring SW')
 
+with col2:
+    img = load_lottieurl(
+                    'https://assets4.lottiefiles.com/packages/lf20_yMpiqXia1k.json')
+    st_lottie(img, width=60, height=60)
+    
+    
+style_metric_cards(background_color='#03152A', border_color='#0083B9', border_left_color='#0083B9', border_size_px=0, box_shadow=False)
 
 def highlight_max(data, color='yellow'):
     '''
@@ -49,7 +58,7 @@ def show_img_monsters(data, stars, variable='*', width=70):
     st.subheader(f'{stars} etoiles ({data.shape[0]} monstres)')
 
     if width <= 50:
-        return st.image(data['url'].tolist(), width=width)
+        return st.image(data['url'].tolist(), width=width)    
     else:
         return st.image(data['url'].tolist(), width=width, caption=data['name'].tolist())
 
@@ -76,6 +85,9 @@ if 'submitted' in st.session_state:
 
             size_general, avg_score_general, max_general, size_guilde, avg_score_guilde, max_guilde, df_max, df_guilde = comparaison(
                 st.session_state['guildeid'])
+            
+            size_general_arte, avg_arte, max_arte, size_arte_guilde, avg_score_arte_guilde, max_arte_guilde, df_arte_max, df_arte_guilde = comparaison(
+                st.session_state['guildeid'], 'score_arte')
 
             tab1, tab2, tab3, tab4, tab_arte = st.tabs(
                 ['Autre scorings', 'Detail du scoring', 'Efficience moyenne par set', 'Monstres', 'Artefacts'])
@@ -379,8 +391,8 @@ if 'submitted' in st.session_state:
                     st.warning('Cette combinaison est impossible')
                 
                 
-                order = ['EAU', 'FEU', 'VENT', 'LUMIERE', 'TENEBRE', 'ATTACK', 'DEFENSE', 'HP', 'SUPPORT']
-                # df_arte_filter = filter_dataframe(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], 'filter_arte', type_number='int', disabled=True)
+                
+                
                 def show_arte_table(keyword, substat, exclure='None'):
                     
                     i = 0
@@ -405,28 +417,7 @@ if 'submitted' in st.session_state:
                                                                order=order)
                             except IndexError: # il n'y en a plus
                                 pass
-
-                            
-                        
-                            
-                        
-                        
-                        # col_arte1, col_arte2 = st.columns(2)
-                        # with col_arte1:
-                        #     visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[i])
-                        # try:
-                        #     if keyword in substat[i+1]:
-                        #         with col_arte2:
-                        #             visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[i+1])
-                        # except IndexError: # il n'y en a plus
-                        #     pass
-                        # try:
-                        #     if keyword in substat[i-1]:
-                        #         col_arte_3, col_arte_4 = st.columns(2)
-                        #         with col_arte_3:
-                        #             visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[i-1])
-                        # except IndexError: # il n'y en a plus
-                        #     pass                 
+            
 
                 tab_reduc, tab_dmg, tab_dmg_supp, tab_precision, tab_crit, tab_soin, tab_renforcement, tab_perdus, tab_autres = st.tabs(['Réduction',
                                                                                      'Dégâts élémentaire',
@@ -491,14 +482,20 @@ if 'submitted' in st.session_state:
 
 
             # ---------------- Comparaison
+            
+            colored_header(
+            label="Comparaison",
+            description="",
+            color_name="blue-70",
+        )
 
             col1, col2 = st.columns(2)
             with col1:
-                st.header('Comparaison (Runes)')
+                st.subheader('Rune')
             with col2:
                 img = load_lottieurl(
-                    'https://assets4.lottiefiles.com/packages/lf20_yMpiqXia1k.json')
-                st_lottie(img, width=60, height=60)
+                    'https://assets9.lottiefiles.com/packages/lf20_ksrabxwb.json')
+                st_lottie(img, width=70, height=70)
 
             tab_general, tab_guilde = st.tabs(['General', st.session_state['guilde']])
             # Par rapport à tous les joueurs
@@ -517,6 +514,9 @@ if 'submitted' in st.session_state:
                 with comparaison1_3:
                     delta1_3 = int(st.session_state['score']) - max_general
                     st.metric('Record score', max_general, delta1_3)
+                    
+                
+                    
 
                 rank2_1, rank2_2 = st.columns(2)
 
@@ -526,7 +526,7 @@ if 'submitted' in st.session_state:
                     st.metric('Classement', rank_general)
 
                     # with rank2_2:
-                fig_general = comparaison_graph(df_max, 'General')
+                fig_general = comparaison_rune_graph(df_max, 'General')
                 st.plotly_chart(fig_general)
 
                 # Par rapport à sa guilde
@@ -552,9 +552,77 @@ if 'submitted' in st.session_state:
                         df_guilde.loc[st.session_state['pseudo']]['rank'])
                     st.metric('Classement', rank_guilde)
 
-                fig_guilde = comparaison_graph(
+                fig_guilde = comparaison_rune_graph(
                     df_guilde, st.session_state['guilde'])
                 st.plotly_chart(fig_guilde)
+                
+        # artefact
+        
+            col1, col2 = st.columns(2)
+            with col1:
+                st.subheader('Artefact')
+            with col2:
+                img = load_lottieurl(
+                    'https://assets4.lottiefiles.com/temporary_files/jXGKLw.json')
+                st_lottie(img, width=60, height=60)
+
+            tab_general, tab_guilde = st.tabs(['General', st.session_state['guilde']])
+            # Par rapport à tous les joueurs
+            with tab_general:
+
+                comparaison1_1, comparaison1_2, comparaison1_3 , comparaison1_4 = st.columns(4)
+
+                with comparaison1_1:
+                    st.metric('Joueurs', size_general_arte)
+
+                with comparaison1_2:
+                    delta1_2 = int(
+                        st.session_state['score_arte']) - avg_arte
+                    st.metric('Moyenne Score', avg_arte, delta1_2)
+
+                with comparaison1_3:
+                    delta1_3 = int(st.session_state['score_arte']) - max_arte
+                    st.metric('Record score', max_arte, delta1_3)
+
+                rank2_1, rank2_2 = st.columns(2)
+
+                with comparaison1_4:
+                    rank_general_arte = int(
+                        df_arte_max.loc[st.session_state['pseudo']]['rank'])
+                    st.metric('Classement', rank_general_arte)
+
+                    # with rank2_2:
+                fig_general = comparaison_rune_graph(df_arte_max, 'General', 'score_arte', 'score_arte')
+                st.plotly_chart(fig_general)
+
+                # Par rapport à sa guilde
+            with tab_guilde:
+
+                comparaison2_1, comparaison2_2, comparaison2_3, comparaison2_4 = st.columns(4)
+
+                with comparaison2_1:
+                    st.metric('Joueurs', size_arte_guilde)
+
+                with comparaison2_2:
+                    delta2_2 = int(
+                        st.session_state['score']) - avg_score_arte_guilde
+                    st.metric('Moyenne Score', avg_score_arte_guilde, delta2_2)
+
+                with comparaison2_3:
+                    delta2_3 = int(st.session_state['score_arte']) - max_arte_guilde
+                    st.metric('Record score', max_arte_guilde, delta2_3)
+
+                with comparaison2_4:
+
+                    rank_arte_guilde = int(
+                        df_arte_guilde.loc[st.session_state['pseudo']]['rank'])
+                    st.metric('Classement', rank_arte_guilde)
+
+                fig_guilde_arte = comparaison_rune_graph(
+                    df_arte_guilde, st.session_state['guilde'], 'score_arte', score_joueur='score_arte')
+                st.plotly_chart(fig_guilde_arte)
+                
+            
 
         except Exception as e:
             traceback.print_exception(type(e), e, e.__traceback__)

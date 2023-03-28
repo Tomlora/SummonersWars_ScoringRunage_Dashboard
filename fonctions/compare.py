@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 
-def comparaison(guilde_id): 
+def comparaison(guilde_id, score='score_general'): 
     """_Genere les éléments globaux puis spécifiques à la guilde spécifiée par son id_
 
     Parameters
@@ -37,35 +37,38 @@ def comparaison(guilde_id):
     df_actuel = df_actuel.transpose()
     df_actuel.reset_index(inplace=True)
     df_actuel.drop(['id'], axis=1, inplace=True)
+    
+    
+    df_actuel = df_actuel[df_actuel[score] != 0]
 
     # On regroupe les scores max de tous les joueurs enregistrés
     df_max = df_actuel.groupby('joueur').max()
 
     # On trie du plus grand au plus petit
-    df_max['rank'] = df_max['score_general'].rank(ascending=False, method='min')
+    df_max['rank'] = df_max[score].rank(ascending=False, method='min')
 
     # Nb joueurs
     size_general = len(df_max)
 
     # Score moyen
-    avg_score_general = int(round(df_max['score_general'].mean(), 0))
+    avg_score_general = int(round(df_max[score].mean(), 0))
 
     # Meilleur score
-    max_general = int(df_max['score_general'].max())
+    max_general = int(df_max[score].max())
 
     # On refait les mêmes étapes pour la guilde Endless
     df_guilde = df_actuel[df_actuel['guilde_id'] == guilde_id]
     # df_guilde = df_actuel[df_actuel['guilde'] == guilde]
     df_guilde_max = df_guilde.groupby('joueur').max()
     size_guilde = len(df_guilde_max)
-    avg_score_guilde = int(round(df_guilde_max['score_general'].mean(), 0))
-    max_guilde = int(df_guilde_max['score_general'].max())
-    df_guilde_max['rank'] = df_guilde_max['score_general'].rank(
+    avg_score_guilde = int(round(df_guilde_max[score].mean(), 0))
+    max_guilde = int(df_guilde_max[score].max())
+    df_guilde_max['rank'] = df_guilde_max[score].rank(
         ascending=False, method='min')
 
     return size_general, avg_score_general, max_general, size_guilde, avg_score_guilde, max_guilde, df_max, df_guilde_max
 
-def comparaison_graph(df, name):
+def comparaison_rune_graph(df, name, score='score_general', score_joueur='score'):
     """_Génère le graphique de comparaison_
 
     Parameters
@@ -83,15 +86,16 @@ def comparaison_graph(df, name):
     fig = go.Figure()
 
     fig.add_trace(go.Box(
-        y=df['score_general'],
+        y=df[score],
         marker_color='#2C75FF',
         name=name,
         quartilemethod='inclusive',
     ))
 
+
     fig.add_trace(go.Scatter(
         x=['Score personnel'],
-        y=[int(st.session_state['score'])],
+        y=[int(st.session_state[score_joueur])],
         name='Score personnel',
         mode='markers',
         marker_color='rgba(255,255,255,1)',  # à modifier

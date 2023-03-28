@@ -118,6 +118,7 @@ def build():
 
     col1, col2 = st.columns([0.8, 0.2])
 
+
     # DataFrame avec les monstres
     with col1:
         st.subheader('Chercher un monstre')
@@ -126,8 +127,10 @@ def build():
     with col2:
         image = swarfarm.loc[swarfarm['name'] ==
                              monster_selected]['image_filename'].values[0]
+
         st.image(
             f'https://swarfarm.com/static/herders/images/monsters/{image}')
+
 
     # on charge les build sauvegardés
     df_build_save = lire_bdd_perso(
