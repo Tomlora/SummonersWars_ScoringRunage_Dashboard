@@ -355,9 +355,7 @@ if 'submitted' in st.session_state:
             sauvegarde_bdd(df_global, 'sw_monsters', 'append', index=False)
             
             with tab_arte:
-                
-                st.info('Tu peux cocher le mode élargi dans le menu en haut à droite pour mieux voir les tableaux')
-                
+               
                 liste_substat = st.session_state.data_arte.df_top['substat'].unique()
                 df_arte = st.session_state.data_arte.df_top.copy()
                 
@@ -381,19 +379,112 @@ if 'submitted' in st.session_state:
                     st.warning('Cette combinaison est impossible')
                 
                 
-                df_arte_filter = filter_dataframe(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], 'filter_arte', type_number='int', disabled=True)
-                               
-                
+                # df_arte_filter = filter_dataframe(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], 'filter_arte', type_number='int', disabled=True)
+                def show_arte_table(keyword, substat, exclure='None'):
                     
-                for i in range (0, len(liste_substat), 2):
-                    col_arte1, col_arte2 = st.columns(2)
-                    with col_arte1:
-                        visualisation_top_arte(df_arte_filter, liste_substat[i])
-                    try:
-                        with col_arte2:
-                            visualisation_top_arte(df_arte_filter, liste_substat[i+1])
-                    except IndexError: # il n'y en a plus
-                        continue
+                    i = 0
+                    index_keyword = []
+                    
+                    for i in range(len(substat)):
+                        if keyword in substat[i] and not exclure in substat[i]:
+                            index_keyword.append(i)
+                            
+                    if len(index_keyword) >= 1:
+                        
+                        for n in range(0,len(index_keyword), 2):
+                            element = index_keyword[n]
+                            col_arte1, _, col_arte2 = st.columns([0.4,0.1,0.4])
+                            with col_arte1:
+                                visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[element])
+                            try:
+                                if keyword in substat[element+1]:
+                                    with col_arte2:
+                                        visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[element+1])
+                            except IndexError: # il n'y en a plus
+                                pass
+
+                            
+                        
+                            
+                        
+                        
+                        # col_arte1, col_arte2 = st.columns(2)
+                        # with col_arte1:
+                        #     visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[i])
+                        # try:
+                        #     if keyword in substat[i+1]:
+                        #         with col_arte2:
+                        #             visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[i+1])
+                        # except IndexError: # il n'y en a plus
+                        #     pass
+                        # try:
+                        #     if keyword in substat[i-1]:
+                        #         col_arte_3, col_arte_4 = st.columns(2)
+                        #         with col_arte_3:
+                        #             visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[i-1])
+                        # except IndexError: # il n'y en a plus
+                        #     pass                 
+
+                tab_reduc, tab_dmg, tab_dmg_supp, tab_precision, tab_crit, tab_soin, tab_renforcement, tab_perdus, tab_autres = st.tabs(['Réduction',
+                                                                                     'Dégâts élémentaire',
+                                                                                     'Degats supp',
+                                                                                     'Précision',
+                                                                                     'CRIT',
+                                                                                     'SOIN',
+                                                                                     'RENFORCEMENT',
+                                                                                     'EN FONCTION PERDUS',
+                                                                                     'AUTRES'])    
+
+                    
+                with tab_reduc:
+
+                    show_arte_table('REDUCTION', liste_substat)
+                        
+                with tab_dmg:
+
+                    show_arte_table('DMG SUR', liste_substat, 'CRIT')
+                    
+                    
+                with tab_dmg_supp:
+
+                    show_arte_table('DMG SUPP', liste_substat)
+
+                    
+                with tab_precision:
+
+                    show_arte_table('PRECISION', liste_substat)
+
+                    
+                with tab_crit:
+
+                    show_arte_table('CRIT', liste_substat)
+
+
+                with tab_renforcement:
+
+                    show_arte_table('RENFORCEMENT', liste_substat)
+
+                with tab_soin:
+
+                    show_arte_table('SOIN', liste_substat)
+                    
+                with tab_perdus:
+                    show_arte_table('PERDUS', liste_substat)
+                    show_arte_table('DEF EN FONCTION', liste_substat)
+
+
+                with tab_autres:
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        show_arte_table('REVIVE', liste_substat)
+                        show_arte_table('BOMBE', liste_substat)
+                        show_arte_table('COOP', liste_substat)
+                    with col2:
+                        show_arte_table('REVENGE', liste_substat)
+                        show_arte_table('VOL', liste_substat)
+                        show_arte_table('INCAPACITE', liste_substat)
+
 
 
             # ---------------- Comparaison

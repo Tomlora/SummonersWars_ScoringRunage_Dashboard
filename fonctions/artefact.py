@@ -346,7 +346,7 @@ class Artefact():
                
         self.df_max = self.df_max[['arte_type', 'arte_attribut', 'max_value']]
         
-        self.df_max.to_excel('df_max2.xlsx')
+
         self.df_max_arte_type = self.df_max.groupby(['arte_type', 'substat']).agg({'max_value' : 'max'})
         self.df_max_element = self.df_max.groupby(['arte_attribut', 'substat']).agg({'max_value' : 'max'})
         self.df_max_substat = self.df_max.groupby(['substat']).agg({'max_value' : 'max'})
@@ -437,7 +437,7 @@ class Artefact():
         return self.df_top
     
     
-def visualisation_top_arte(df, column):
+def visualisation_top_arte(df, column, use_container_width=True):
         
     df_filter = df[df['substat'] == column]
         
@@ -447,4 +447,4 @@ def visualisation_top_arte(df, column):
         
         st.write(f'Top 5 {column.capitalize()}')
             
-        st.dataframe(tcd)
+        st.dataframe(tcd, use_container_width=use_container_width)
