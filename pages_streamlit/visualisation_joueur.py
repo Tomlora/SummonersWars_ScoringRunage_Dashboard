@@ -39,7 +39,7 @@ def filter_data(df, selected_options):
     df_filtered = df[df['date'].isin(selected_options)]
     return df_filtered
 
-@st.cache_data(ttl=timedelta(minutes=5))
+@st.cache_data(ttl=timedelta(minutes=5), show_spinner='Chargement des joueurs...')
 def chargement_data_joueur(df_guilde, guilde_target):
     if guilde_target == '*':
         df = lire_bdd_perso(
@@ -84,7 +84,7 @@ def chargement_data_joueur(df_guilde, guilde_target):
         
     return df, df_complet_grp, df_arte
         
-@st.cache_data
+@st.cache_data(ttl=timedelta(minutes=5), show_spinner='Chargement des guildes...')
 def chargement_guilde():
     df_guilde = lire_bdd_perso(f'''SELECT * from sw_guilde''', index_col='guilde_id').transpose()
     return df_guilde

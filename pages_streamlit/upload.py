@@ -131,6 +131,8 @@ if st.session_state['file'] is not None and st.session_state.submitted:
                 # calcul max value rune
                 
             st.session_state.df_max = data_rune.calcul_value_max() # TODO : Reduire le temps de calcul
+            
+            
 
 
 

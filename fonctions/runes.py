@@ -534,15 +534,49 @@ class Rune():
             df_avg['value'] = df_avg[['first_sub_value_total', 'second_sub_value_total', 'third_sub_value_total', 'fourth_sub_value_total']].sum(axis=1)
             df_avg[f'top{n}'] = df_avg['value'].apply(lambda liste: np.sort(np.array(liste))[-n:].mean())
             
+            if n == 10:
+                return df_avg[f'top{n}'].values, df_avg
+            
             return df_avg[f'top{n}'].values
         
         
         for i in [5,10,15,25]:
-            self.df_max[f'top{i}'] = calcul_avg(self.data_max, i)
+            if i != 10:
+                self.df_max[f'top{i}'] = calcul_avg(self.data_max, i)
+            else:
+                self.df_max[f'top{i}'], self.df_best_value = calcul_avg(self.data_max, i)
         
         
         self.df_max = optimisation_int(self.df_max, ['int64'])
-        # self.df_max = optimisation_int(self.df_max, ['float64'], 'float16')
+        
+        self.df_best_value = self.df_best_value[['first_sub', 'rune_set', 'value']]
+        
+        def fill_value(x):
+            long = len(x)
+            if long < 10:
+                for i in range(10-long): 
+                    x.append(0) 
+            return x
+        
+        self.df_best_value['value'] = self.df_best_value['value'].apply(fill_value)
+        self.df_best_value[f'value'] = self.df_best_value['value'].apply(lambda liste: np.sort(np.array(liste))[-10:])
+        
+
+        self.df_best_value[['10', '9', '8', '7', '6', '5', '4', '3', '2', '1']] = self.df_best_value['value'].apply(lambda x: pd.Series(list(x))) 
+        
+        
+        
+        self.df_best_value.drop(['value'], axis=1, inplace=True)
+        self.df_best_value.rename(columns={'first_sub' : 'substat'}, inplace=True)
+
+        
+        self.df_best_value = optimisation_int(self.df_best_value, ['int64'])
+        
+       
+        self.df_max = self.df_max.reset_index().merge(self.df_best_value, on=['substat', 'rune_set'])
+
+        self.df_max.set_index('substat', inplace=True)
+
         
         return self.df_max
     
