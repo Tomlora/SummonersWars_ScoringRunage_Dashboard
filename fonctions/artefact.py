@@ -435,9 +435,42 @@ class Artefact():
 
 
         return self.df_top
+  
+def return_style(color, background_color):
+            
+    style_perso = [
+        ('font-size', '14px'),
+        ('text-align', 'center'),
+        ('font-weight', 'bold'),
+        ('color', color),
+        ('background-color', background_color)
+        ]
+            
+    return style_perso
+        
+water = return_style('#FFFFFF', '#0000FF')
+feu = return_style('#FFFFFF', '#FF0000')
+vent = return_style('#FFFFFF', '#FF7F00')
+light = return_style('#000000', '#FFFFFF')
+dark = return_style('#FFFFFF', '#6F2DA8')
+attack = return_style('#FFFFFF', '#2E86C1')
+defense = return_style('#FFFFFF', '#C0392B')
+hp = return_style('#FFFFFF', '#45B39D')
+support = return_style('#FFFFFF', '#6E2C00')
+                                                                           
+styles = [
+        dict(selector="thead tr th.col_heading.level0.col0.css-3d58hu.edw49t11", props=water),
+        dict(selector="thead tr th.col_heading.level0.col1.css-3d58hu.edw49t11", props=feu),
+        dict(selector="thead tr th.col_heading.level0.col2.css-3d58hu.edw49t11", props=vent),
+        dict(selector="thead tr th.col_heading.level0.col3.css-3d58hu.edw49t11", props=light),
+        dict(selector="thead tr th.col_heading.level0.col4.css-3d58hu.edw49t11", props=dark),
+        dict(selector="thead tr th.col_heading.level0.col5.css-3d58hu.edw49t11", props=attack),
+        dict(selector="thead tr th.col_heading.level0.col6.css-3d58hu.edw49t11", props=defense),
+        dict(selector="thead tr th.col_heading.level0.col7.css-3d58hu.edw49t11", props=hp),
+        dict(selector="thead tr th.col_heading.level0.col8.css-3d58hu.edw49t11", props=support),
+        ]   
     
-    
-def visualisation_top_arte(df, column, use_container_width=True, order=None):
+def visualisation_top_arte(df, column, use_container_width0=True, order=None):
         
     df_filter = df[df['substat'] == column]
         
@@ -451,5 +484,12 @@ def visualisation_top_arte(df, column, use_container_width=True, order=None):
         # Sélectionner les colonnes existantes dans l'ordre souhaité
             existing_cols = [col for col in order if col in tcd.columns]
             tcd = tcd.loc[:, existing_cols]
-            
-        st.dataframe(tcd, use_container_width=use_container_width)
+        
+        
+        
+
+
+        # table
+        df2=tcd.astype('int').astype('str').style.set_properties(**{'text-align': 'center'}).set_table_styles(styles)
+        st.table(df2)    
+        # st.dataframe(tcd, use_container_width=use_container_width)
