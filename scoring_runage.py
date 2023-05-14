@@ -45,6 +45,7 @@ show_pages([
                     Page('pages_streamlit/inventaire_artefact.py', 'Inventaire', icon=':open_file_folder:'),
                     Page('pages_streamlit/stats_artefact.py', 'Statistiques', icon=':bar_chart:'),
                     Page('pages_streamlit/dmg_add.py', 'Calculateur dmg', icon=':1234:'),
+                    Page('pages_streamlit/use_arte.py', 'Where2Use', icon=':brain:'),
                     Section(name='Paramètres', icon=':gear:'),
                     Page('pages_streamlit/visibility.py', 'Ma visibilité', icon=':eyes:'),
                     Page('pages_streamlit/options.py', 'Mes données', icon=':iphone:'),
