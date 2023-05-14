@@ -76,55 +76,61 @@ def choose_stats(stats, key):
 
 df_where_to_use = charger_data_artefact()
 
+tab1, tab2 = st.tabs(['Recherche par Artefact', 'Recherche par Monstre'])
+
 stats = df_where_to_use.columns.drop(['Family', 'Element', 'Awakened', 'Attribute', 'Preferred stats', 'Include', 'name', 'url', 'natural_stars'])
 
-col1, col2, col3, col4 = st.columns(4)
+with tab1:
+    col1, col2, col3, col4 = st.columns(4)
 
-with col1:
-    stat1, priority1 = choose_stats(stats, 'stats1')
-with col2:
-    stat2, priority2 = choose_stats(stats, 'stats2')
+    with col1:
+        stat1, priority1 = choose_stats(stats, 'stats1')
+    with col2:
+        stat2, priority2 = choose_stats(stats, 'stats2')
 
-add_vertical_space(1)    
+    add_vertical_space(1)    
 
-# col3, col4 = st.columns(2)
-with col3:
-    stat3, priority3 = choose_stats(stats, 'stats3')
-with col4:
-    stat4, priority4 = choose_stats(stats, 'stats4')
-    
-if stat1 == None and stat2 == None and stat3 == None and stat4 == None:
-    st.warning('Veuillez sélectionner au moins une stat')
-else:    
+    # col3, col4 = st.columns(2)
+    with col3:
+        stat3, priority3 = choose_stats(stats, 'stats3')
+    with col4:
+        stat4, priority4 = choose_stats(stats, 'stats4')
+
     df_final = df_where_to_use.copy()
-    if stat1 != None:
-        df_final = df_final[df_final[stat1] >= priority1]
+    for stat, priority in zip([stat1, stat2, stat3, stat4], [priority1, priority2, priority3, priority4]):
+        if stat != None:
+            df_final = df_final[df_final[stat] >= priority]
 
-    if stat2 != None:
-        df_final = df_final[df_final[stat2] >= priority2]
-
-    if stat3 != None:
-        df_final = df_final[df_final[stat3] >= priority3] 
-
-    if stat4 != None:
-        df_final = df_final[df_final[stat4] >= priority4]    
-
-
-    # Modif DF
-    df_final = df_final[['Awakened', 'Attribute', 'Element', 'Family', 'Preferred stats', 'url', 'natural_stars']]  
+    if stat1 == None and stat2 == None and stat3 == None and stat4 == None:
+        st.warning('Veuillez sélectionner au moins une stat')
+    else:
+        # Modif DF
+        df_final = df_final[['Awakened', 'Attribute', 'Element', 'Family', 'Preferred stats', 'url', 'natural_stars']]  
+        
+        df_final.columns = ['Monstre', 'Attribut', 'Element', 'Famille', 'Stats préférées', 'url', 'Etoiles']
+        
+        df_final['Stats préférées'] = df_final['Stats préférées'].str.replace('Any', 'Toutes')  
+        
+        # Filtre dispo    
+        index_filter = filter_dataframe(
+                df_final.drop(['url', 'Etoiles'], axis=1), 'data_build', type_number='int').index
+        
+        data_filter = df_final.loc[index_filter].dropna(subset='url').sort_values(by=['Etoiles', 'Famille'], ascending=[False, False])
+        
+        
+        st.image(data_filter['url'].tolist(), width=50, caption=data_filter['Monstre'].tolist()) 
+        
+with tab2:
+      
+    monster = st.multiselect('Monstre', df_where_to_use['Awakened'].unique(), key='monster')
     
-    df_final.columns = ['Monstre', 'Attribut', 'Element', 'Famille', 'Stats préférées', 'url', 'Etoiles']
+    df_monster = df_where_to_use[df_where_to_use['Awakened'].isin(monster)]\
+        .drop(['Family', 'Element', 'Attribute', 'Preferred stats', 'Include', 'name', 'url', 'natural_stars'], axis=1)\
+        .set_index('Awakened')
+        
+    df_monster.replace({0: '/', 1: 'Faible', 2: 'Moyen', 3 : 'Elevé' }, inplace=True)
     
-    df_final['Stats préférées'] = df_final['Stats préférées'].str.replace('Any', 'Toutes')  
-    
-    # Filtre dispo    
-    index_filter = filter_dataframe(
-            df_final.drop(['url', 'Etoiles'], axis=1), 'data_build', type_number='int').index
-    
-    data_filter = df_final.loc[index_filter].dropna(subset='url').sort_values(by=['Etoiles', 'Famille'], ascending=[False, False])
-    
-    
-    st.image(data_filter['url'].tolist(), width=50, caption=data_filter['Monstre'].tolist()) 
+    st.dataframe(df_monster, use_container_width=True)
     
     
 
