@@ -7,11 +7,12 @@ from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
 from params.coef import coef_set, coef_set_spd, liste_substat_arte
 from streamlit_extras.switch_page_button import switch_page
-from fonctions.gestion_bdd import sauvegarde_bdd, update_info_compte, get_user, requete_perso_bdd, cancel
+from fonctions.gestion_bdd import sauvegarde_bdd, update_info_compte, get_user, requete_perso_bdd, cancel, get_number_row
 from fonctions.runes import Rune
 from fonctions.artefact import Artefact
 from st_pages import add_indentation
 from sqlalchemy.exc import InternalError, OperationalError
+from dateutil import tz
 
 try:
     st.set_page_config(layout='wide')
@@ -40,6 +41,16 @@ def chargement_params():
 st.session_state.category_selected, st.session_state.category_selected_spd, st.session_state.coef_set, st.session_state.coef_set_spd = chargement_params()
 
 @st.cache_data(ttl=timedelta(minutes=30))
+def nb_data():
+    timezone=tz.gettz('Europe/Paris')
+    heure_update = datetime.now(timezone)
+    heure = heure_update.strftime("%H:%M")
+    nb_user = get_number_row("sw_user")
+    nb_guilde = get_number_row("sw_guilde")
+    nb_score = get_number_row("sw_score")
+    return nb_user, nb_guilde, nb_score, heure
+
+@st.cache_data(ttl=timedelta(minutes=30))
 def date_du_jour():
     currentMonth = str(datetime.now().month)
     currentYear = str(datetime.now().year)
@@ -55,6 +66,8 @@ if 'submitted' not in st.session_state:
 
 col1, col2, col3 = st.columns([0.25,0.50,0.25])
 
+nb_user, nb_guilde, nb_score, heure = nb_data()
+
 with col2:
     st.title('Scoring SW')
     with st.form('Data du compte'):
@@ -64,6 +77,9 @@ with col2:
                 'Calcule mon score')
         st.info(body='Vous serez redirigé automatiquement à la fin du téléchargement.', icon="🚨")
         st.warning(body="L'application est par defaut en mode elargi. L'affichage est modifiable dans le menu en haut à droite", icon="⚠️")
+        
+        st.markdown(f':blue[{heure}] : :green[{nb_user}] utilisateurs | :violet[{nb_guilde}] guildes | :orange[{nb_score}] scores')
+
 
 if not st.session_state.submitted:
     col1, col2, col3 = st.columns(3)
