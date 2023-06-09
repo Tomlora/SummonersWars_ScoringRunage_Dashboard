@@ -2,6 +2,7 @@ streamlit==1.19.0
 pandas==1.4.3
 numpy
 plotly_express
+python-dateutil==2.8.2
 json5==0.9.6
 jsonschema==4.4.0
 sqlalchemy==2.0.4
