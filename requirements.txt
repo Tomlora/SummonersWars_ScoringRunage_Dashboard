@@ -16,3 +16,4 @@ streamlit-lottie
 protobuf
 st-pages
 streamlit-extras
+altair<5
