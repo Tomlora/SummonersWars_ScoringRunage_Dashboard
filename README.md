@@ -1,6 +1,10 @@
 # SummonersWars_ScoringRunage_Api
 Dashboard permettant d'attribuer un score aux runes d'un compte Summoners Wars
 
+### Lien
+
+https://scoringsw.herokuapp.com/
+
 # Fonctionnement
 
 L'utilisateur upload un fichier json, qui est généré par [SWEX](https://github.com/Xzandro/sw-exporter) et qui récapitule l'ensemble des informations de son compte.
@@ -108,8 +112,6 @@ Il est également possible de télécharger ces données au format Excel, et mis
 
 D'autres outils sont disponibles :) 
 
-# Lien
 
-https://scoringsw.herokuapp.com/
 
 
