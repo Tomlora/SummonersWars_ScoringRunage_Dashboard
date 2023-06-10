@@ -46,12 +46,17 @@ show_pages([
                     Page('pages_streamlit/stats_artefact.py', 'Statistiques', icon=':bar_chart:'),
                     Page('pages_streamlit/dmg_add.py', 'Calculateur dmg', icon=':1234:'),
                     Page('pages_streamlit/use_arte.py', 'Where2Use', icon=':brain:'),
+                    Section(name='Autres', icon=':star:'),
+                    Page('pages_streamlit/ladder_others.py', 'Ladder PvP | WB', icon=':trophy:'),
                     Section(name='Paramètres', icon=':gear:'),
                     Page('pages_streamlit/visibility.py', 'Ma visibilité', icon=':eyes:'),
                     Page('pages_streamlit/options.py', 'Mes données', icon=':iphone:'),
-                    Section(name='Administration', icon=':star:'),
-                    Page('pages_streamlit/visualisation_joueur.py', 'Visualisation', icon=':mag:'),
-                    Page('pages_streamlit/box.py', 'Box guilde', icon=':briefcase:' )
+                    Section(name='Mise à jour', icon=':loudspeaker:'),
+                    Page('pages_streamlit/update.py', 'Version 10/06/23', icon=':speaker:')
+
+                    # Section(name='Administration', icon=':star:'),
+                    # Page('pages_streamlit/visualisation_joueur.py', 'Visualisation', icon=':mag:'),
+                    # Page('pages_streamlit/box.py', 'Box guilde', icon=':briefcase:' )
                     ])
 
 
