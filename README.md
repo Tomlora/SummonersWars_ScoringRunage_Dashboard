@@ -10,7 +10,7 @@ Il a ensuite accès à un certain nombre de pages.
 Les données sont stockées dans une base de données PostgreSQL. __Seuls les scores, la date, le pseudo et la guilde du joueur sont stockées.__
 
  <p align="center">
-  <img width="300" height="500" src="https://github.com/Tomlora/SummonersWars_ScoringRunage_Dashboard/blob/main/img/menu_sw.png?raw=true">
+  <img width="300" height="700" src="https://github.com/Tomlora/SummonersWars_ScoringRunage_Dashboard/blob/main/img/menu_sw.png?raw=true">
 </p>
 
 ## Calcul du score
