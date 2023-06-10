@@ -6,6 +6,7 @@ from streamlit_extras.add_vertical_space import add_vertical_space
 from streamlit_extras.no_default_selectbox import selectbox
 from st_pages import add_indentation
 from fonctions.visualisation import filter_dataframe
+from fonctions.gestion_bdd import lire_bdd
 
 from fonctions.visuel import css
 
@@ -41,15 +42,13 @@ def supprimer_variables_peu_utilisables(data, condition): # 'nom' à améliorer
 
 st.title('Où utiliser ?')
 st.info("**Note** : Cet onglet étant nouveau, il peut y avoir des incohérences", icon="ℹ️")
+st.info("Chaque monstre dispose de 4 stats à priorité élevé, 4 à priorité moyenne et 8 à priorité faible", icon="ℹ️")
 
 add_vertical_space(1)
 
-@st.cache_data
+@st.cache_data(show_spinner='Chargement de la data...')
 def charger_data_artefact():
-    df = pd.read_excel('artifact_tool.xlsm', sheet_name='User monsters', header=3)
-    df = supprimer_variables_peu_utilisables(df, 0.95,) # colonnes inutiles
-    df.drop(['All\nOK?', 3, 2, 1, 'Owned'], axis=1, inplace=True) # colonnes inutiles
-    df.dropna(thresh=10, inplace=True) # on retire les mobs qui ont pas assez d'info
+    df = lire_bdd('sw_where2use', index='index').T
     
     swarfarm = pd.read_excel('swarfarm.xlsx').drop('id', axis=1)
     
@@ -69,10 +68,6 @@ def choose_stats(stats, key):
     
     return stats, priority
     
-    
-    
-    
-
 
 df_where_to_use = charger_data_artefact()
 
