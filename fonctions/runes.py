@@ -21,6 +21,60 @@ class Rune():
                     11: 'RES',
                     12: 'ACC'}
         
+        # Valeur max
+        sub = {1: (375 * 5) * 2,  # PV flat
+               2: 8 * 5,  # PV%
+               3: (20 * 5) * 2,  # ATQ FLAT
+               4: 8 * 5,  # ATQ%
+               5: (20 * 5) * 2,  # DEF FLAT
+               6: 8 * 5,  # DEF %
+               8: 6 * 5,  # SPD
+               9: 6 * 5,  # CRIT
+               10: 7 * 5,  # DCC
+               11: 8 * 5,  # RES
+               12: 8 * 5}  # ACC
+        
+        self.sub_max_lgd = {1: 550,
+                            2: 10,
+                            3: 30,
+                            4: 10,
+                            5: 30,
+                            6: 10,
+                            8: 5}
+        
+        self.sub_max_heroique = {1: 450,
+                                 2: 7,
+                                 3: 22,
+                                 4: 7,
+                                 5: 22,
+                                 6: 7,
+                                 8: 4}
+        
+        self.set = {1: "Energy",
+                    2: "Guard",
+                    3: "Swift",
+                    4: "Blade",
+                    5: "Rage",
+                    6: "Focus",
+                    7: "Endure",
+                    8: "Fatal",
+                    10: "Despair",
+                    11: "Vampire",
+                    13: "Violent",
+                    14: "Nemesis",
+                    15: "Will",
+                    16: "Shield",
+                    17: "Revenge",
+                    18: "Destroy",
+                    19: "Fight",
+                    20: "Determination",
+                    21: "Enhance",
+                    22: "Accuracy",
+                    23: "Tolerance",
+                    24 : "Seal",
+                    25 : 'Intangible',
+                    99: "Immemorial"}
+        
         self.property_grind = {1: 'Meule : HP', # 141
                           2: 'Meule : HP%', # 125
                           3: 'Meule : ATQ',
@@ -37,6 +91,7 @@ class Rune():
                                 6: 'Gemme : DEF%',
                                 8: "Gemme : SPD"}
         
+        # Inventaire
         for rune in self.data_json['runes']:
             first_sub = 0
             first_sub_value = 0
@@ -173,27 +228,9 @@ class Rune():
 
         # # Map des sets
 
-        self.set = {1: "Energy", 2: "Guard", 3: "Swift", 4: "Blade", 5: "Rage",
-                    6: "Focus", 7: "Endure", 8: "Fatal", 10: "Despair", 11: "Vampire", 13: "Violent",
-                    14: "Nemesis", 15: "Will", 16: "Shield", 17: "Revenge", 18: "Destroy", 19: "Fight",
-                    20: "Determination", 21: "Enhance", 22: "Accuracy", 23: "Tolerance", 99: "Immemorial"}
+
 
         self.data['rune_set'] = self.data['rune_set'].map(self.set)
-
-        # # Efficiency
-
-        # Valeur max
-        sub = {1: (375 * 5) * 2,  # PV flat
-               2: 8 * 5,  # PV%
-               3: (20 * 5) * 2,  # ATQ FLAT
-               4: 8 * 5,  # ATQ%
-               5: (20 * 5) * 2,  # DEF FLAT
-               6: 8 * 5,  # DEF %
-               8: 6 * 5,  # SPD
-               9: 6 * 5,  # CRIT
-               10: 7 * 5,  # DCC
-               11: 8 * 5,  # RES
-               12: 8 * 5}  # ACC
 
         # On map les valeurs max
         self.data['first_sub_value_max'] = self.data['first_sub'].map(sub)
@@ -384,8 +421,9 @@ class Rune():
 
         self.data_spd = self.data_spd[['rune_set', 'spd']]
 
-        self.data_spd['spd_binned'] = pd.cut(
-            self.data_spd['spd'], bins=(23, 26, 29, 32, 36, 40), right=False)
+        self.data_spd['spd_binned'] = pd.cut(self.data_spd['spd'], 
+                                            bins=(23, 26, 29, 32, 36, 40),
+                                            right=False)
 
         self.data_spd.dropna(inplace=True)
 
@@ -588,8 +626,7 @@ class Rune():
         self.data_grind = self.data_grind[self.data_grind['level'] > 11]
         self.data_grind = self.data_grind[self.data_grind['stars'] > 5]
         
-        self.sub_max_lgd = {1: 550, 2: 10, 3: 30, 4: 10, 5: 30, 6: 10, 8: 5}
-        self.sub_max_heroique = {1: 450, 2: 7, 3: 22, 4: 7, 5: 22, 6: 7, 8: 4}
+
 
     # Certaines stats ne sont pas meulables. On remplace donc le potentiel de meule par 0
 
@@ -684,9 +721,7 @@ class Rune():
         data est le nom du df à modifier : [data, data_grind]
         
         Remplace les id des monstres par leurs noms'''
-        
 
-        
         if data == 'data_grind':
             self.data_grind['rune_equiped'] = self.data_grind['rune_equiped'].replace(monsters)
         elif data == 'data':

@@ -117,7 +117,9 @@ def supprimer_data(joueur, date):
                     DELETE FROM sw_spd WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_detail WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_max WHERE "id" = :joueur AND date = :date;
-                    DELETE FROM sw_arte_max WHERe "id" =:joueur AND date = :date;''')  # :var_name
+                    DELETE FROM sw_arte_max WHERE "id" =:joueur AND date = :date;
+                    DELETE FROM sw_wb WHERE "id_joueur" =:joueur AND date = :date;
+                    DELETE FROM sw_pvp WHERE "id_joueur" =:joueur AND date = :date;''')  # :var_name
     conn.execute(sql1, params_sql)
     conn.commit()
 
@@ -136,6 +138,8 @@ def supprimer_data_all(joueur):
                     DELETE from sw_detail WHERE "id" = :joueur;
                     DELETE from sw_arte_max WHERE "id" = :joueur;
                     DELETE FROM sw_user WHERE "id" = :joueur;
+                    DELETE FROM sw_wb WHERE "id_joueur" =:joueur;
+                    DELETE FROM sw_pvp WHERE "id_joueur" =:joueur;
                     ''')  
     conn.execute(sql1, params_sql)
     conn.commit()
@@ -175,6 +179,7 @@ def requete_perso_bdd(request: text, dict_params: dict):
 
 def get_user(joueur, type: str = 'name_user', id_compte: int = 0):
     '''Return l'id, la guilde, la visibilité et le rank du joueur demandé
+        id_compte est dans le cas de l'ancien système où on ne prenait pas l'id du compte. Utile pour faire la maj et adapter la ligne au nouveau système
     type : name_user ou id'''
     # conn = engine.connect()
     if type == 'name_user':
@@ -188,6 +193,7 @@ def get_user(joueur, type: str = 'name_user', id_compte: int = 0):
     visibility = data[0]['visibility']
     guildeid = data[0]['guilde_id']
     rank = data[0]['rank']
+    
     # Dans l'ancien système, on ne prenait pas l'id. On regarde s'il faut maj
     if data[0]['joueur_id'] == 0 and type == 'name_user':
         sql = text(
@@ -225,3 +231,10 @@ def cleaning_only_guilde(x):
         if x['guilde'] != st.session_state.guilde:
             x['private'] = 1
     return x
+
+
+def get_number_row(table):
+    sql = text(f'SELECT COUNT(*) FROM {table}')
+    data = conn.execute(sql)
+    data = data.mappings().all()
+    return data[0]['count']
