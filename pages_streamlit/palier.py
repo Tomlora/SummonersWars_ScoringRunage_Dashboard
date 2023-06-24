@@ -8,6 +8,8 @@ from streamlit_lottie import st_lottie
 from streamlit_extras.switch_page_button import switch_page
 from st_pages import add_indentation
 
+
+
 css()
 add_indentation()
 
@@ -98,6 +100,8 @@ def palier_page():
             with tab4:
                 fig_rune_120 = plotline_evol_rune_visu(data_120)
                 st.plotly_chart(fig_rune_120)
+            
+
 
             st.subheader('Speed')
 

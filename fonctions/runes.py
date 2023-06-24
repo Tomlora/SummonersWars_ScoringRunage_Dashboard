@@ -515,13 +515,15 @@ class Rune():
 
         self.data_max = self.data.copy()
         
+        self.data_max = self.data_max[self.data_max['level'] >= 12]
+        
 
         self.data_max = self.map_stats(self.data_max, ['innate_type', 'first_sub', 'second_sub', 'third_sub', 'fourth_sub', 'main_type'])
     
                 
         self.data_max['first_sub_value_total'] = (
             self.data_max['first_sub_value'] + self.data_max['first_sub_grinded_value'])
-        self.data['second_sub_value_total'] = (
+        self.data_max['second_sub_value_total'] = (
             self.data_max['second_sub_value'] + self.data_max['second_sub_grinded_value'])
         self.data_max['third_sub_value_total'] = (
             self.data_max['third_sub_value'] + self.data_max['third_sub_grinded_value'])
@@ -946,4 +948,73 @@ class Rune():
         print(data_avg_top_avg)
         
         print(time()-a)
+        
+        
+
+        
+    def count_per_slot(self):
+        """On compte par set et par slot le nombre de runes ayant la même valeur en substat"""
+
+        self.data_per_slot = self.data.copy()
+        
+        self.data_per_slot = self.data_per_slot[self.data_per_slot['level'] >= 12]
+        
+        self.data_per_slot = self.map_stats(self.data_per_slot, ['first_sub', 'second_sub', 'third_sub', 'fourth_sub'])
+                   
+        self.data_per_slot['first_sub_value_total'] = (
+            self.data_per_slot['first_sub_value'] + self.data_per_slot['first_sub_grinded_value'])
+        self.data_per_slot['second_sub_value_total'] = (
+            self.data_per_slot['second_sub_value'] + self.data_per_slot['second_sub_grinded_value'])
+        self.data_per_slot['third_sub_value_total'] = (
+            self.data_per_slot['third_sub_value'] + self.data_per_slot['third_sub_grinded_value'])
+        self.data_per_slot['fourth_sub_value_total'] = (
+            self.data_per_slot['fourth_sub_value'] + self.data_per_slot['fourth_sub_grinded_value'])
+
+                
+        def prepare_data(data_max, aggfunc):        
+            df_first = pd.pivot_table(data_max, index=['first_sub', 'rune_set', 'rune_slot', 'first_sub_value_total'], values='first_sub_value', aggfunc=aggfunc).reset_index()
+            df_second = pd.pivot_table(data_max, index=['second_sub', 'rune_set', 'rune_slot', 'second_sub_value_total'], values='second_sub_value', aggfunc=aggfunc).reset_index()
+            df_third = pd.pivot_table(data_max, index=['third_sub', 'rune_set', 'rune_slot', 'third_sub_value_total'], values='third_sub_value', aggfunc=aggfunc).reset_index()
+            df_fourth = pd.pivot_table(data_max, index=['fourth_sub', 'rune_set', 'rune_slot', 'fourth_sub_value_total'], values='fourth_sub_value', aggfunc=aggfunc).reset_index()
+
+            df_per_slot = df_first.merge(df_second, left_on=['first_sub', 'rune_set', 'rune_slot', 'first_sub_value_total'], right_on=['second_sub', 'rune_set', 'rune_slot', 'second_sub_value_total'], how='outer')
+
+            df_per_slot = df_per_slot.merge(df_third, left_on=['first_sub', 'rune_set', 'rune_slot', 'first_sub_value_total'], right_on=['third_sub', 'rune_set', 'rune_slot', 'third_sub_value_total'], how='outer')
+
+            df_per_slot = df_per_slot.merge(df_fourth, left_on=['first_sub', 'rune_set', 'rune_slot', 'first_sub_value_total'], right_on=['fourth_sub', 'rune_set', 'rune_slot', 'fourth_sub_value_total'], how='outer')
+
+            df_per_slot = df_per_slot[df_per_slot['first_sub'] != 'Aucun']
+            
+
+            return df_per_slot
+        
+        
+        self.data_per_slot = prepare_data(self.data_per_slot, 'count')
+        
+        self.data_per_slot.drop(['second_sub', 'third_sub', 'fourth_sub', 'second_sub_value_total', 'third_sub_value_total', 'fourth_sub_value_total'], axis=1, inplace=True)
+        
+        # Si on a pas de rune avec la valeur pour le slot et le set, on met 0
+        
+        self.data_per_slot.fillna(0, inplace=True)
+        
+        # on fait le total
+        
+        self.data_per_slot['count'] = self.data_per_slot['first_sub_value'] + self.data_per_slot['second_sub_value'] + self.data_per_slot['third_sub_value'] + self.data_per_slot['fourth_sub_value']
+        
+        # Maintenant qu'on a le total, on peut supprimer les colonnes inutiles
+        
+        self.data_per_slot.drop(['first_sub_value', 'second_sub_value', 'third_sub_value', 'fourth_sub_value'], axis=1, inplace=True)
+        
+        return self.data_per_slot
+        
+    def count_efficience_per_slot(self):
+        """On compte par set et par slot le nombre de runes ayant la même valeur en substat"""
+
+        self.eff_per_slot = self.data.copy()
+        
+        self.eff_per_slot['efficiency'].fillna(0, inplace=True) # les runes pas montées n'ont pas été calculés
+        
+        
+        return self.eff_per_slot[['rune_set', 'rune_slot', 'efficiency']]
+        
         

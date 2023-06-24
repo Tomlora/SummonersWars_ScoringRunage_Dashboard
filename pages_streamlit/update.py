@@ -1,8 +1,4 @@
-import pandas as pd
-
 import streamlit as st
-
-
 from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
 from st_pages import add_indentation
@@ -24,8 +20,10 @@ with col2:
     img = load_lottieurl('https://assets7.lottiefiles.com/private_files/lf30_rzhdjuoe.json')
     st_lottie(img, height=200, width=200)
     
-with st.expander('Version 24/06/2023', expanded=True):
-    st.info("- Amélioration visuelle des tableaux")    
+with st.expander('Version 25/06/2023', expanded=True):
+    st.info("- Amélioration visuelle des tableaux \n\n"+
+            "- Correction d'une erreur dans le calcul du score général \n\n"+
+            "- Nouvelles statistiques de runes dans Statistiques")    
 
 with st.expander('Version 10/06/2023', expanded=True):
     st.info("- Ajout des ladder Arene et World Boss \n\n"+

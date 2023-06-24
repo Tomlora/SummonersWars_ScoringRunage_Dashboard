@@ -8,6 +8,8 @@ from fonctions.visualisation import filter_dataframe
 from streamlit_extras.switch_page_button import switch_page
 from st_pages import add_indentation
 from fonctions.visuel import css
+
+
 css()
 
 add_indentation()
@@ -215,6 +217,29 @@ def timelapse_joueur():
             
     except ValueError:
         st.warning('Tu dois au moins selectionner un joueur')
+        
+    # data = Data()
+    
+    # data.add_data_frame(dataset_final1)
+    
+    # story = Story(data=data)
+    
+    # story.set_size(750, 450)
+    
+    # for semaine in dataset_final1['semaine'].unique():
+    #     slide = Slide(
+    #         Step(
+    #             Style({'backgroundColor' : '#03152A'}),
+    #             data.filter("record.semaine <= {}".format(semaine)),
+    #             Config({'color' : 'joueur', 'x' : 'semaine', 'y' : 'score_general', "geometry" : "circle"}),
+    #         ))
+        
+    #     story.add_slide(slide)
+    # # joueur / semaine / score_general
+   
+    # html(story._repr_html_(), width=750, height=450)
+    
+    
         
 
 if 'submitted' in st.session_state:
