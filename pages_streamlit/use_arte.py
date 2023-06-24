@@ -16,30 +16,6 @@ css()
 add_indentation()
 
 
-def data_columns(data):
-    return data.columns
-
-def lignes_en_doublon(data):
-    #Compte le nombre de doublons (lignes)
-    return len(data)-len(data.drop_duplicates())
-
-def cellules_manquantes_pourcentage(data):
-    #Permet d'avoir un % de cellules manquantes
-    return data.isna().sum().sum()/(data.size)
-
-def supprimer_variables_peu_utilisables(data, condition): # 'nom' à améliorer
-# Permet de supprimer les variables qui ont un nombre de données manquantes important. On calcule en fonction d'un % (condition)
-    data_filtree = pd.DataFrame()
-    data_filtree = data
-    for column in data.columns: #on boucle sur chaque colonne de la Dataframe
-        var_type = data[column].dtypes #on check le type de la colonne
-        pourcentage_valeur_manquantes = cellules_manquantes_pourcentage(data[column])  #% de données manquant
-        if var_type == 'float64' and float(pourcentage_valeur_manquantes) > condition: # si le type n'est pas float, ça ne peut pas marcher.
-            data_filtree.drop(column, axis=1, inplace=True) #on drop l'intégralité de la colonne si le % manquant dépasse la condition...
-    return data_filtree   
-
-
-
 st.title('Où utiliser ?')
 st.info("**Note** : Cet onglet étant nouveau, il peut y avoir des incohérences", icon="ℹ️")
 st.info("Chaque monstre dispose de 4 stats à priorité élevé, 4 à priorité moyenne et 8 à priorité faible", icon="ℹ️")

@@ -111,18 +111,18 @@ def classement_arte():
 
     if filtre_attribut == 'AUCUN' and filtre_type != 'AUCUN':
         data_filtre = data.groupby(['joueur', 'arte_type', 'substat', 'date', 'guilde']).agg({'valeur' : 'max', 'visibility': 'max'}).reset_index()
-        mise_en_forme_classement(data_filtre, 'valeur', ['joueur', 'arte_type', 'substat', 'valeur', 'date', 'guilde'])
+        mise_en_forme_classement(data_filtre, 'valeur', ['joueur', 'valeur', 'date', 'guilde'])
     
     elif filtre_type == 'AUCUN' and filtre_attribut != 'AUCUN':
         data_filtre = data.groupby(['joueur', 'arte_attribut', 'substat', 'date', 'guilde']).agg({'valeur' : 'max', 'visibility': 'max'}).reset_index()
-        mise_en_forme_classement(data_filtre, 'valeur', ['joueur', 'arte_attribut', 'substat', 'valeur', 'date', 'guilde'])
+        mise_en_forme_classement(data_filtre, 'valeur', ['joueur', 'valeur', 'date', 'guilde'])
         
     elif filtre_attribut == 'AUCUN' and filtre_type == 'AUCUN':
         data_filtre = data.groupby(['joueur', 'substat', 'date', 'guilde']).agg({'valeur' : 'max', 'visibility': 'max'}).reset_index()
-        mise_en_forme_classement(data_filtre, 'valeur', ['joueur', 'substat', 'valeur', 'date', 'guilde'])
+        mise_en_forme_classement(data_filtre, 'valeur', ['joueur', 'valeur', 'date', 'guilde'])
     
     else:
-        mise_en_forme_classement(data, 'valeur', ['joueur', 'arte_type', 'arte_attribut', 'substat', 'valeur', 'date', 'guilde'])
+        mise_en_forme_classement(data, 'valeur', ['joueur', 'arte_type', 'arte_attribut', 'valeur', 'date', 'guilde'])
     
     
     

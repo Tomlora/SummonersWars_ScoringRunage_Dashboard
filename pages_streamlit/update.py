@@ -1,18 +1,11 @@
 import pandas as pd
 
 import streamlit as st
-import json
-from datetime import datetime, timedelta
+
+
 from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
-from params.coef import coef_set, coef_set_spd, liste_substat_arte
-from streamlit_extras.switch_page_button import switch_page
-from fonctions.gestion_bdd import sauvegarde_bdd, update_info_compte, get_user, requete_perso_bdd, cancel, get_number_row
-from fonctions.runes import Rune
-from fonctions.artefact import Artefact
 from st_pages import add_indentation
-from sqlalchemy.exc import InternalError, OperationalError
-from dateutil import tz
 
 try:
     st.set_page_config(layout='wide')
@@ -26,6 +19,13 @@ add_indentation()
 
 st.subheader('Mise à jour')
 
+col1, col2, col3 = st.columns([0.4,0.2,0.4])
+with col2:
+    img = load_lottieurl('https://assets7.lottiefiles.com/private_files/lf30_rzhdjuoe.json')
+    st_lottie(img, height=200, width=200)
+    
+with st.expander('Version 24/06/2023', expanded=True):
+    st.info("- Amélioration visuelle des tableaux")    
 
 with st.expander('Version 10/06/2023', expanded=True):
     st.info("- Ajout des ladder Arene et World Boss \n\n"+

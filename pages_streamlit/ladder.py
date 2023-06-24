@@ -17,7 +17,9 @@ dict_type = {'Score general' : 'score_general',
                  'Score speed sur un set' : 'score spd sur un set',
                  'Score artefact' : 'score_arte'}
     
-
+set_to_show = ['Violent', 'Will', 'Destroy', 'Despair', 'Swift',
+                'Blade', 'Endure', 'Energy', 'Fatal', 'Focus', 'Guard', 'Nemesis',
+                'Rage', 'Revenge', 'Shield', 'Tolerance', 'Vampire']
 
 
 def mise_en_forme_classement(df, variable='score'):
@@ -97,9 +99,7 @@ def classement():
 
     if classement == 'score sur un set':
         # set = st.radio('Quel set ?', options=coef_set.keys(), horizontal=True)
-        set = st.radio('Quel set ?', options=['Violent', 'Will', 'Destroy', 'Despair', 'Swift',
-                                              'Blade', 'Endure', 'Energy', 'Fatal', 'Focus', 'Guard', 'Nemesis',
-                                              'Rage', 'Revenge', 'Shield', 'Tolerance', 'Vampire'], horizontal=True)
+        set = st.radio('Quel set ?', options=set_to_show, horizontal=True)
 
         if set in ['Violent', 'Will', 'Despair', 'Destroy']:
             data_set = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw.date, sw."Set", sw."100", sw."110", sw."120", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde

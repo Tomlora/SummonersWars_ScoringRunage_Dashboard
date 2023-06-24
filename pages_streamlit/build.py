@@ -108,10 +108,17 @@ def build():
     with st.expander('Chercher mes runes'):
         data_build_filter = filter_dataframe(
             st.session_state.data_rune.data_build.drop('id_rune', axis=1), 'data_build', type_number='int')
-        st.dataframe(data_build_filter, use_container_width=True)
+        
+        if not 'img' in data_build_filter.columns:
+            img = data_build_filter['Set rune'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
+            data_build_filter.insert(0, 'img', img, True)
+        
+        st.dataframe(data_build_filter, 
+                     use_container_width=True,
+                     column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
 
 
-        data_xlsx = export_excel(data_build_filter, 'Id_rune', 'Runes')
+        data_xlsx = export_excel(data_build_filter.drop('img', axis=1), 'Id_rune', 'Runes')
 
         st.download_button('Télécharger la data (Excel)', data_xlsx, file_name='runes.xlsx',
                            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')

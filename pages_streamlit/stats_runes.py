@@ -28,13 +28,19 @@ def stats_runage():
     
     value_tcd = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
     
-    set_select = st.selectbox('Choisir un set', df_max['rune_set'].unique(), key='stat')
+    list_set = df_max['rune_set'].unique().tolist()
+    
+    list_set.sort()
+    
+    set_select = st.selectbox('Choisir un set', list_set , key='stat')
     
     df_max_selected = df_max[df_max['rune_set'] == set_select]
     
 
-    
-    st.markdown(f'Points : :green[{df_points.loc[set_select, "points"]}] | Efficience(Mediane) : :violet[{round(df_points.loc[set_select, "mediane"],2)}] | Efficience (Moyenne) : :orange[{round(df_points.loc[set_select, "moyenne"],2)}]')
+    try:
+        st.markdown(f'Points : :green[{df_points.loc[set_select, "points"]}] | Efficience(Mediane) : :violet[{round(df_points.loc[set_select, "mediane"],2)}] | Efficience (Moyenne) : :orange[{round(df_points.loc[set_select, "moyenne"],2)}]')
+    except KeyError:
+        st.info("Pas de statistiques sur ce set")
     
     st.table(df_max_selected.pivot_table(values=value_tcd, index=['rune_set', 'substat'], aggfunc='max')[value_tcd].transpose())
     

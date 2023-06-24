@@ -199,25 +199,19 @@ def timelapse_joueur():
     
     
     try:
-        
-        tab1, tab2 = st.tabs(['V1', 'V2 (Beta)'])
-        
-        with tab1:
-            fig = timelapse_graph(dataset_final1)
+        fig = timelapse_graph(dataset_final1)
 
-            st.write(fig)
-        
-        with tab2:
+        st.write(fig)
+         
+        # fig2 = px.scatter(dataset_final2, x='semaine', y ='score_general', color='joueur',
+        #                  animation_frame='semaine', hover_name='guilde',
+        #                  text='joueur',
+        #                  range_x = [dataset_final2['semaine'].min()-1, dataset_final2['semaine'].max()+1],
+        #                  range_y=[dataset_final2['score_general'].min(), dataset_final2['score_general'].max()])
             
-            fig2 = px.scatter(dataset_final2, x='semaine', y ='score_general', color='joueur',
-                         animation_frame='semaine', hover_name='guilde',
-                         text='joueur',
-                         range_x = [dataset_final2['semaine'].min()-1, dataset_final2['semaine'].max()+1],
-                         range_y=[dataset_final2['score_general'].min(), dataset_final2['score_general'].max()])
+        # fig2.update_layout(height=800, width=1000, showlegend=False)
             
-            fig2.update_layout(height=800, width=1000, showlegend=False)
-            
-            st.plotly_chart(fig2)
+        # st.plotly_chart(fig2)
             
     except ValueError:
         st.warning('Tu dois au moins selectionner un joueur')

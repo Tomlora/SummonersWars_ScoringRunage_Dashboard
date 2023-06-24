@@ -57,7 +57,7 @@ def mise_en_forme_classement(df, variable='score', autres_var=None, ascending=Fa
                     == st.session_state.guilde]
 
         df.reset_index(inplace=True, drop=True)
-        height_dataframe = 36 * df.shape[0]
+        height_dataframe = 70 * df.shape[0]
 
         
         st.dataframe(df, height=height_dataframe,

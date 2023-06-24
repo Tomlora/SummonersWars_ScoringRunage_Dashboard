@@ -376,8 +376,15 @@ def optimisation_rune():
                                                                      f'potentiel_max_{variable}': ['mean', 'max', 'median']})
         data_grp.columns.set_levels(
             ['Moyenne', 'Max', 'Mediane'], level=1, inplace=True)
+        
+        if not 'set' in data_grp.columns:
+            data_grp.insert(0, 'set', data_grp.index)
+            data_grp['img'] = data_grp['set'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
+                
+
         # data_grp = data_grp.droplevel(level=0, axis=1)
-        st.dataframe(data_grp)
+        st.dataframe(data_grp.set_index('img'),
+                     column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
 
         fig = go.Figure()
         # on calcule ce que ça donnerait avec le potentiel
@@ -403,7 +410,11 @@ def optimisation_rune():
         st.plotly_chart(fig_max_lgd)
     with tab3:
         df_rune_filter = filter_dataframe(df_rune, 'df_rune')
-        st.dataframe(df_rune_filter)
+                
+
+        df_rune_filter['img'] = df_rune_filter['Set'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
+        st.dataframe(df_rune_filter.set_index('img'),
+                     column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
 
     with tab4:
         df_count_filter = filter_dataframe(df_count, 'df_count')

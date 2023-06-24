@@ -14,6 +14,7 @@ from streamlit_extras.colored_header import colored_header
 import traceback
 from fonctions.artefact import visualisation_top_arte
 from streamlit_extras.metric_cards import style_metric_cards
+from streamlit_extras.add_vertical_space import add_vertical_space
 
 
 from st_pages import add_indentation
@@ -22,15 +23,6 @@ css()
 add_indentation()
 
 
-col1, col2 = st.columns([0.6,0.4])
-
-with col1:
-    st.title('Scoring SW')
-
-with col2:
-    img = load_lottieurl(
-                    'https://assets4.lottiefiles.com/packages/lf20_yMpiqXia1k.json')
-    st_lottie(img, width=60, height=60)
     
     
 style_metric_cards(background_color='#03152A', border_color='#0083B9', border_left_color='#0083B9', border_size_px=0, box_shadow=False)
@@ -63,11 +55,29 @@ def show_img_monsters(data, stars, variable='*', width=70):
         return st.image(data['url'].tolist(), width=width, caption=data['name'].tolist())
 
 
+def get_img_runes(df : pd.DataFrame):
+    if not "set" in df.columns:
+        df.insert(0, 'set', df.index)
+        df['img'] = df['set'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
+    
+    return df
+
 new_index = ['Autre', 'Despair', 'Destroy', 'Violent', 'Will', 'Total']
 new_index_spd = ['Autre', 'Despair', 'Destroy', 'Swift', 'Violent', 'Will', 'Total']
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:
+        
+
+        col1, col2 = st.columns([0.6,0.4])
+
+        with col1:
+            st.subheader(f'{st.session_state.pseudo} ({st.session_state.guilde})')
+
+        with col2:
+            img = load_lottieurl(
+                            'https://assets4.lottiefiles.com/packages/lf20_yMpiqXia1k.json')
+            st_lottie(img, width=60, height=60)
 
         # -------------- Scoring du compte
         try:
@@ -75,8 +85,13 @@ if 'submitted' in st.session_state:
 
             with tcd_column:
                 # Stat du joueur
+                # https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/accuracy.png
+                st.session_state.tcd = get_img_runes(st.session_state.tcd)
                 st.dataframe(
-                    st.session_state.tcd[[100, 110, 120]].reindex(new_index), use_container_width=True)
+                    st.session_state.tcd[['set', 100, 110, 120, 'img']].reindex(new_index).set_index('img'), 
+                    use_container_width=True, 
+                    column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
+                    )
 
             with score_column:
                 # Score du joueur
@@ -110,8 +125,11 @@ if 'submitted' in st.session_state:
                     tcd_column_df_spd, _, score_column_df_arte = st.columns([0.4,0.1,0.4])
                     #  df.style.highlight_max(axis=0)
                     with tcd_column_df_spd:
+                        st.session_state.tcd_spd = get_img_runes(st.session_state.tcd_spd)
                         st.dataframe(
-                            st.session_state.tcd_spd.reindex(new_index_spd), use_container_width=True)
+                            st.session_state.tcd_spd.reindex(new_index_spd).set_index('img'),
+                            use_container_width=True,
+                            column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
 
                     with score_column_df_arte:
                         st.dataframe(st.session_state.tcd_arte, use_container_width=True)
@@ -122,7 +140,10 @@ if 'submitted' in st.session_state:
                     column_detail_scoring1, _, column_detail_scoring2 = st.columns([0.4,0.1,0.4])
 
                     with column_detail_scoring1:
-                        st.dataframe(st.session_state.tcd_detail_score, use_container_width=True)
+                        st.session_state.tcd_detail_score = get_img_runes(st.session_state.tcd_detail_score)
+                        st.dataframe(st.session_state.tcd_detail_score.set_index('img'),
+                                     use_container_width=True,
+                                     column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
 
                     with column_detail_scoring2:
                         txt = 'Une rune 100 vaut 1 point \nUne rune 110 vaut 2 points\nUne Rune 120 vaut 3 points\n\n\nCoefficient : \n'
@@ -137,7 +158,10 @@ if 'submitted' in st.session_state:
                     col1_tab3, _, col2_tab3 = st.columns([0.4,0.05,0.4])
                     
                     with col1_tab3:
-                        st.dataframe(st.session_state.data_avg, use_container_width=True)
+                        st.session_state.data_avg = get_img_runes(st.session_state.data_avg)
+                        st.dataframe(st.session_state.data_avg.set_index('img'), 
+                                     use_container_width=True,
+                                     column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
 
                     with col2_tab3:
                         fig = go.Figure()
@@ -480,7 +504,6 @@ if 'submitted' in st.session_state:
                         show_arte_table('INCAPACITE', liste_substat)
 
 
-
             # ---------------- Comparaison
             
             colored_header(
@@ -525,9 +548,13 @@ if 'submitted' in st.session_state:
                         df_max.loc[st.session_state['pseudo']]['rank'])
                     st.metric('Classement', rank_general)
 
-                    # with rank2_2:
-                fig_general = comparaison_rune_graph(df_max, 'General')
-                st.plotly_chart(fig_general)
+                with rank2_1:
+                    fig_general = comparaison_rune_graph(df_max, 'General')
+                    st.plotly_chart(fig_general)
+                    
+                with rank2_2:
+                    add_vertical_space(10)
+                    st.info('Lecture : \n\n Q1 signifie 1/4 des joueurs \n\n Q3 signifie 3/4 des joueurs \n\n Les points sont des scores qui se démarquent de la majorité des joueurs')
 
                 # Par rapport à sa guilde
             with tab_guilde:
@@ -551,10 +578,18 @@ if 'submitted' in st.session_state:
                     rank_guilde = int(
                         df_guilde.loc[st.session_state['pseudo']]['rank'])
                     st.metric('Classement', rank_guilde)
+                    
+                rank3_1, rank3_2 = st.columns(2)
 
-                fig_guilde = comparaison_rune_graph(
-                    df_guilde, st.session_state['guilde'])
-                st.plotly_chart(fig_guilde)
+                with rank3_1:
+                    fig_guilde = comparaison_rune_graph(
+                        df_guilde, st.session_state['guilde'])
+                    st.plotly_chart(fig_guilde)
+                
+                with rank3_2:
+                    add_vertical_space(10)
+                    st.info('Lecture : \n\n Q1 signifie 1/4 des joueurs \n\n Q3 signifie 3/4 des joueurs \n\n Les points sont des scores qui se démarquent de la majorité des joueurs')
+                    
                 
         # artefact
         

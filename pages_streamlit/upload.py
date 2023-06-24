@@ -66,7 +66,19 @@ if 'submitted' not in st.session_state:
 
 col1, col2, col3 = st.columns([0.25,0.50,0.25])
 
-nb_user, nb_guilde, nb_score, heure = nb_data()
+try:
+    nb_user, nb_guilde, nb_score, heure = nb_data()
+except InternalError as e:
+    print(e)
+    cancel()
+    st.warning('Erreur')
+    st.session_state['submitted'] = False
+
+except OperationalError as e:
+    print(e)
+    cancel()
+    st.warning('Erreur')
+    st.session_state['submitted'] = False
 
 with col2:
     st.title('Scoring SW')
@@ -105,13 +117,17 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             # infos du compte
 
             st.session_state.pseudo = data_json['wizard_info']['wizard_name']
+            st.session_state.compteid = data_json['wizard_info']['wizard_id']
+            st.session_state.lang = data_json['wizard_info']['wizard_last_country']
+            st.session_state.mana = data_json['wizard_info']['wizard_mana']
+            
             try:
                 st.session_state.guildeid = data_json['guild']['guild_info']['guild_id']
                 st.session_state.guilde = data_json['guild']['guild_info']['name']
             except TypeError: # pas de guilde
                 st.session_state.guildeid = 0
                 st.session_state.guilde = 'Aucune'          
-            st.session_state.compteid = data_json['wizard_info']['wizard_id']
+            
 
 
             data_rune = Rune(data_json)
@@ -172,10 +188,16 @@ if st.session_state['file'] is not None and st.session_state.submitted:
 
                     st.session_state.id_joueur, st.session_state.visibility, guilde_id, st.session_state.rank  = get_user(
                             st.session_state['pseudo'])
+                    
+            try:
+                requete_perso_bdd('''UPDATE sw_user SET lang = :lang WHERE joueur_id = :joueur_id;''',
+                                {'lang': st.session_state['lang'], 'joueur_id': st.session_state['compteid']})
+            except:
+                cancel()
 
-                # Enregistrement SQL
+            # Enregistrement SQL
 
-                # Scoring general 
+            # Scoring general 
             tcd_value['id'] = st.session_state['id_joueur']
             tcd_value['date'] = date_du_jour()
                 
@@ -186,13 +208,14 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             del tcd_value
 
             
-            requete_perso_bdd('''INSERT INTO public.sw_score(score_general, date, id_joueur, score_spd, score_arte)
-            VALUES (:score_general, :date, :id_joueur, :score_spd, :score_arte);''',
+            requete_perso_bdd('''INSERT INTO public.sw_score(score_general, date, id_joueur, score_spd, score_arte, mana)
+            VALUES (:score_general, :date, :id_joueur, :score_spd, :score_arte, :mana);''',
             {'id_joueur' : int(st.session_state['id_joueur']),
             'date' : date_du_jour(),
             'score_general' : int(st.session_state['score']),
             'score_spd' : int(st.session_state['score_spd']),
-            'score_arte' : int(st.session_state['score_arte'])})
+            'score_arte' : int(st.session_state['score_arte']),
+            'mana' : int(st.session_state['mana'])})
 
                 
                 # scoring detail
@@ -311,7 +334,7 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             df_max['date'] = date_du_jour()
             
                 
-                # on supprime les anciennes données
+            # on supprime les anciennes données
             requete_perso_bdd('''DELETE FROM sw_max WHERE "id" = :id''', dict_params={'id' : st.session_state['id_joueur']})
                 
             #     # on met à jour
@@ -344,28 +367,53 @@ if st.session_state['file'] is not None and st.session_state.submitted:
                     # On met ça en dataframe
             df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre'])
 
-                # Maintenant, on a besoin d'identifier les id.
-                # Pour cela, on va utiliser l'api de swarfarm
+            # Maintenant, on a besoin d'identifier les id.
+            # Pour cela, on va utiliser l'api de swarfarm
 
-                    # swarfarm
+            # swarfarm
 
             swarfarm = st.session_state.swarfarm[[
                         'com2us_id', 'name']].set_index('com2us_id')
             df_mobs['name_monstre'] = df_mobs['id_monstre'].map(
                         swarfarm.to_dict(orient="dict")['name'])
 
-                    # On peut faire le mapping...
+            # On peut faire le mapping...
 
             df_identification = df_mobs[['id_unit', 'name_monstre']].set_index('id_unit')
             
             st.session_state.identification_monsters = df_identification.to_dict(orient="dict")['name_monstre']
+            
+            # PVP / World Boss
+            
+            st.session_state.arena_win = data_json['pvp_info']['arena_win']
+            st.session_state.arena_lose = arena_lose = data_json['pvp_info']['arena_lose']
+            
+            st.session_state.rank_wb = data_json['my_worldboss_best_ranking']['ranking']
+            st.session_state.dmg_wb = data_json['my_worldboss_best_ranking']['accumulate_damage']
+            
+            
+            requete_perso_bdd('''INSERT INTO public.sw_pvp(id_joueur, win, lose, date)
+            VALUES (:id_joueur, :win, :lose, :date);
+            INSERT INTO public.sw_wb(id_joueur, rank, damage, date)
+            VALUES (:id_joueur, :rank, :damage, :date);''',
+            {'id_joueur' : int(st.session_state['id_joueur']),
+            'date' : date_du_jour(),
+            'win' : int(st.session_state['arena_win']),
+            'lose' : int(st.session_state['arena_lose']),
+            'rank' : int(st.session_state['rank_wb']),
+            'damage' : int(st.session_state['dmg_wb'])})
+            
+            # Tout est bon, on peut passer à la suite !
 
             st.subheader(f'Validé pour le joueur {st.session_state["pseudo"]} !')
             st.write('Tu peux désormais aller sur les autres onglets disponibles')
 
             st.session_state['submitted'] = True
                 
+            # On passe à la page suivante    
             switch_page('General')
+            
+        # Gestions des erreurs    
         except InternalError as e:
             print(e)
             cancel()
