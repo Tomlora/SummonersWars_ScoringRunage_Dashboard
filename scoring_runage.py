@@ -51,7 +51,7 @@ show_pages([
                     Page('pages_streamlit/visibility.py', 'Ma visibilité', icon=':eyes:'),
                     Page('pages_streamlit/options.py', 'Mes données', icon=':iphone:'),
                     Section(name='Mise à jour', icon=':loudspeaker:'),
-                    Page('pages_streamlit/update.py', 'Version 24/06/23', icon=':speaker:')
+                    Page('pages_streamlit/update.py', 'Version 30/06/23', icon=':speaker:')
 
                     # Section(name='Administration', icon=':star:'),
                     # Page('pages_streamlit/visualisation_joueur.py', 'Visualisation', icon=':mag:'),

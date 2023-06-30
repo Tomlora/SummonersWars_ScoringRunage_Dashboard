@@ -4,7 +4,7 @@ import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 from params.coef import coef_set, coef_set_spd
 from datetime import timedelta
-
+from streamlit_extras.no_default_selectbox import selectbox
 from st_pages import add_indentation
 from fonctions.visuel import css
 css()
@@ -99,7 +99,7 @@ def classement():
 
     if classement == 'score sur un set':
         # set = st.radio('Quel set ?', options=coef_set.keys(), horizontal=True)
-        set = st.radio('Quel set ?', options=set_to_show, horizontal=True)
+        set = st.radio('Quel set ?', options=st.session_state.set_rune, horizontal=True)
 
         if set in ['Violent', 'Will', 'Despair', 'Destroy']:
             data_set = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw.date, sw."Set", sw."100", sw."110", sw."120", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde

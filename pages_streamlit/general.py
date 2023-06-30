@@ -62,8 +62,10 @@ def get_img_runes(df : pd.DataFrame):
     
     return df
 
-new_index = ['Autre', 'Despair', 'Destroy', 'Violent', 'Will', 'Total']
-new_index_spd = ['Autre', 'Despair', 'Destroy', 'Swift', 'Violent', 'Will', 'Total']
+new_index = ['Autre', 'Seal', 'Despair', 'Destroy', 'Violent', 'Will', 'Intangible', 'Total']
+new_index_spd = ['Autre', 'Seal', 'Despair', 'Destroy', 'Swift', 'Violent', 'Will', 'Intangible', 'Total']
+
+
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:
@@ -86,9 +88,10 @@ if 'submitted' in st.session_state:
             with tcd_column:
                 # Stat du joueur
                 # https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/accuracy.png
+                
                 st.session_state.tcd = get_img_runes(st.session_state.tcd)
                 st.dataframe(
-                    st.session_state.tcd[['set', 100, 110, 120, 'img']].reindex(new_index).set_index('img'), 
+                    st.session_state.tcd[['set', 100, 110, 120, 'img']].reindex(new_index).set_index('img').dropna(how='all'), 
                     use_container_width=True, 
                     column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
                     )
@@ -476,6 +479,7 @@ if 'submitted' in st.session_state:
                 with tab_crit:
 
                     show_arte_table('CRIT', liste_substat)
+                    show_arte_table('PREMIER HIT CRIT DMG', liste_substat)
 
 
                 with tab_renforcement:
@@ -498,6 +502,7 @@ if 'submitted' in st.session_state:
                         show_arte_table('REVIVE', liste_substat)
                         show_arte_table('BOMBE', liste_substat)
                         show_arte_table('COOP', liste_substat)
+                        show_arte_table('REVENGE ET COOP', liste_substat)
                     with col2:
                         show_arte_table('REVENGE', liste_substat)
                         show_arte_table('VOL', liste_substat)

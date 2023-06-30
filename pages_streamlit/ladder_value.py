@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 from datetime import timedelta
-
+from streamlit_extras.no_default_selectbox import selectbox
 from st_pages import add_indentation
 from fonctions.visuel import css
 css()
@@ -104,9 +104,9 @@ def classement_value():
     
     data_tri = data[data['substat'] == stat]
     
-    rune = st.selectbox('Set de runes', options=['*'] + data['rune_set'].unique().tolist())
+    rune = selectbox('Set de runes', options=st.session_state.set_rune)
     
-    if rune != '*':
+    if rune != None:
         data_tri = data_tri[data_tri['rune_set'] == rune]
 
     # on transpose la date au format date

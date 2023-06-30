@@ -17,12 +17,12 @@ dict_arte_element = {
 }
 
 dict_arte_effect = {
-    200: {'name': 'ATK EN FONCTION HP PERDUS', 'max': 14},
-    201: {'name': 'DEF EN FONCTION HP PERDUS', 'max': 14},
-    202: {'name': 'SPD EN FONCTION HP PERDUS', 'max': 14},
+    200: {'name': 'ATK EN FONCTION HP PERDUS', 'max': 14}, #ancien
+    201: {'name': 'DEF EN FONCTION HP PERDUS', 'max': 14}, # ancien
+    202: {'name': 'SPD EN FONCTION HP PERDUS', 'max': 14}, # ancien
     203: {'name': "SPD EN CAS D'INCAPACITE", 'max': 6},
-    204: {'name': 'RENFORCEMENT ATK', 'max': 5},
-    205: {'name': 'RENFORCEMENT DEF', 'max': 4},
+    204: {'name': 'RENFORCEMENT ATK', 'max': 5}, #ancien
+    205: {'name': 'RENFORCEMENT DEF', 'max': 4}, # ancien
     206: {'name': 'RENFORCEMENT SPD', 'max': 6},
     207: {'name': 'RENFORCEMENT CRITRATE', 'max': 6},
     208: {'name': 'REVENGE', 'max': 4},
@@ -42,6 +42,8 @@ dict_arte_effect = {
     222: {'name': 'CRIT DMG EN FONCTION DES HP ELEVES', 'max': 6},
     223: {'name': 'CRIT DMG EN FONCTION DES HP FAIBLES', 'max': 12},
     224: {'name': 'CRIT DMG SUR CIBLE UNIQUE', 'max': 4},
+    225: {'name' : 'REVENGE ET COOP', 'max': 4},
+    226: {'name' : 'RENFORCEMENT ATK/DEF', 'max': 5},
     300: {'name': 'DMG SUR FEU', 'max': 5},
     301: {'name': 'DMG SUR EAU', 'max': 5},
     302: {'name': 'DMG SUR VENT', 'max': 5},
@@ -54,14 +56,16 @@ dict_arte_effect = {
     309: {'name': 'REDUCTION SUR DARK', 'max': 6},
     400: {'name': 'CRIT DMG S1', 'max': 6},
     401: {'name': 'CRIT DMG S2', 'max': 6},
-    402: {'name': 'CRIT DMG S3', 'max': 6},
-    403: {'name': 'CRIT DMG S4', 'max': 6},
+    402: {'name': 'CRIT DMG S3', 'max': 6}, # ancien
+    403: {'name': 'CRIT DMG S4', 'max': 6}, # ancien
     404: {'name': 'SOIN S1', 'max': 6},
     405: {'name': 'SOIN S2', 'max': 6},
     406: {'name': 'SOIN S3', 'max': 6},
     407: {'name': 'PRECISION S1', 'max': 6},
     408: {'name': 'PRECISION S2', 'max': 6},
     409: {'name': 'PRECISION S3', 'max': 6},
+    410: {'name' : 'CRIT DMG S3/S4', 'max' : 6},
+    411: {'name' : 'PREMIER HIT CRIT DMG', 'max': 6},
 }
 
 dict_arte_archetype = {

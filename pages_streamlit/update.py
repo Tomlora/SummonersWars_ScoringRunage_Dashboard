@@ -20,6 +20,15 @@ with col2:
     img = load_lottieurl('https://assets7.lottiefiles.com/private_files/lf30_rzhdjuoe.json')
     st_lottie(img, height=200, width=200)
     
+with st.expander('Version 30/06/2023', expanded=True):
+    st.info("- Ajout des nouveaux sets \n\n"+
+            "- Ajout des nouveaux bonus d'artefacts\n\n"+
+            "- Ajout des nouveaux monstres\n\n"+
+            "- Amélioration de l'onglet Inventaire d'Artefact")        
+    
+with st.expander('Version 29/06/2023', expanded=True):
+    st.info("- Ajout de la courbe d'efficience des runes et artefacts dans Statistiques")
+    
 with st.expander('Version 25/06/2023', expanded=True):
     st.info("- Amélioration visuelle des tableaux \n\n"+
             "- Correction d'une erreur dans le calcul du score général \n\n"+

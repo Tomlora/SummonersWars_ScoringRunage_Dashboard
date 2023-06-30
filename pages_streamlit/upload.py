@@ -29,11 +29,11 @@ add_indentation()
 
 @st.cache_data
 def chargement_params():
-    category_selected = ['Violent', 'Will', 'Destroy', 'Despair']
+    category_selected = ['Violent', 'Seal', 'Will', 'Destroy', 'Despair', 'Intangible']
     category_value = ", ".join(category_selected)
 
 
-    category_selected_spd = ['Violent', 'Will', 'Destroy', 'Despair', 'Swift']
+    category_selected_spd = ['Violent', 'Seal', 'Will', 'Destroy', 'Despair', 'Swift', 'Intangible']
     category_value_spd = ", ".join(category_selected_spd)
     
     return category_selected,category_selected_spd, coef_set, coef_set_spd
@@ -133,6 +133,9 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             data_rune = Rune(data_json)
                 
             st.session_state.data_rune = data_rune
+            
+            st.session_state.set_rune = list(data_rune.set_to_show.values())
+            st.session_state.set_rune.sort()
     
             st.session_state.data_arte = Artefact(data_json)
             
@@ -344,7 +347,7 @@ if st.session_state['file'] is not None and st.session_state.submitted:
             
             
                 
-                # MAJ guilde
+            # MAJ guilde
 
             update_info_compte(st.session_state['pseudo'], st.session_state['guildeid'],
                                 st.session_state['compteid'])  # on update le compte

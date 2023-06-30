@@ -4,6 +4,34 @@ import numpy as np
 from time import time
 from fonctions.gestion_bdd import optimisation_int
 
+
+        # id des crafts
+
+CRAFT_TYPE_MAP = {
+            1: 'Enchant_gem',
+            2: 'Grindstone',
+            3: 'Gemme_immemoriale',
+            4: 'Grindstone_immemoriale',
+            5: 'Ancienne_gemme',
+            6: 'Ancienne_grindstone',
+        }
+
+        # id des qualités de runes
+COM2US_QUALITY_MAP = {
+            1: 'NORMAL',
+            2: 'MAGIQUE',
+            3: 'RARE',
+            4: 'HEROIQUE',
+            5: 'LGD',
+            # Original quality values
+            11: 'ANTIQUE_NORMAL',
+            12: 'ANTIQUE_MAGIQUE',
+            13: 'ANTIQUE_RARE',
+            14: 'ANTIQUE_HEROIQUE',
+            15: 'ANTIQUE_LGD',
+        }
+
+
 class Rune():
     def __init__(self, data_json):
         self.data_json = data_json
@@ -75,6 +103,30 @@ class Rune():
                     25 : 'Intangible',
                     99: "Immemorial"}
         
+        self.set_to_show = {1: "Energy",
+                    2: "Guard",
+                    3: "Swift",
+                    4: "Blade",
+                    5: "Rage",
+                    6: "Focus",
+                    7: "Endure",
+                    8: "Fatal",
+                    10: "Despair",
+                    11: "Vampire",
+                    13: "Violent",
+                    14: "Nemesis",
+                    15: "Will",
+                    16: "Shield",
+                    17: "Revenge",
+                    18: "Destroy",
+                    19: "Fight",
+                    20: "Determination",
+                    21: "Enhance",
+                    22: "Accuracy",
+                    23: "Tolerance",
+                    24 : "Seal",
+                    25 : 'Intangible'}
+        
         self.property_grind = {1: 'Meule : HP', # 141
                           2: 'Meule : HP%', # 125
                           3: 'Meule : ATQ',
@@ -90,6 +142,12 @@ class Rune():
                                 5: 'Gemme : DEF',
                                 6: 'Gemme : DEF%',
                                 8: "Gemme : SPD"}
+        
+
+        self.gemme_max_lgd = {'HP': 580, 'HP%': 13, 'ATQ': 40, 'ATQ%': 13, 'DEF': 40,
+                                'DEF%': 13, 'SPD': 10, 'CRIT': 9, 'DCC': 10, 'RES': 11, 'ACC': 11}
+        self.gemme_max_hero = {'HP': 420, 'HP%': 11, 'ATQ': 30, 'ATQ%': 11, 'DEF': 30,
+                                'DEF%': 11, 'SPD': 8, 'CRIT': 7, 'DCC': 8, 'RES': 9, 'ACC': 9}
         
         # Inventaire
         for rune in self.data_json['runes']:
@@ -267,6 +325,9 @@ class Rune():
 
         self.data = optimisation_int(self.data, ['int64'])
         # self.data = optimisation_int(self.data, ['float64'], 'float16')
+        
+        self.set_rune = self.data['rune_set'].unique().tolist()
+        self.set_rune.sort()
 
         self.data_spd = self.data.copy()
 
@@ -734,6 +795,7 @@ class Rune():
         '''Compatible avec data_grind
         
         Identifie les grinds potentiels et les commentaires'''    
+        
         self.data_grind['indicateurs_level'] = (self.data_grind['level'] == 15).astype(
                 'int')  # Si 15 -> 1. Sinon 0
 
@@ -758,7 +820,7 @@ class Rune():
                         '_hero_ameliorable?'] = (self.data_grind[key + '_hero_value'] > 0).astype('int')
 
 
-            # # Commentaires
+        # # Commentaires
 
    
                 # Level
@@ -768,6 +830,9 @@ class Rune():
                     self.data_grind['third_gemme_bool'] + self.data_grind['fourth_gemme_bool']
         self.data_grind['Commentaires'] = np.where(
                     calcul_gemme == 0, self.data_grind['Commentaires'] + "Pas de gemme utilisée", self.data_grind['Commentaires'])
+        
+        
+        # Grind
         self.data_grind['Grind_lgd'] = ""
         self.data_grind['Grind_hero'] = ""
 
@@ -776,7 +841,7 @@ class Rune():
                         'amelioration_third_grind': 'third_sub',
                         'amelioration_fourth_grind': 'fourth_sub'}
 
-                # meule
+        # meule
 
         for key, value in dict.items():
             nom = key + "_lgd_value"
@@ -787,26 +852,23 @@ class Rune():
             self.data_grind['Grind_hero'] = np.where(self.data_grind[key + '_hero_ameliorable?'] == 1, self.data_grind['Grind_hero'] +
                                                 "Meule : " + self.data_grind[value] + "(" + self.data_grind[nom].astype('str') + ") \n", self.data_grind['Grind_hero'])
 
-                # gemme
+        # gemme
 
-                # sub des gemmes
+        # sub des gemmes
 
-        gemme_max_lgd = {'HP': 580, 'HP%': 13, 'ATQ': 40, 'ATQ%': 13, 'DEF': 40,
-                                'DEF%': 13, 'SPD': 10, 'CRIT': 9, 'DCC': 10, 'RES': 11, 'ACC': 11}
-        gemme_max_hero = {'HP': 420, 'HP%': 11, 'ATQ': 30, 'ATQ%': 11, 'DEF': 30,
-                                'DEF%': 11, 'SPD': 8, 'CRIT': 7, 'DCC': 8, 'RES': 9, 'ACC': 9}
 
-                # On les inclut au dataframe
 
-        self.data_grind['first_gemme_max_lgd'] = self.data_grind['first_sub'].map(gemme_max_lgd)
-        self.data_grind['second_gemme_max_lgd'] = self.data_grind['second_sub'].map(gemme_max_lgd)
-        self.data_grind['third_gemme_max_lgd'] = self.data_grind['third_sub'].map(gemme_max_lgd)
-        self.data_grind['fourth_gemme_max_lgd'] = self.data_grind['fourth_sub'].map(gemme_max_lgd)
+        # On les inclut au dataframe
 
-        self.data_grind['first_gemme_max_hero'] = self.data_grind['first_sub'].map(gemme_max_hero)
-        self.data_grind['second_gemme_max_hero'] = self.data_grind['second_sub'].map(gemme_max_hero)
-        self.data_grind['third_gemme_max_hero'] = self.data_grind['third_sub'].map(gemme_max_hero)
-        self.data_grind['fourth_gemme_max_hero'] = self.data_grind['fourth_sub'].map(gemme_max_hero)
+        self.data_grind['first_gemme_max_lgd'] = self.data_grind['first_sub'].map(self.gemme_max_lgd)
+        self.data_grind['second_gemme_max_lgd'] = self.data_grind['second_sub'].map(self.gemme_max_lgd)
+        self.data_grind['third_gemme_max_lgd'] = self.data_grind['third_sub'].map(self.gemme_max_lgd)
+        self.data_grind['fourth_gemme_max_lgd'] = self.data_grind['fourth_sub'].map(self.gemme_max_lgd)
+
+        self.data_grind['first_gemme_max_hero'] = self.data_grind['first_sub'].map(self.gemme_max_hero)
+        self.data_grind['second_gemme_max_hero'] = self.data_grind['second_sub'].map(self.gemme_max_hero)
+        self.data_grind['third_gemme_max_hero'] = self.data_grind['third_sub'].map(self.gemme_max_hero)
+        self.data_grind['fourth_gemme_max_hero'] = self.data_grind['fourth_sub'].map(self.gemme_max_hero)
 
         dict2 = {'first_gemme': 'first_sub',
                         'second_gemme': 'second_sub',
@@ -845,8 +907,6 @@ class Rune():
         
         self.data_grind = optimisation_int(self.data_grind, ['int64'])
         self.data_short = optimisation_int(self.data_short, ['int64'])
-        # self.data_grind = optimisation_int(self.data_grind, ['float64'], 'float16')
-        # self.data_short = optimisation_int(self.data_short, ['float64'], 'float16')
         
         
     def count_meules_manquantes(self):

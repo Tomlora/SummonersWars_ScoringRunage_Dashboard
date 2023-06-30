@@ -7,7 +7,7 @@ import streamlit as st
 from io import BytesIO
 from fonctions.visualisation import filter_dataframe
 import plotly.graph_objects as go
-from fonctions.runes import Rune
+from fonctions.runes import Rune, CRAFT_TYPE_MAP, COM2US_QUALITY_MAP
 from streamlit_extras.switch_page_button import switch_page
 # fix plotly express et Visual Studio Code
 import plotly.io as pio
@@ -205,29 +205,8 @@ def optimisation_rune():
 
         # id des crafts
 
-        CRAFT_TYPE_MAP = {
-            1: 'Enchant_gem',
-            2: 'Grindstone',
-            3: 'Gemme_immemoriale',
-            4: 'Grindstone_immemoriale',
-            5: 'Ancienne_gemme',
-            6: 'Ancienne_grindstone',
-        }
 
-        # id des qualités de runes
-        COM2US_QUALITY_MAP = {
-            1: 'NORMAL',
-            2: 'MAGIQUE',
-            3: 'RARE',
-            4: 'HEROIQUE',
-            5: 'LGD',
-            # Original quality values
-            11: 'ANTIQUE_NORMAL',
-            12: 'ANTIQUE_MAGIQUE',
-            13: 'ANTIQUE_RARE',
-            14: 'ANTIQUE_HEROIQUE',
-            15: 'ANTIQUE_LGD',
-        }
+
 
         # Combien de gemmes/meules différentes ?
 
