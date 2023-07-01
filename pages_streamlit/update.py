@@ -21,7 +21,8 @@ with col2:
     st_lottie(img, height=200, width=200)
     
 with st.expander('Version 01/07/2023', expanded=True):
-    st.info("- Ajout des Pages Upgrade (Rune + Artefact)")    
+    st.info("- Ajout des Pages Upgrade (Rune + Artefact)\n\n"+
+            "- Amélioration de la lisibilité des tableaux dans Optimisation de Runes")    
     
 with st.expander('Version 30/06/2023', expanded=True):
     st.info("- Ajout des nouveaux sets \n\n"+

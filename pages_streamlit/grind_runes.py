@@ -37,12 +37,7 @@ def export_excel(data, data_short, data_property, data_count, data_inventaire):
     # https://xlsxwriter.readthedocs.io/working_with_pandas.html
 
     # Pour travailler avec xlswriter et pendas et faire des tableaux, il faut reset l'index
-    data.reset_index(inplace=True)
-    data.rename(columns={'index': 'Id_rune'}, inplace=True)
-    data_short.reset_index(inplace=True)
-    data_short.rename(columns={'index': 'Set'}, inplace=True)
-    data_property.reset_index(inplace=True)
-    data_property.rename(columns={'index': 'Set'}, inplace=True)
+
 
     writer = pd.ExcelWriter(output, engine='xlsxwriter')
     data_short.to_excel(
@@ -276,7 +271,7 @@ def optimisation_rune():
                              'first_sub': 'Substat 1',
                              'second_sub': 'Substat 2',
                              'third_sub': 'Substat 3',
-                             'fourth sub': 'Substat 4',
+                             'fourth_sub': 'Substat 4',
                              'first_sub_value': 'Substat valeur 1',
                              'second_sub_value': 'Substat valeur 2',
                              'third_sub_value': 'Substat valeur 3',
@@ -314,9 +309,13 @@ def optimisation_rune():
             df_rune.rename(columns=rename_column, inplace=True)
             df_count.rename(columns=rename_column, inplace=True)
             df_inventaire.rename(columns=rename_column, inplace=True)
-
-            data_xlsx = export_excel(
-                data, data_short, df_rune, df_count, df_inventaire)
+            
+            data.reset_index(inplace=True)
+            data.rename(columns={'index': 'Id_rune'}, inplace=True)
+            data_short.reset_index(inplace=True)
+            data_short.rename(columns={'index': 'Set'}, inplace=True)
+            df_rune.reset_index(inplace=True)
+            df_rune.rename(columns={'index': 'Set'}, inplace=True)
 
             # Mise en forme :
 
@@ -326,7 +325,34 @@ def optimisation_rune():
                 {'0': 'Inventaire'})
 
             data_short['Efficience'] = np.round(data_short['Efficience'], 2)
+            
+            data_short.rename(columns={'Set': 'Id_rune'}, inplace=True)
+            
+            # Gestion des substats
+            
+            melt = data.melt(id_vars=['Id_rune', 'Set rune', 'Slot', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'],
+                    value_vars=['Substat valeur 1', 'Substat valeur 2', 'Substat valeur 3', 'Substat valeur 4'])
 
+            def changement_variable(x):
+                    number = x.variable[-1]
+                    type = x[f'Substat {number}']
+                    
+                    return type
+
+            melt['variable'] = melt.apply(changement_variable, axis=1)
+
+
+            pivot = melt.pivot_table(index=['Id_rune', 'Set rune', 'Slot'],
+                                    columns='variable',
+                                    values='value',
+                                    aggfunc='first',
+                                    fill_value=0).reset_index()
+            
+            data = data.merge(pivot, on=['Id_rune', 'Set rune', 'Slot']).drop(columns=['Substat 1', 'Substat 2', 'Substat 3', 'Substat 4', 'Substat valeur 1', 'Substat valeur 2', 'Substat valeur 3', 'Substat valeur 4'])
+            data_short = data_short.merge(pivot, on=['Id_rune', 'Set rune', 'Slot'])
+            
+            data_xlsx = export_excel(
+                data, data_short, df_rune, df_count, df_inventaire)
             try:
                 data_short.drop('Set', axis=1,  inplace=True)
             except KeyError:  # déjà fait
@@ -340,70 +366,71 @@ def optimisation_rune():
     st.success('Terminé !')
 
     st.subheader('Summary')
-    st.text("Note : Aucune donnée n'est conservée")
+    st.info("Aucune donnée n'est conservée")
+    
     data_short_filter = filter_dataframe(data_short, 'data_short')
-    st.dataframe(data_short_filter)
+    st.dataframe(data_short_filter.drop('Id_rune', axis=1))
 
     st.download_button('Télécharger la data (Excel)', data_xlsx, file_name='grind.xlsx',
                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(
-        ['Potentiel max hero', 'Potentiel max lgd', 'Nombre de runes (Grid max Hero)', 'Meules/Gemmes nécessaires', 'Inventaire'])
+    # tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    #     ['Potentiel max hero', 'Potentiel max lgd', 'Nombre de runes (Grid max Hero)', 'Meules/Gemmes nécessaires', 'Inventaire'])
 
-    def potentiel_max(variable):
-        data_grp: pd.DataFrame = data_short.groupby('Set rune').agg({f'Efficience_max_{variable}': ['mean', 'max', 'median'],
-                                                                     f'potentiel_max_{variable}': ['mean', 'max', 'median']})
-        data_grp.columns.set_levels(
-            ['Moyenne', 'Max', 'Mediane'], level=1, inplace=True)
+    # def potentiel_max(variable):
+    #     data_grp: pd.DataFrame = data_short.groupby('Set rune').agg({f'Efficience_max_{variable}': ['mean', 'max', 'median'],
+    #                                                                  f'potentiel_max_{variable}': ['mean', 'max', 'median']})
+    #     data_grp.columns.set_levels(
+    #         ['Moyenne', 'Max', 'Mediane'], level=1, inplace=True)
         
-        if not 'set' in data_grp.columns:
-            data_grp.insert(0, 'set', data_grp.index)
-            data_grp['img'] = data_grp['set'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
+    #     if not 'set' in data_grp.columns:
+    #         data_grp.insert(0, 'set', data_grp.index)
+    #         data_grp['img'] = data_grp['set'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
                 
 
-        # data_grp = data_grp.droplevel(level=0, axis=1)
-        st.dataframe(data_grp.set_index('img'),
-                     column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
+    #     # data_grp = data_grp.droplevel(level=0, axis=1)
+    #     st.dataframe(data_grp.set_index('img'),
+    #                  column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
 
-        fig = go.Figure()
-        # on calcule ce que ça donnerait avec le potentiel
-        data_grp['total'] = data_grp[f'Efficience_max_{variable}']['Moyenne'] + \
-            data_grp[f'potentiel_max_{variable}']['Moyenne']
-        fig.add_trace(go.Histogram(
-            y=data_grp['total'], x=data_grp.index, histfunc='avg', name=f'potentiel {variable}'))
-        fig.add_trace(go.Histogram(
-            y=data_grp[f'Efficience_max_{variable}']['Moyenne'], x=data_grp.index, histfunc='avg', name='efficience actuelle'))
-        fig.update_layout(
-            barmode="overlay",
-            title=f'Potentiel {variable}',
-            bargap=0.1)
+    #     fig = go.Figure()
+    #     # on calcule ce que ça donnerait avec le potentiel
+    #     data_grp['total'] = data_grp[f'Efficience_max_{variable}']['Moyenne'] + \
+    #         data_grp[f'potentiel_max_{variable}']['Moyenne']
+    #     fig.add_trace(go.Histogram(
+    #         y=data_grp['total'], x=data_grp.index, histfunc='avg', name=f'potentiel {variable}'))
+    #     fig.add_trace(go.Histogram(
+    #         y=data_grp[f'Efficience_max_{variable}']['Moyenne'], x=data_grp.index, histfunc='avg', name='efficience actuelle'))
+    #     fig.update_layout(
+    #         barmode="overlay",
+    #         title=f'Potentiel {variable}',
+    #         bargap=0.1)
 
-        return fig
+    #     return fig
 
-    with tab1:
-        fig_max_hero = potentiel_max('hero')
-        st.plotly_chart(fig_max_hero)
+    # with tab1:
+    #     fig_max_hero = potentiel_max('hero')
+    #     st.plotly_chart(fig_max_hero)
 
-    with tab2:
-        fig_max_lgd = potentiel_max('lgd')
-        st.plotly_chart(fig_max_lgd)
-    with tab3:
-        df_rune_filter = filter_dataframe(df_rune, 'df_rune')
+    # with tab2:
+    #     fig_max_lgd = potentiel_max('lgd')
+    #     st.plotly_chart(fig_max_lgd)
+    # with tab3:
+    #     df_rune_filter = filter_dataframe(df_rune, 'df_rune')
                 
 
-        df_rune_filter['img'] = df_rune_filter['Set'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
-        st.dataframe(df_rune_filter.set_index('img'),
-                     column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
+    #     df_rune_filter['img'] = df_rune_filter['Set'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
+    #     st.dataframe(df_rune_filter.set_index('img'),
+    #                  column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
 
-    with tab4:
-        df_count_filter = filter_dataframe(df_count, 'df_count')
-        st.dataframe(df_count_filter)
-        st.plotly_chart(fig_hero_manquante)
-        st.plotly_chart(fig_lgd_manquante)
+    # with tab4:
+    #     df_count_filter = filter_dataframe(df_count, 'df_count')
+    #     st.dataframe(df_count_filter)
+    #     st.plotly_chart(fig_hero_manquante)
+    #     st.plotly_chart(fig_lgd_manquante)
 
-    with tab5:
-        df_inventaire_filter = filter_dataframe(df_inventaire, 'df_inventaire')
-        st.dataframe(df_inventaire_filter)
+    # with tab5:
+    #     df_inventaire_filter = filter_dataframe(df_inventaire, 'df_inventaire')
+    #     st.dataframe(df_inventaire_filter)
 
     del data, data_short, df_rune, df_count, df_inventaire
 
