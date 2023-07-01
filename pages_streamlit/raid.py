@@ -18,39 +18,38 @@ def donjon():
 
 
     st.session_state.run_logger = st.file_uploader(
-                'Fichier CSV généré par SWEX', type=['csv'], help="Il faut activer l'option RunLogger dans SWEX. Le fichier se nomme 'pseudo-runs.csv' ")
+                'Fichier CSV généré par SWEX', type=['csv'], help="Il faut activer l'option RunLogger dans SWEX. Le fichier se nomme 'pseudo-raid-runs.csv' ")
 
     
     if st.session_state.run_logger is not None:
         df_run = pd.read_csv(st.session_state.run_logger)
-        # on crée les teams
-        df_run['team'] = df_run.apply(lambda x : f"{x['team1']}(L),{x['team2']},{x['team3']},{x['team4']},{x['team5']}", axis=1)
-        df_run.fillna(0, inplace=True)
+
+
+        st.info("Ne pas hésiter à zoomer sur les graphiques lorsqu'il y a beaucoup de données. La fonctionnalité est disponible en haut à droite du graphique, en passant la souris dessus.")
+
         # date au bon format
         df_run['date'] = pd.to_datetime(df_run['date'])
-        df_run['time'] = pd.to_datetime(df_run['time'], format='%M:%S').dt.time
 
-        # Tant que les abysses ne sont pas séparés par RunLogger
-        df_run['dungeon'] = df_run['dungeon'].replace({'Unknown' : 'Abysses'})
-        
+        # Le R5 n'est pas détecté
+        df_run['dungeon'].fillna('R5', inplace=True)
         # type de donjon
         
         list_donjon = df_run['dungeon'].unique()
-        
-        st.info("RunLogger ne différencie pas les abysses pour le moment")
         
         donjon_selected = selectbox('Donjon', list_donjon)
         
         if donjon_selected != None:
             df_run = df_run[df_run['dungeon'] == donjon_selected]
        
-     
+        
         col1, col2 = st.columns(2)    
         
         with col1:   
-            fig = px.pie(df_run, names='team', title='Répartition des équipes')
+            fig = px.pie(df_run, names='result', title='Répartition des résultats')
             
             st.plotly_chart(fig)
+        
+        df_run = df_run[df_run['result'] == 'Win']  # on ne va pas s'embêter avec les défaites
         
         with col2:    
             fig = px.pie(df_run, names='dungeon', title='Répartition des donjons')
@@ -61,7 +60,7 @@ def donjon():
             
         with col3:
             
-            fig = px.pie(df_run, names='drop', title='Répartition des butins')
+            fig = px.pie(df_run, names='main_stat', title='Répartition des main stat')
             
             st.plotly_chart(fig)
             
@@ -69,11 +68,11 @@ def donjon():
         with col4:
             
             
-                df_grp = df_run[df_run['drop'].isin(['Artifact', 'Rune'])].groupby(['dungeon', 'set', 'rarity'], as_index=False).count()
+                df_grp = df_run[df_run['drop'].isin(['Grindstone', 'Enchanted Gem'])].groupby(['dungeon', 'set', 'drop', 'main_stat'], as_index=False).count()
                 
                 if df_grp.shape[0] > 0:
                 
-                    fig = px.sunburst(df_grp, path=['dungeon', 'set', 'rarity'], values='result', title='Répartition des runes/artefacts')
+                    fig = px.sunburst(df_grp, path=['dungeon', 'set', 'drop', 'main_stat'], values='result', title='Répartition des runes/artefacts')
                     
                     fig.update_traces(textinfo='value+label')
                     
@@ -83,19 +82,19 @@ def donjon():
                    
         with col5:
         
-            df_grp = df_run[df_run['drop'] == 'Rune']
+            df_grp = df_run[df_run['drop'] == 'Grindstone']
             
             if df_grp.shape[0] > 0:
-                fig = px.pie(df_grp, names='slot', title='Slot')
+                fig = px.pie(df_grp, names='set', title='Set (Meules)')
                 
                 st.plotly_chart(fig)
             
         with col6:
             
-            df_grp = df_run[df_run['drop'] == 'Artifact']
+            df_grp = df_run[df_run['drop'] == 'Enchanted Gem']
             
             if df_grp.shape[0] > 0:
-                fig = px.pie(df_grp, names='main_stat', title='Stat Arté')
+                fig = px.pie(df_grp, names='set', title='Set (Gemmes)')
                 
                 st.plotly_chart(fig)
             
@@ -106,7 +105,7 @@ def donjon():
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:
-        st.title('Donjon')
+        st.title('Raid')
         donjon()
 
     else:

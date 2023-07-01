@@ -51,6 +51,7 @@ show_pages([
                     Page('pages_streamlit/use_arte.py', 'Where2Use', icon=':brain:'),
                     Section(name='Monstres', icon=':japanese_ogre:'),
                     Page('pages_streamlit/donjons.py', 'Donjons', icon=':japanese_castle:'),
+                    Page('pages_streamlit/raid.py', 'Raid', icon=':dragon_face:'),
                     Section(name='Paramètres', icon=':gear:'),
                     Page('pages_streamlit/visibility.py', 'Ma visibilité', icon=':eyes:'),
                     Page('pages_streamlit/options.py', 'Mes données', icon=':iphone:'),
