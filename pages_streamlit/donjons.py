@@ -29,12 +29,15 @@ def donjon():
         # date au bon format
         df_run['date'] = pd.to_datetime(df_run['date'])
         df_run['time'] = pd.to_datetime(df_run['time'], format='%M:%S').dt.time
-        # on convertit tout en secondes car le groupby time n'existe pas
-        # df_run['time'] = df_run['time'].apply(lambda x : x.minute*60 + x.second)
+
+        # Tant que les abysses ne sont pas séparés par RunLogger
+        df_run['dungeon'] = df_run['dungeon'].replace({'Unknown' : 'Abysses'})
         
         # type de donjon
         
         list_donjon = df_run['dungeon'].unique()
+        
+        st.info("RunLogger ne différencie pas les abysses pour le moment")
         
         donjon_selected = selectbox('Donjon', list_donjon)
         
@@ -75,7 +78,26 @@ def donjon():
                     fig.update_traces(textinfo='value+label')
                     
                     st.plotly_chart(fig)
+        
+        col5, col6 = st.columns(2) 
+                   
+        with col5:
+        
+            df_grp = df_run[df_run['drop'] == 'Rune']
             
+            if df_grp.shape[0] > 0:
+                fig = px.pie(df_grp, names='slot', title='Slot')
+                
+                st.plotly_chart(fig)
+            
+        with col6:
+            
+            df_grp = df_run[df_run['drop'] == 'Artifact']
+            
+            if df_grp.shape[0] > 0:
+                fig = px.pie(df_grp, names='main_stat', title='Stat Arté')
+                
+                st.plotly_chart(fig)
             
             
             
@@ -84,7 +106,6 @@ def donjon():
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:
-        st.info("La v8 n'est pas encore détectée par RunLogger")
         st.title('Donjon')
         donjon()
 
