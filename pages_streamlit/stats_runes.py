@@ -30,6 +30,7 @@ def stats_runage():
          # on récupère les données
         df_efficience : pd.DataFrame = st.session_state.data_rune.data.copy()
         
+        
         # on identifie les monstres
         df_efficience['rune_equiped'] = df_efficience['rune_equiped'].astype('str')
         df_efficience['rune_equiped'].replace(
@@ -40,11 +41,14 @@ def stats_runage():
         # list_set.sort()
         
         set_select_efficience = selectbox('Choisir un set', st.session_state.set_rune , key='efficience')
-        top = st.slider('Nombre de runes à afficher', 10, 1000, 400, 10) 
+        
         
         # filtre sur un set ?
         if set_select_efficience != None:
             df_efficience = df_efficience[df_efficience['rune_set'] == set_select_efficience]
+            
+        
+        top = st.slider('Nombre de runes à afficher', 10, df_efficience.shape[0], round(df_efficience.shape[0] / 2), 10)     
         
         # on sort par efficience    
         df_efficience = df_efficience.sort_values('efficiency', ascending=False)
@@ -52,11 +56,38 @@ def stats_runage():
         # top 400
         df_efficience = df_efficience.head(top).reset_index()
         
-        fig = px.line(df_efficience, x=df_efficience.index, y='efficiency', hover_data=['rune_set', 'rune_equiped'])
+        col1, col2 = st.columns(2)
         
-        st.plotly_chart(fig)
+        with col1:
+        
+            fig = px.line(df_efficience, x=df_efficience.index, y='efficiency', hover_data=['rune_set', 'rune_equiped'])
+            
+            st.plotly_chart(fig)
+            
+        with col2:
+        
+            if set_select_efficience == None:
+                grp_by = 'rune_set'
+                
+            else:
+                grp_by = 'main_type'
+                df_efficience['main_type'] = df_efficience['main_type'].replace(
+                    {0: 'Aucun',
+                    1: 'HP',
+                    2: 'HP%',
+                    3: 'ATQ',
+                    4: 'ATQ%',
+                    5: 'DEF',
+                    6: 'DEF%',
+                    8: "SPD",
+                    9: 'CRIT',
+                    10: 'DCC',
+                    11: 'RES',
+                    12: 'ACC'})
+                
+            fig = px.pie(df_efficience.groupby(grp_by, as_index=False).count(), values='efficiency', names=grp_by, title='Répartition des runes par set')
+            st.plotly_chart(fig)
 
-        
         
     with tab_pts:
     

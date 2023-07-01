@@ -330,6 +330,20 @@ class Rune():
         self.set_rune.sort()
 
         self.data_spd = self.data.copy()
+        
+
+        def map_stats(df : pd.DataFrame, columns : list):
+            '''Transforme les substats numériques en string'''
+
+            df[columns] = df[columns].applymap(lambda x : self.property[x])
+                    
+            return df
+        
+        self.data_set = self.data[self.data['level'] >= 12]
+        
+        self.data_set = map_stats(self.data_set, ['innate_type', 'first_sub', 'second_sub', 'third_sub', 'fourth_sub', 'main_type'])
+        
+            
 
     def scoring_rune(self, category_selected, coef_set):
         """Calcule le score général du compte

@@ -7,12 +7,13 @@ from streamlit_extras.colored_header import colored_header
 from st_pages import add_indentation
 from fonctions.visuel import css
 from streamlit_extras.no_default_selectbox import selectbox
-
+from streamlit_extras.metric_cards import style_metric_cards
 import plotly_express as px
 
 css()
 add_indentation()
 
+style_metric_cards(background_color='#03152A', border_color='#0083B9', border_left_color='#0083B9', border_size_px=0, box_shadow=False)
 
 def grind_arte():
     
@@ -28,24 +29,75 @@ def grind_arte():
         
     type_select = selectbox('Choisir un type', list_type , key='type_arte')
     attribut_select = selectbox('Choisir un attribut', list_attribut , key='attribut_arte')
-    top = st.slider("Nombre d'artefacts à afficher", 10, 1000, 400, 10) 
-        
-    # filtre sur un set ?
+    
+        # filtre sur un set ?
     if type_select != None:
         df_efficience = df_efficience[df_efficience['arte_type'] == type_select]
     
     if attribut_select != None:
         df_efficience = df_efficience[df_efficience['arte_attribut'] == attribut_select]
         
+    top = st.slider("Nombre d'artefacts à afficher", 10, df_efficience.shape[0], round(df_efficience.shape[0]/2), 10) 
+        
+
+        
     # on sort par efficience    
     df_efficience = df_efficience.sort_values('efficiency', ascending=False)
         
     # top 400
     df_efficience = df_efficience.head(top).reset_index()
+    
+    col1, col2 = st.columns(2)
+     
+    with col1:    
+        fig = px.line(df_efficience, x=df_efficience.index, y='efficiency', hover_data=['arte_type', 'arte_attribut', 'arte_equiped'])
+        st.plotly_chart(fig)  
         
-    fig = px.line(df_efficience, x=df_efficience.index, y='efficiency', hover_data=['arte_type', 'arte_attribut', 'arte_equiped'])
+    with col2:
         
-    st.plotly_chart(fig)    
+        st.text(f'Efficience moyenne {df_efficience["efficiency"].mean():.2f}')
+        st.text(f'50% de tes artefacts ont plus de : {df_efficience["efficiency"].median():.2f}')
+        st.text(f'Efficience moyenne par archetype {df_efficience[df_efficience["arte_type"] == "ARCHETYPE"]["efficiency"].mean():.2f}')
+        st.text(f'Efficience moyenne par element {df_efficience[df_efficience["arte_type"] == "ELEMENT"]["efficiency"].mean():.2f}')
+        
+        st.subheader(f'Parmi le top {top}:')
+        col2_1, col2_2 = st.columns(2)
+        
+        with col2_1:
+            count_element = df_efficience[df_efficience["arte_type"] == "ELEMENT"]['efficiency'].count()
+            st.metric('Element', count_element, round(count_element / top * 100,2), help="Le nombre coloré correspond au % du top")
+        
+        with col2_2:
+            count_archetype = df_efficience[df_efficience["arte_type"] == "ARCHETYPE"]['efficiency'].count()
+            st.metric('Archetype', count_archetype, round(count_archetype / top * 100,2), help="Le nombre coloré correspond au % du top")
+            
+    with st.expander('Plus de détails...'):
+        
+        fig = px.pie(df_efficience.groupby(['arte_attribut'], as_index=False).count(),
+                     values='efficiency',
+                     names='arte_attribut',
+                     title='Répartition par attribut')
+        
+        fig.update_traces(textposition='inside', textinfo='percent+value+label')
+            
+        st.plotly_chart(fig, use_container_width=True)    
+            
+    
+    
+        
+    col3, col4 = st.columns(2)
+    
+    with col3:
+        df_archetype = df_efficience[df_efficience["arte_type"] == "ELEMENT"].reset_index(drop=True)
+        fig = px.line(df_archetype, x=df_archetype.index, y='efficiency', hover_data=['arte_type', 'arte_attribut', 'arte_equiped'], title='Element')
+        st.plotly_chart(fig)
+    
+    with col4:
+        df_element = df_efficience[df_efficience["arte_type"] == "ARCHETYPE"].reset_index(drop=True)
+        fig = px.line(df_element, x=df_element.index, y='efficiency', hover_data=['arte_type', 'arte_attribut', 'arte_equiped'], title='Archetype')
+        st.plotly_chart(fig)  
+        
+        
     
 
     
