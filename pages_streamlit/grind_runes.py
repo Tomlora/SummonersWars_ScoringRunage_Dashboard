@@ -16,6 +16,8 @@ pio.renderers.default = "notebook_connected"
 from fonctions.visuel import css
 css()
 
+
+
 # Supprime les Future Warnings sur les copies
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -109,7 +111,6 @@ def export_excel(data, data_short, data_property, data_count, data_inventaire):
 
     return processed_data
 
-
 def optimisation_rune():
 
     data_class = st.session_state.data_rune
@@ -198,10 +199,6 @@ def optimisation_rune():
 
         df_inventaire = df_inventaire['rune_craft_item_list']
 
-        # id des crafts
-
-
-
 
         # Combien de gemmes/meules différentes ?
 
@@ -229,7 +226,7 @@ def optimisation_rune():
     #     quality : 14
 
     @st.cache_data(show_spinner=False)
-    def charge_data(data, data_short, df_rune, df_count, df_inventaire):
+    def charge_data(data, data_short, df_rune, df_count, df_inventaire, user_id, meule:bool):
         with st.spinner('Chargement des données concaténées...Prévoir quelques secondes'):
 
             df_inventaire = pd.DataFrame(df_inventaire)
@@ -288,10 +285,10 @@ def optimisation_rune():
                              'second_sub_value_max': 'Substat 2 max',
                              'third_sub_value_max': 'Substat 3 max',
                              'fourth_sub_value_max': 'Substat 4 max',
-                             'first_sub_value_total': 'Substat 1 total',
-                             'second_sub_value_total': 'Substat 2 total',
-                             'third_sub_value_total': 'Substat 3 total',
-                             'fourth_sub_value_total': 'Substat 4 total',
+                             'first_sub_value_total': 'Substat total 1',
+                             'second_sub_value_total': 'Substat total 2',
+                             'third_sub_value_total': 'Substat total 3',
+                             'fourth_sub_value_total': 'Substat total 4',
                              'first_grind_value_max_lgd': 'Meule 1 lgd Max',
                              'second_grind_value_max_lgd': 'Meule 2 lgd Max',
                              'third_grind_value_max_lgd': 'Meule 3 lgd Max',
@@ -330,8 +327,14 @@ def optimisation_rune():
             
             # Gestion des substats
             
-            melt = data.melt(id_vars=['Id_rune', 'Set rune', 'Slot', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'],
-                    value_vars=['Substat valeur 1', 'Substat valeur 2', 'Substat valeur 3', 'Substat valeur 4'])
+            if meule:
+            
+                melt = data.melt(id_vars=['Id_rune', 'Set rune', 'Slot', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'],
+                        value_vars=['Substat total 1', 'Substat total 2', 'Substat total 3', 'Substat total 4'])
+            else:
+                
+                melt = data.melt(id_vars=['Id_rune', 'Set rune', 'Slot', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'],
+                        value_vars=['Substat valeur 1', 'Substat valeur 2', 'Substat valeur 3', 'Substat valeur 4'])
 
             def changement_variable(x):
                     number = x.variable[-1]
@@ -348,7 +351,10 @@ def optimisation_rune():
                                     aggfunc='first',
                                     fill_value=0).reset_index()
             
-            data = data.merge(pivot, on=['Id_rune', 'Set rune', 'Slot']).drop(columns=['Substat 1', 'Substat 2', 'Substat 3', 'Substat 4', 'Substat valeur 1', 'Substat valeur 2', 'Substat valeur 3', 'Substat valeur 4'])
+            if meule:
+                data = data.merge(pivot, on=['Id_rune', 'Set rune', 'Slot']).drop(columns=['Substat 1', 'Substat 2', 'Substat 3', 'Substat 4', 'Substat total 1', 'Substat total 2', 'Substat total 3', 'Substat total 4'])
+            else:
+                data = data.merge(pivot, on=['Id_rune', 'Set rune', 'Slot']).drop(columns=['Substat 1', 'Substat 2', 'Substat 3', 'Substat 4', 'Substat valeur 1', 'Substat valeur 2', 'Substat valeur 3', 'Substat valeur 4'])
             data_short = data_short.merge(pivot, on=['Id_rune', 'Set rune', 'Slot'])
             
             data_xlsx = export_excel(
@@ -360,10 +366,11 @@ def optimisation_rune():
 
             return data_xlsx, data, data_short, df_rune, df_count, df_inventaire
 
+    show_stat = st.checkbox('Afficher les stats de base ou les stats avec meules ?', value=True, key='checkbox_data', help='Le premier chargement sera plus long')
     data_xlsx, data, data_short, df_rune, df_count, df_inventaire = charge_data(
-        data, data_short, df_rune, df_count, df_inventaire)
+        data, data_short, df_rune, df_count, df_inventaire, st.session_state.compteid, show_stat)
 
-    st.success('Terminé !')
+
 
     st.subheader('Summary')
     st.info("Aucune donnée n'est conservée")
@@ -374,63 +381,6 @@ def optimisation_rune():
     st.download_button('Télécharger la data (Excel)', data_xlsx, file_name='grind.xlsx',
                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
-    # tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    #     ['Potentiel max hero', 'Potentiel max lgd', 'Nombre de runes (Grid max Hero)', 'Meules/Gemmes nécessaires', 'Inventaire'])
-
-    # def potentiel_max(variable):
-    #     data_grp: pd.DataFrame = data_short.groupby('Set rune').agg({f'Efficience_max_{variable}': ['mean', 'max', 'median'],
-    #                                                                  f'potentiel_max_{variable}': ['mean', 'max', 'median']})
-    #     data_grp.columns.set_levels(
-    #         ['Moyenne', 'Max', 'Mediane'], level=1, inplace=True)
-        
-    #     if not 'set' in data_grp.columns:
-    #         data_grp.insert(0, 'set', data_grp.index)
-    #         data_grp['img'] = data_grp['set'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
-                
-
-    #     # data_grp = data_grp.droplevel(level=0, axis=1)
-    #     st.dataframe(data_grp.set_index('img'),
-    #                  column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
-
-    #     fig = go.Figure()
-    #     # on calcule ce que ça donnerait avec le potentiel
-    #     data_grp['total'] = data_grp[f'Efficience_max_{variable}']['Moyenne'] + \
-    #         data_grp[f'potentiel_max_{variable}']['Moyenne']
-    #     fig.add_trace(go.Histogram(
-    #         y=data_grp['total'], x=data_grp.index, histfunc='avg', name=f'potentiel {variable}'))
-    #     fig.add_trace(go.Histogram(
-    #         y=data_grp[f'Efficience_max_{variable}']['Moyenne'], x=data_grp.index, histfunc='avg', name='efficience actuelle'))
-    #     fig.update_layout(
-    #         barmode="overlay",
-    #         title=f'Potentiel {variable}',
-    #         bargap=0.1)
-
-    #     return fig
-
-    # with tab1:
-    #     fig_max_hero = potentiel_max('hero')
-    #     st.plotly_chart(fig_max_hero)
-
-    # with tab2:
-    #     fig_max_lgd = potentiel_max('lgd')
-    #     st.plotly_chart(fig_max_lgd)
-    # with tab3:
-    #     df_rune_filter = filter_dataframe(df_rune, 'df_rune')
-                
-
-    #     df_rune_filter['img'] = df_rune_filter['Set'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
-    #     st.dataframe(df_rune_filter.set_index('img'),
-    #                  column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
-
-    # with tab4:
-    #     df_count_filter = filter_dataframe(df_count, 'df_count')
-    #     st.dataframe(df_count_filter)
-    #     st.plotly_chart(fig_hero_manquante)
-    #     st.plotly_chart(fig_lgd_manquante)
-
-    # with tab5:
-    #     df_inventaire_filter = filter_dataframe(df_inventaire, 'df_inventaire')
-    #     st.dataframe(df_inventaire_filter)
 
     del data, data_short, df_rune, df_count, df_inventaire
 

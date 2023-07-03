@@ -17,12 +17,12 @@ add_indentation()
 def donjon():
 
 
-    st.session_state.run_logger = st.file_uploader(
+    st.session_state.run_logger_raid = st.file_uploader(
                 'Fichier CSV généré par SWEX', type=['csv'], help="Il faut activer l'option RunLogger dans SWEX. Le fichier se nomme 'pseudo-raid-runs.csv' ")
 
     
-    if st.session_state.run_logger is not None:
-        df_run = pd.read_csv(st.session_state.run_logger)
+    if st.session_state.run_logger_raid is not None:
+        df_run = pd.read_csv(st.session_state.run_logger_raid)
 
 
         st.info("Ne pas hésiter à zoomer sur les graphiques lorsqu'il y a beaucoup de données. La fonctionnalité est disponible en haut à droite du graphique, en passant la souris dessus.")
@@ -100,9 +100,6 @@ def donjon():
             
             
             
-        
-
-
 if 'submitted' in st.session_state:
     if st.session_state.submitted:
         st.title('Raid')

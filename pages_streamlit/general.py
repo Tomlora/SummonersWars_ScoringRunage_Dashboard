@@ -16,7 +16,6 @@ from fonctions.artefact import visualisation_top_arte
 from streamlit_extras.metric_cards import style_metric_cards
 from streamlit_extras.add_vertical_space import add_vertical_space
 
-
 from st_pages import add_indentation
 
 css()
@@ -43,7 +42,7 @@ def highlight_max(data, color='yellow'):
                             index=data.index, columns=data.columns)
 
 
-def show_img_monsters(data, stars, variable='*', width=70):
+def show_img_monsters(user_id, data, stars, variable='*', width=70, ):
 
     data = data[data[variable] == stars]
 
@@ -183,8 +182,8 @@ if 'submitted' in st.session_state:
                     st.warning(
                         body="Pour des raisons de performance, l'autel de scellement n'est inclus que dans l'onglet spécifié", icon="🚨")
 
-                    # @st.cache_data(show_spinner=False)
-                    def chargement_mobs():
+                    @st.cache_data(show_spinner=False)
+                    def chargement_mobs(user_id):
                         data_mobs = pd.DataFrame.from_dict(
                             st.session_state['data_json'], orient="index").transpose()
 
@@ -208,7 +207,7 @@ if 'submitted' in st.session_state:
 
                         return df_mobs
 
-                    df_mobs = chargement_mobs()
+                    df_mobs = chargement_mobs(st.session_state.compteid)
 
                     # on merge
                     df_mobs_complet = pd.merge(
@@ -256,23 +255,23 @@ if 'submitted' in st.session_state:
 
                         with tab1:
                             show_img_monsters(
-                                df_mobs_name, 6, width=taille_image)
+                                st.session_state.compteid, df_mobs_name, 6, width=taille_image)
 
                         with tab2:
                             show_img_monsters(
-                                df_mobs_name, 5, width=taille_image)
+                                st.session_state.compteid, df_mobs_name, 5, width=taille_image)
 
                         with tab3:
                             show_img_monsters(
-                                df_mobs_name, 4, width=taille_image)
+                                st.session_state.compteid, df_mobs_name, 4, width=taille_image)
 
                         with tab4:
                             show_img_monsters(
-                                df_mobs_name, 3, width=taille_image)
+                                st.session_state.compteid, df_mobs_name, 3, width=taille_image)
 
                         with tab5:
                             show_img_monsters(
-                                df_mobs_name, 2, width=taille_image)
+                                st.session_state.compteid, df_mobs_name, 2, width=taille_image)
 
                     with menu2:
                         tab1, tab2, tab3, tab4, tab5 = st.tabs(
@@ -282,23 +281,23 @@ if 'submitted' in st.session_state:
 
                         with tab1:
                             show_img_monsters(
-                                df_mobs_2a_only, 6, width=taille_image)
+                                st.session_state.compteid, df_mobs_2a_only, 6, width=taille_image)
 
                         with tab2:
                             show_img_monsters(
-                                df_mobs_2a_only, 5, width=taille_image)
+                                st.session_state.compteid, df_mobs_2a_only, 5, width=taille_image)
 
                         with tab3:
                             show_img_monsters(
-                                df_mobs_2a_only, 4, width=taille_image)
+                                st.session_state.compteid, df_mobs_2a_only, 4, width=taille_image)
 
                         with tab4:
                             show_img_monsters(
-                                df_mobs_2a_only, 3, width=taille_image)
+                                st.session_state.compteid, df_mobs_2a_only, 3, width=taille_image)
 
                         with tab5:
                             show_img_monsters(
-                                df_mobs_2a_only, 2, width=taille_image)
+                                st.session_state.compteid, df_mobs_2a_only, 2, width=taille_image)
 
                     with menu3:
                         df_mobs_ld_only = df_mobs_name[df_mobs_name['element_number'].isin([
@@ -309,19 +308,19 @@ if 'submitted' in st.session_state:
 
                         with tab1:
                             show_img_monsters(
-                                df_mobs_ld_only, 5, 'natural_stars', width=taille_image)
+                                st.session_state.compteid, df_mobs_ld_only, 5, 'natural_stars', width=taille_image)
 
                         with tab2:
                             show_img_monsters(
-                                df_mobs_ld_only, 4, 'natural_stars', width=taille_image)
+                                st.session_state.compteid, df_mobs_ld_only, 4, 'natural_stars', width=taille_image)
 
                         with tab3:
                             show_img_monsters(
-                                df_mobs_ld_only, 3, 'natural_stars', width=taille_image)
+                                st.session_state.compteid, df_mobs_ld_only, 3, 'natural_stars', width=taille_image)
 
                         with tab4:
                             show_img_monsters(
-                                df_mobs_ld_only, 2, 'natural_stars', width=taille_image)
+                                st.session_state.compteid, df_mobs_ld_only, 2, 'natural_stars', width=taille_image)
 
                     with menu4:
 
@@ -348,27 +347,29 @@ if 'submitted' in st.session_state:
 
                             return df_storage_complet
 
-                        tab1, tab2 = st.tabs(['Interactif', 'Image'])
+    
+                        try:
+                            tab1, tab2 = st.tabs(['Interactif', 'Image'])
+                            df_storage_complet = chargement_storage()
 
-                        df_storage_complet = chargement_storage()
+                            with tab1:
+                                df_storage_complet_filter = filter_dataframe(
+                                    df_storage_complet.drop(['unit_master_id', 'url', 'image_filename'], axis=1), 'data_build', type_number='int', disabled=True)
 
-                        with tab1:
-                            df_storage_complet_filter = filter_dataframe(
-                                df_storage_complet.drop(['unit_master_id', 'url', 'image_filename'], axis=1), 'data_build', type_number='int', disabled=True)
+                                st.dataframe(df_storage_complet_filter)
 
-                            st.dataframe(df_storage_complet_filter)
+                            with tab2:
+                                df_html = table_with_images(
+                                    df=df_storage_complet[['url', 'name', 'quantité']], url_columns=("url",))
 
-                        with tab2:
-                            df_html = table_with_images(
-                                df=df_storage_complet[['url', 'name', 'quantité']], url_columns=("url",))
+                                st.markdown(df_html, unsafe_allow_html=True)
+                        except KeyError:
+                            st.error(
+                                "Vous n'avez pas encore de monstres dans votre autel de scellement")
 
-                            st.markdown(df_html, unsafe_allow_html=True)
+            # Stockage monstres
 
-                # Stockage monstres
-
-            df_mobs_copy = df_mobs.copy()
-
-            df_mobs_global = df_mobs_copy.groupby(by=['id_monstre']).count()
+            df_mobs_global = df_mobs.groupby(by=['id_monstre']).count()
 
             df_mobs_global['storage'] = False
 
@@ -376,22 +377,25 @@ if 'submitted' in st.session_state:
             df_mobs_global.rename(
                 columns={'id_unit': 'quantité'}, inplace=True)
 
-            df_storage_global = df_storage_complet.copy()
+            # df_storage_global = df_storage_complet.copy()
 
-            df_storage_global['storage'] = True
-            df_storage_global.rename(
-                columns={'unit_master_id': 'id_monstre'}, inplace=True)
-            df_global = pd.concat([df_mobs_global[['id_monstre', 'quantité', 'storage']], df_storage_global[[
-                                  'id_monstre', 'quantité', 'storage']]]).reset_index(drop=True)
+            try:
+                df_storage_complet['storage'] = True
+                df_storage_complet.rename(
+                    columns={'unit_master_id': 'id_monstre'}, inplace=True)
+                df_global = pd.concat([df_mobs_global[['id_monstre', 'quantité', 'storage']], df_storage_complet[[
+                                    'id_monstre', 'quantité', 'storage']]]).reset_index(drop=True)
 
-            df_global['id'] = st.session_state['id_joueur']
+                df_global['id'] = st.session_state['id_joueur']
 
-            # on supprime les informations qu'on avait déjà
-            requete_perso_bdd('''DELETE FROM sw_monsters WHERE "id" = :id''', dict_params={
-                              'id': st.session_state['id_joueur']})
-            # # on insert les nouvelles
+                # on supprime les informations qu'on avait déjà
+                requete_perso_bdd('''DELETE FROM sw_monsters WHERE "id" = :id''', dict_params={
+                                'id': st.session_state['id_joueur']})
+                # # on insert les nouvelles
 
-            sauvegarde_bdd(df_global, 'sw_monsters', 'append', index=False)
+                sauvegarde_bdd(df_global, 'sw_monsters', 'append', index=False)
+            except:
+                pass
             
             with tab_arte:
                

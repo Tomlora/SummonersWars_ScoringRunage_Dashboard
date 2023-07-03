@@ -33,6 +33,7 @@ COM2US_QUALITY_MAP = {
 
 
 class Rune():
+    
     def __init__(self, data_json):
         self.data_json = data_json
         self.player_runes = {}
@@ -959,9 +960,6 @@ class Rune():
         list_propriete = []
         list_propriete_gemmes = []
         list_count_gemmes = []
-
-        self.set = {1: "Energy", 2: "Guard", 3: "Swift", 4: "Blade", 5: "Rage", 6: "Focus", 7: "Endure", 8: "Fatal", 10: "Despair", 11: "Vampire", 13: "Violent",
-            14: "Nemesis", 15: "Will", 16: "Shield", 17: "Revenge", 18: "Destroy", 19: "Fight", 20: "Determination", 21: "Enhance", 22: "Accuracy", 23: "Tolerance", 99: "Immemorial"}
 
         for type_rune in self.set.values():
             for propriete in self.property_grind.values():

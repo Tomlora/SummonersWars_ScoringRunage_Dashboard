@@ -22,6 +22,7 @@ def donjon():
 
     
     if st.session_state.run_logger is not None:
+        st.info("Ne pas hésiter à zoomer sur les graphiques lorsqu'il y a beaucoup de données. La fonctionnalité est disponible en haut à droite du graphique, en passant la souris dessus.")
         df_run = pd.read_csv(st.session_state.run_logger)
         # on crée les teams
         df_run['team'] = df_run.apply(lambda x : f"{x['team1']}(L),{x['team2']},{x['team3']},{x['team4']},{x['team5']}", axis=1)

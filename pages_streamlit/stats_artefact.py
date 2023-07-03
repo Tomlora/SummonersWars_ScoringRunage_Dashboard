@@ -21,7 +21,7 @@ def grind_arte():
     st.session_state.data_arte.identify_monsters(st.session_state.identification_monsters)
             
     # on récupère les données        
-    df_efficience : pd.DataFrame = st.session_state.data_arte.data_a.copy()
+    df_efficience : pd.DataFrame = st.session_state.data_arte.data_a
     list_type = df_efficience['arte_type'].unique().tolist()
     list_attribut = df_efficience['arte_attribut'].unique().tolist()
         

@@ -23,7 +23,7 @@ with col2:
 with st.expander('Version 01/07/2023', expanded=True):
     st.info("- Ajout des Pages Upgrade (Rune + Artefact)\n\n"+
             "- Amélioration de la lisibilité des tableaux dans Optimisation de Runes\n\n"+
-            "- Ajout de l'onglet Donjon/Raid")    
+            "- Ajout de l'onglet Monstres et des Pages Donjon/Raid")    
     
 with st.expander('Version 30/06/2023', expanded=True):
     st.info("- Ajout des nouveaux sets \n\n"+

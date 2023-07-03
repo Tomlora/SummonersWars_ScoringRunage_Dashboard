@@ -227,6 +227,7 @@ class Artefact():
         self.data_a.reset_index(inplace=True)
         
         
+        
     def scoring_arte(self):
         self.data_eff = self.data_a[['efficiency', 'arte_type', 'main_type']]
 
@@ -355,19 +356,7 @@ class Artefact():
         self.df_max_element = self.df_max.groupby(['arte_attribut', 'substat']).agg({'max_value' : 'max'})
         self.df_max_substat = self.df_max.groupby(['substat']).agg({'max_value' : 'max'})
         
-    # def count_substat(self, mot_cle, nb_mot_cle):
-    #     data_count = self.data_a.copy()
-    #     data_count.reset_index(inplace=True)
-    #     data_count['totalsub'] = data_count['first_sub'] + data_count['second_sub'] + data_count['third_sub'] + data_count['fourth_sub']
-        
-    #     data_grp = data_count.groupby(['index']).agg({'totalsub':lambda x: ', '.join(tuple(x.tolist()))})
-    #     data_grp['critere'] = data_grp['totalsub'].str.count(mot_cle)
-        
-    #     data_count = data_grp.merge(data_grp, on='index')
-        
-    #     data_count = data_grp[data_grp['critere'] >= nb_mot_cle]
-        
-    #     return data_count, data_count.shape[0]
+
     
     def count_substat(self, mot_cle, nb_mot_cle):
         data = self.data_a.copy()
@@ -489,10 +478,6 @@ def visualisation_top_arte(df, column, use_container_width0=True, order=None):
             existing_cols = [col for col in order if col in tcd.columns]
             tcd = tcd.loc[:, existing_cols]
         
-        
-        
-
-
         # table
         df2=tcd.astype('int').astype('str').style.set_properties(**{'text-align': 'center'}).set_table_styles(styles)
         st.table(df2)    
