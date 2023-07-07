@@ -4,6 +4,7 @@ from streamlit_extras.switch_page_button import switch_page
 from fonctions.visualisation import filter_dataframe
 import pandas as pd
 import plotly_express as px
+import plotly.graph_objects as go
 from st_pages import add_indentation
 from fonctions.visuel import css
 from fonctions.gestion_bdd import lire_bdd_perso
@@ -25,10 +26,11 @@ def stats_runage():
     with tab_efficience:
         
         
-        st.session_state.data_rune.identify_monsters(st.session_state.identification_monsters, 'data')
+        st.session_state.data_rune.calcul_potentiel()
+        st.session_state.data_rune.identify_monsters(st.session_state.identification_monsters, 'data_grind')
         
          # on récupère les données
-        df_efficience : pd.DataFrame = st.session_state.data_rune.data.copy()
+        df_efficience : pd.DataFrame = st.session_state.data_rune.data_grind.copy()
         
         
         # on identifie les monstres
@@ -52,9 +54,14 @@ def stats_runage():
         
         # on sort par efficience    
         df_efficience = df_efficience.sort_values('efficiency', ascending=False)
+        df_efficience_hero = df_efficience.sort_values('efficiency_max_hero', ascending=False)
+        df_efficience_lgd = df_efficience.sort_values('efficiency_max_lgd', ascending=False)
+        
         
         # top 400
         df_efficience = df_efficience.head(top).reset_index()
+        df_efficience_hero = df_efficience_hero.head(top).reset_index()
+        df_efficience_lgd = df_efficience_lgd.head(top).reset_index()
         
         col1, col2 = st.columns(2)
         
@@ -64,6 +71,7 @@ def stats_runage():
             
             st.plotly_chart(fig)
             
+                        
         with col2:
         
             if set_select_efficience == None:
@@ -87,6 +95,22 @@ def stats_runage():
                 
             fig = px.pie(df_efficience.groupby(grp_by, as_index=False).count(), values='efficiency', names=grp_by, title='Répartition des runes par set')
             st.plotly_chart(fig)
+            
+        fig = go.Figure()
+            
+        fig.add_trace(go.Scatter(x=df_efficience.index, y=df_efficience['efficiency'],
+                    mode='lines',
+                    name='efficiency'))
+
+        fig.add_trace(go.Scatter(x=df_efficience_hero.index, y=df_efficience_hero['efficiency_max_hero'],
+                    mode='lines',
+                    name='Efficience potentiel (hero)'))
+
+        fig.add_trace(go.Scatter(x=df_efficience_lgd.index, y=df_efficience_lgd['efficiency_max_lgd'],
+                    mode='lines',
+                    name='Efficience potentiel (lgd)'))
+            
+        st.plotly_chart(fig, use_container_width=True)
 
         
     with tab_pts:
