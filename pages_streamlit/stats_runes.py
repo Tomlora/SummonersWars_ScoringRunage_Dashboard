@@ -133,7 +133,8 @@ def stats_runage():
         set_select = st.selectbox('Choisir un set', st.session_state.set_rune , key='stat')
         
         df_max_selected = df_max[df_max['rune_set'] == set_select]
-    
+        
+
 
         try:
             st.markdown(f'Points : :green[{df_points.loc[set_select, "points"]}] | Efficience(Mediane) : :violet[{round(df_points.loc[set_select, "mediane"],2)}] | Efficience (Moyenne) : :orange[{round(df_points.loc[set_select, "moyenne"],2)}]')
@@ -158,7 +159,6 @@ def stats_runage():
         
         df_rune['rune_slot'] = df_rune['rune_slot'].apply(lambda x: f'Slot {x}')
         
-
         if set_selected == None:
 
             df_rune_grp = df_rune[(df_rune['first_sub'] == sub_selected) & (df_rune['first_sub_value_total'] >= value_mini)].groupby(['rune_slot']).sum().reset_index()

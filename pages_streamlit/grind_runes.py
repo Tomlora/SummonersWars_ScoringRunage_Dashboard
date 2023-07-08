@@ -327,6 +327,8 @@ def optimisation_rune():
             
             # Gestion des substats
             
+            st.dataframe(data)
+            
             if meule:
             
                 melt = data.melt(id_vars=['Id_rune', 'Set rune', 'Slot', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'],
@@ -343,7 +345,7 @@ def optimisation_rune():
                     return type
 
             melt['variable'] = melt.apply(changement_variable, axis=1)
-
+            
 
             pivot = melt.pivot_table(index=['Id_rune', 'Set rune', 'Slot'],
                                     columns='variable',
