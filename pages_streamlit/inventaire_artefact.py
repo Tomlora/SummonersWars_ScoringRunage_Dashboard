@@ -147,10 +147,12 @@ def inventaire_arte():
 
     data_inventaire = data_inventaire.merge(pivot, on=['Type', 'Attribut', 'Equipé', 'efficience', 'main_type']).drop(columns=['Substat 1', 'Substat 2', 'Substat 3', 'Substat 4', 'Substat valeur 1', 'Substat valeur 2', 'Substat valeur 3', 'Substat valeur 4'])
 
-    st.dataframe(data_inventaire.sort_values('efficience', ascending=False))
+    
     
     
     df_filter2 = filter_dataframe(data_inventaire, key='filtrer_data')
+    
+    st.dataframe(df_filter2.sort_values('efficience', ascending=False))
     data_xlsx2 = export_excel(df_filter2.sort_values('efficience', ascending=False), 'Id_Artefacts', 'Artefacts')
     
     st.download_button('Télécharger la data (Excel)', data_xlsx2, file_name='artefacts_details.xlsx',
