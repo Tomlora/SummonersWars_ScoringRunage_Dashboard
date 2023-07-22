@@ -1,9 +1,8 @@
 from fonctions.gestion_bdd import lire_bdd_perso
-import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-
+@st.cache_data(ttl='1h')
 def comparaison(guilde_id, score='score_general'): 
     """_Genere les éléments globaux puis spécifiques à la guilde spécifiée par son id_
 

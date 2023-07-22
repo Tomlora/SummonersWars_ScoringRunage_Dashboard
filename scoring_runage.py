@@ -4,6 +4,7 @@ import streamlit as st
 from st_pages import Page, Section, show_pages, add_indentation
 from streamlit_extras.switch_page_button import switch_page
 
+
 # Supprime les Future Warnings sur les copies
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -13,16 +14,17 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 @st.cache_data
 def chargement_params():
-    category_selected = ['Violent', 'Will', 'Destroy', 'Despair']
+    category_selected = ['Violent', 'Seal', 'Will', 'Destroy', 'Despair', 'Intangible']
     category_value = ", ".join(category_selected)
 
 
-    category_selected_spd = ['Violent', 'Will', 'Destroy', 'Despair', 'Swift']
+    category_selected_spd = ['Violent', 'Seal', 'Will', 'Destroy', 'Despair', 'Swift', 'Intangible']
     category_value_spd = ", ".join(category_selected_spd)
     
     return category_selected,category_selected_spd, coef_set, coef_set_spd
 
 
+@st.cache_data
 def main_page():
     st.session_state.category_selected, st.session_state.category_selected_spd, st.session_state.coef_set, st.session_state.coef_set_spd = chargement_params()
 
@@ -31,8 +33,9 @@ def main_page():
                         Page('pages_streamlit/upload.py', 'Upload JSON', icon=':file_folder:'),
                         Section(name='Scoring', icon=':bar_chart:'),
                         Page('pages_streamlit/general.py', 'General', ':books:'),
-                        Page('pages_streamlit/palier.py', 'Evolution', ':chart_with_upwards_trend:'),
-                        Page('pages_streamlit/timelapse.py', 'Timelapse', ':bookmark_tabs:'), 
+                        Page('pages_streamlit/evolution.py', 'Evolution', ':chart_with_upwards_trend:'),
+                        Page('pages_streamlit/comparaison.py', 'Comparaison', icon=':chart:'),
+                        # Page('pages_streamlit/timelapse.py', 'Timelapse', ':bookmark_tabs:'), 
                         Section(name='Classement', icon=':trophy:'),
                         Page('pages_streamlit/ladder.py', 'Scoring', icon='🥇'),
                         Page('pages_streamlit/ladder_value.py', 'Rune', icon=':trophy:'),
@@ -58,7 +61,7 @@ def main_page():
                         Page('pages_streamlit/visibility.py', 'Ma visibilité', icon=':eyes:'),
                         Page('pages_streamlit/options.py', 'Mes données', icon=':iphone:'),
                         Section(name='Mise à jour', icon=':loudspeaker:'),
-                        Page('pages_streamlit/update.py', 'Version 08/07/23', icon=':speaker:')
+                        Page('pages_streamlit/update.py', 'Version 18/07/23', icon=':speaker:')
 
                         # Section(name='Administration', icon=':star:'),
                         # Page('pages_streamlit/visualisation_joueur.py', 'Visualisation', icon=':mag:'),

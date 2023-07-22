@@ -32,6 +32,10 @@ def charger_data_artefact():
                         lambda x:  f'https://swarfarm.com/static/herders/images/monsters/{x["image_filename"]}', axis=1)
     
     df = df.merge(swarfarm[['name', 'url', 'natural_stars']], how='left', left_on='Awakened', right_on='name').drop_duplicates(subset=['Awakened'])
+    
+    df['Stats préférées'] = df['Preferred stats'].str.replace('Any', 'Toutes') 
+    df[['Element', 'Attribute', 'Preferred stats']] = df[['Element', 'Attribute', 'Preferred stats']].astype('category')
+
     return df
 
 
@@ -80,7 +84,7 @@ with tab1:
         
         df_final.columns = ['Monstre', 'Attribut', 'Element', 'Famille', 'Stats préférées', 'url', 'Etoiles']
         
-        df_final['Stats préférées'] = df_final['Stats préférées'].str.replace('Any', 'Toutes')  
+         
         
         # Filtre dispo    
         index_filter = filter_dataframe(

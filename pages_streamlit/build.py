@@ -23,91 +23,97 @@ st.title('Création de build')
 
 def build():
 
-    data_mobs = pd.DataFrame.from_dict(
-        st.session_state['data_json'], orient="index").transpose()
+        # # swarfarm
+    @st.cache_data(ttl='1h', show_spinner='Chargement des runes...')
+    def charger_data(joueur):
+        swarfarm = st.session_state.swarfarm[[
+            'com2us_id', 'name', 'image_filename', 'url']].set_index('com2us_id')
+        # df_mobs['name_monstre'] = df_mobs['id_monstre'].map(
+        #     swarfarm.to_dict(orient="dict")['name'])
 
-    data_mobs = data_mobs['unit_list']
+        # On peut faire le mapping...
 
-    # On va boucler et retenir ce qui nous intéresse..
-    list_mobs = []
+        st.session_state.data_rune.data_build = st.session_state.data_rune.data.copy()
 
-    for monstre in data_mobs[0]:
-        unit = monstre['unit_id']
-        master_id = monstre['unit_master_id']
-        list_mobs.append([unit, master_id, monstre['unit_level'], monstre['atk'], monstre['def'], monstre['spd'], monstre['resist'], monstre['accuracy'],
-                          monstre['critical_rate'], monstre['critical_damage']])
+        rename_column = {'rune_set': 'Set rune',
+                        'rune_slot': 'Slot',
+                        'rune_equiped': 'Equipé',
+                        'main_type': 'Stat principal',
+                        'main_value': 'Valeur stat principal',
+                        'first_sub': 'Substat 1',
+                        'second_sub': 'Substat 2',
+                        'third_sub': 'Substat 3',
+                        'fourth_sub': 'Substat 4',
+                        'first_sub_value_total': 'Substat 1 total',
+                        'second_sub_value_total': 'Substat 2 total',
+                        'third_sub_value_total': 'Substat 3 total',
+                        'fourth_sub_value_total': 'Substat 4 total',
+                        }
 
-        for i in range(6):  # itération sur les runes de 1 à 6
-            if len(monstre['runes']) > i:
-                list_mobs[-1].append(monstre['runes'][i]['rune_id'])
-            else:  # s'il n'a pas de rune dans le slot, on met 0
-                list_mobs[-1].append(0)
+        st.session_state.data_rune.data_build.rename(
+            columns=rename_column, inplace=True)
+        st.session_state.data_rune.data_build['Equipé'] = st.session_state.data_rune.data_build['Equipé'].astype(
+            'str')
+        st.session_state.data_rune.data_build['Equipé'].replace(
+            {'0': 'Inventaire'}, inplace=True)
+        
+        st.session_state.data_rune.data_build[['Set rune', 'Stat principal', 'innate_type']] = st.session_state.data_rune.data_build[['Set rune', 'Stat principal', 'innate_type']].astype('category')
+        
 
-    # On met ça en dataframe
-    df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre', 'level', 'atk', 'def', 'spd',
-                                               'resist', 'accuracy', 'CRIT', 'DCC',
-                                               'Rune1', 'Rune2', 'Rune3', 'Rune4', 'Rune5', 'Rune6'])
 
-    # Maintenant, on a besoin d'identifier les id.
-    # Pour cela, on va utiliser l'api de swarfarm
+        st.session_state.data_rune.data_build = st.session_state.data_rune.data_build[['Set rune', 'Slot', 'Equipé', 'Stat principal', 'Valeur stat principal',
+                                                                                    'innate_type', 'innate_value',
+                                                                                    'Substat 1', 'Substat 1 total',
+                                                                                    'Substat 2', 'Substat 2 total',
+                                                                                    'Substat 3', 'Substat 3 total',
+                                                                                    'Substat 4', 'Substat 4 total']]
 
-    # swarfarm
+        st.session_state.data_rune.data_build = st.session_state.data_rune.map_stats(st.session_state.data_rune.data_build, [
+            'Stat principal', 'innate_type', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4']).reset_index()
 
-    swarfarm = st.session_state.swarfarm[[
-        'com2us_id', 'name', 'image_filename', 'url']].set_index('com2us_id')
-    df_mobs['name_monstre'] = df_mobs['id_monstre'].map(
-        swarfarm.to_dict(orient="dict")['name'])
+        st.session_state.data_rune.data_build.rename(
+            columns={'index': 'id_rune'}, inplace=True)
 
-    # On peut faire le mapping...
+        # on peut préparer la page
+        st.warning('En beta', icon="⚠️")
+        
 
-    df_mobs = df_mobs.set_index('id_unit')
+                
+        melt = st.session_state.data_rune.data_build.melt(id_vars=['id_rune', 'Set rune', 'Slot', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'],
+                            value_vars=['Substat 1 total', 'Substat 2 total', 'Substat 3 total', 'Substat 4 total'])
 
-    st.session_state.data_rune.identify_monsters(monsters=df_mobs.to_dict(
-        orient="dict")['name_monstre'], data='data')
 
-    st.session_state.data_rune.data_build = st.session_state.data_rune.data.copy()
 
-    rename_column = {'rune_set': 'Set rune',
-                     'rune_slot': 'Slot',
-                     'rune_equiped': 'Equipé',
-                     'main_type': 'Stat principal',
-                     'main_value': 'Valeur stat principal',
-                     'first_sub': 'Substat 1',
-                     'second_sub': 'Substat 2',
-                     'third_sub': 'Substat 3',
-                     'fourth_sub': 'Substat 4',
-                     'first_sub_value_total': 'Substat 1 total',
-                     'second_sub_value_total': 'Substat 2 total',
-                     'third_sub_value_total': 'Substat 3 total',
-                     'fourth_sub_value_total': 'Substat 4 total',
-                     }
+        def changement_variable(x):
+            number = x.variable[-7]
+            type = x[f'Substat {number}']
+                        
+            return type
 
-    st.session_state.data_rune.data_build.rename(
-        columns=rename_column, inplace=True)
-    st.session_state.data_rune.data_build['Equipé'] = st.session_state.data_rune.data_build['Equipé'].astype(
-        'str')
-    st.session_state.data_rune.data_build['Equipé'].replace(
-        {'0': 'Inventaire'}, inplace=True)
+        melt['variable'] = melt.apply(changement_variable, axis=1)
+                
 
-    st.session_state.data_rune.data_build = st.session_state.data_rune.data_build[['Set rune', 'Slot', 'Equipé', 'Stat principal', 'Valeur stat principal',
-                                                                                   'innate_type', 'innate_value',
-                                                                                   'Substat 1', 'Substat 1 total',
-                                                                                   'Substat 2', 'Substat 2 total',
-                                                                                   'Substat 3', 'Substat 3 total',
-                                                                                   'Substat 4', 'Substat 4 total']]
+        pivot = melt.pivot_table(index=['id_rune', 'Set rune', 'Slot'],
+                                        columns='variable',
+                                        values='value',
+                                        aggfunc='first',
+                                        fill_value=0).reset_index()
+                
 
-    st.session_state.data_rune.data_build = st.session_state.data_rune.map_stats(st.session_state.data_rune.data_build, [
-        'Stat principal', 'innate_type', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4']).reset_index()
+        st.session_state.data_rune.data_build  = st.session_state.data_rune.data_build.merge(pivot, on=['id_rune', 'Set rune', 'Slot'])
+        
+        df_mobs = st.session_state.df_mobs.set_index('id_unit')
+        
+        return st.session_state.data_rune.data_build, swarfarm, df_mobs
+    
+    st.session_state.data_rune.data_build, swarfarm, df_mobs = charger_data(st.session_state.compteid)
+    
+    
 
-    st.session_state.data_rune.data_build.rename(
-        columns={'index': 'id_rune'}, inplace=True)
-
-    # on peut préparer la page
-    st.warning('En beta', icon="⚠️")
 
     with st.expander('Chercher mes runes'):
         data_build_filter = filter_dataframe(
-            st.session_state.data_rune.data_build.drop('id_rune', axis=1), 'data_build', type_number='int')
+            st.session_state.data_rune.data_build.drop(['id_rune', 'Substat 1', 'Substat 1 total', 'Substat 2', 'Substat 2 total', 'Substat 3', 'Substat 3 total', 'Substat 4', 'Substat 4 total', 'Aucun'], axis=1), 'data_build', type_number='int')
         
         if not 'img' in data_build_filter.columns:
             img = data_build_filter['Set rune'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')

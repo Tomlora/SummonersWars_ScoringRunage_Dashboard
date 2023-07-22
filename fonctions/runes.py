@@ -33,8 +33,8 @@ COM2US_QUALITY_MAP = {
 
 
 class Rune():
-    
-    def __init__(self, data_json):
+
+    def __init__(self, data_json, monsters):
         self.data_json = data_json
         self.player_runes = {}
         self.property = {0: 'Aucun',
@@ -178,6 +178,8 @@ class Rune():
             rune_slot = rune['slot_no']
             rune_equiped = rune['occupied_id']
             stars = rune['class']
+            quality = rune['rank']
+            original_quality = rune['extra']
             level = rune['upgrade_curr']
             efficiency = 0
             max_efficiency = 0
@@ -210,7 +212,7 @@ class Rune():
                 fourth_sub_grinded_value = rune['sec_eff'][3][3]
 
             try:
-                self.player_runes[rune_id] = [rune_set, rune_slot, rune_equiped, stars, level, efficiency, max_efficiency,
+                self.player_runes[rune_id] = [rune_set, rune_slot, rune_equiped, stars, quality, original_quality, level, efficiency, max_efficiency,
                                               max_efficiency_reachable, gain, main_type, main_value, innate_type, innate_value,
                                               first_sub, first_sub_value, first_gemme_bool,  first_sub_grinded_value, second_sub, second_sub_value, second_gemme_bool,
                                               second_sub_grinded_value, third_sub, third_sub_value, third_gemme_bool, third_sub_grinded_value, fourth_sub,
@@ -241,6 +243,8 @@ class Rune():
                         rune_slot = rune['slot_no']
                         rune_equiped = rune['occupied_id']
                         stars = rune['class']
+                        quality = rune['rank']
+                        original_quality = rune['extra']
                         level = rune['upgrade_curr']
                         efficiency = 0
                         max_efficiency = 0
@@ -272,7 +276,7 @@ class Rune():
                             fourth_gemme_bool = rune['sec_eff'][3][2]
                             fourth_sub_grinded_value = rune['sec_eff'][3][3]
 
-                        self.player_runes[rune_id] = [rune_set, rune_slot, rune_equiped, stars, level, efficiency, max_efficiency,
+                        self.player_runes[rune_id] = [rune_set, rune_slot, rune_equiped, stars, quality, original_quality,  level, efficiency, max_efficiency,
                                                       max_efficiency_reachable, gain, main_type, main_value, innate_type, innate_value,
                                                       first_sub, first_sub_value, first_gemme_bool, first_sub_grinded_value, second_sub, second_sub_value, second_gemme_bool,
                                                       second_sub_grinded_value, third_sub, third_sub_value, third_gemme_bool, third_sub_grinded_value, fourth_sub,
@@ -280,7 +284,7 @@ class Rune():
 
                 # on crée un df avec la data
 
-        self.data = pd.DataFrame.from_dict(self.player_runes, orient="index", columns=['rune_set', 'rune_slot', 'rune_equiped', 'stars', 'level', 'efficiency', 'max_efficiency', 'max_efficiency_reachable', 'gain', 'main_type', 'main_value', 'innate_type',
+        self.data = pd.DataFrame.from_dict(self.player_runes, orient="index", columns=['rune_set', 'rune_slot', 'rune_equiped', 'stars', 'qualité', 'qualité_original', 'level', 'efficiency', 'max_efficiency', 'max_efficiency_reachable', 'gain', 'main_type', 'main_value', 'innate_type',
                                                                                        'innate_value', 'first_sub', 'first_sub_value', 'first_gemme_bool', 'first_sub_grinded_value', 'second_sub', 'second_sub_value', 'second_gemme_bool',
                                                                                        'second_sub_grinded_value', 'third_sub', 'third_sub_value', 'third_gemme_bool', 'third_sub_grinded_value', 'fourth_sub',
                                                                                        'fourth_sub_value', 'fourth_gemme_bool', 'fourth_sub_grinded_value'])
@@ -297,6 +301,15 @@ class Rune():
         self.data['third_sub_value_max'] = self.data['third_sub'].map(sub)
         self.data['fourth_sub_value_max'] = self.data['fourth_sub'].map(sub)
         self.data['innate_value_max'] = self.data['innate_type'].replace(sub)
+        
+        # Map qualité
+        
+        self.data['qualité'] = self.data['qualité'].map(COM2US_QUALITY_MAP)
+        
+        self.data['qualité'] = self.data['qualité'].astype('category')
+        
+        self.data['qualité_original'] = self.data['qualité_original'].map(COM2US_QUALITY_MAP)
+        self.data['qualité_original'] = self.data['qualité_original'].astype('category')
 
         # Value des runes du joueur ( stats de base + meule )
 
@@ -327,6 +340,11 @@ class Rune():
         self.data = optimisation_int(self.data, ['int64'])
         # self.data = optimisation_int(self.data, ['float64'], 'float16')
         
+        # on cherche les monstres
+        self.data['rune_equiped'] = self.data['rune_equiped'].replace(monsters)
+        self.data['rune_equiped'] = self.data['rune_equiped'].replace({0 : 'Inventaire'})
+        self.data['rune_equiped'] = self.data['rune_equiped'].astype('category')
+        
         self.set_rune = self.data['rune_set'].unique().tolist()
         self.set_rune.sort()
 
@@ -339,6 +357,8 @@ class Rune():
             df[columns] = df[columns].applymap(lambda x : self.property[x])
                     
             return df
+        
+        self.data['rune_slot'] = self.data['rune_slot'].astype('category')
         
         self.data_set = self.data[self.data['level'] >= 12]
         
@@ -579,6 +599,40 @@ class Rune():
         
         return self.tcd_value_spd, self.score_spd
     
+    
+    def count_quality(self):
+
+        self.data_qual = self.data.groupby(['rune_set', 'qualité_original']).agg(nombre=('efficiency','count'))
+        
+        self.data_qual_per_slot = self.data.groupby(['rune_set', 'rune_slot', 'qualité_original']).agg(nombre=('efficiency','count'))
+        
+        
+        
+    def score_quality(self, coef_set : dict):
+        
+        '''On ne va prendre en compte que les lgd et lgd antiques'''
+        
+        self.data_scoring_quality : pd.DataFrame = self.data_qual.reset_index()
+        
+        self.data_scoring_quality = self.data_scoring_quality.pivot_table('nombre', 'rune_set', 'qualité_original', 'sum')[['LGD', 'ANTIQUE_LGD']]
+        
+        self.data_scoring_quality['score_intermediaire'] = self.data_scoring_quality['LGD'] + (self.data_scoring_quality['ANTIQUE_LGD']*2)
+        
+        self.data_scoring_quality['score'] = self.data_scoring_quality.apply(lambda x : x['score_intermediaire'] * coef_set.get(x.name, 1), axis=1)
+        
+        self.data_scoring_quality.drop('score_intermediaire', axis=1, inplace=True) # plus utile
+        
+        self.score_qual = self.data_scoring_quality['score'].sum()
+        
+        self.data_scoring_quality.loc['Total'] = self.data_scoring_quality.sum(axis=0)
+        
+        return self.data_scoring_quality, self.score_qual
+        
+        
+        
+        
+        
+    
     def map_stats(self, df : pd.DataFrame, columns : list):
         '''Transforme les substats numériques en string'''
 
@@ -586,7 +640,7 @@ class Rune():
                 
         return df
         
-    
+
     def calcul_value_max(self):
 
         self.data_max = self.data.copy()
@@ -790,22 +844,10 @@ class Rune():
             self.data_grind[c] = self.data_grind[c].map(self.property)
             
         self.data_grind = optimisation_int(self.data_grind, ['int64'])
+        self.data_grind[['stars', 'level', 'rune_set', 'rune_slot', 'main_type', 'innate_type']] = self.data_grind[['stars', 'level', 'rune_set', 'rune_slot', 'main_type', 'innate_type']].astype('category')
         # self.data_grind = optimisation_int(self.data_grind, ['float64'], 'float16')
             
-            
-    def identify_monsters(self, monsters:dict, data='data_grind'):
-        '''Compatible avec data_grind
-        
-        data est le nom du df à modifier : [data, data_grind]
-        
-        Remplace les id des monstres par leurs noms'''
-
-        if data == 'data_grind':
-            self.data_grind['rune_equiped'] = self.data_grind['rune_equiped'].replace(monsters)
-        elif data == 'data':
-            self.data['rune_equiped'] = self.data['rune_equiped'].replace(monsters)
-        
-        
+                   
     def grind(self):
         '''Compatible avec data_grind
         
@@ -917,11 +959,13 @@ class Rune():
             
         self.data_grind.drop(['stars', 'level'], axis=1, inplace=True)
 
-        self.data_short = self.data_grind[['rune_set', 'rune_slot', 'rune_equiped', 'efficiency', 'efficiency_max_hero',
+        self.data_short = self.data_grind[['rune_set', 'rune_slot', 'rune_equiped', 'qualité', 'qualité_original', 'efficiency', 'efficiency_max_hero',
                        'efficiency_max_lgd', 'potentiel_max_lgd', 'potentiel_max_hero', 'Commentaires', 'Grind_lgd', 'Grind_hero']]
         
         self.data_grind = optimisation_int(self.data_grind, ['int64'])
+        
         self.data_short = optimisation_int(self.data_short, ['int64'])
+        self.data_short[['efficiency', 'efficiency_max_hero', 'efficiency_max_lgd', 'potentiel_max_lgd', 'potentiel_max_hero']] = self.data_short[['efficiency', 'efficiency_max_hero', 'efficiency_max_lgd', 'potentiel_max_lgd', 'potentiel_max_hero']].astype('float16')
         
         
     def count_meules_manquantes(self):
@@ -1067,7 +1111,7 @@ class Rune():
         
         # Si on a pas de rune avec la valeur pour le slot et le set, on met 0
         
-        self.data_per_slot.fillna(0, inplace=True)
+        self.data_per_slot.select_dtypes(include=['float', 'int']).fillna(0, inplace=True)
         
         # on fait le total
         
@@ -1076,6 +1120,9 @@ class Rune():
         # Maintenant qu'on a le total, on peut supprimer les colonnes inutiles
         
         self.data_per_slot.drop(['first_sub_value', 'second_sub_value', 'third_sub_value', 'fourth_sub_value'], axis=1, inplace=True)
+        
+        self.data_per_slot[['first_sub', 'rune_set', 'rune_slot']] = self.data_per_slot[['first_sub', 'rune_set', 'rune_slot']].astype('category')
+        self.data_per_slot[['first_sub_value_total', 'count']] = self.data_per_slot[['first_sub_value_total', 'count']].astype('int16')
         
         return self.data_per_slot
         

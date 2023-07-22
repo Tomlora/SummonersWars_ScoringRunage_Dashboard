@@ -120,42 +120,6 @@ def optimisation_rune():
 
     st.success('Calcul du potentiel des runes effectué !')
 
-    # ## Monstres
-
-    data_mobs = pd.DataFrame.from_dict(
-        st.session_state['data_json'], orient="index").transpose()
-
-    data_mobs = data_mobs['unit_list']
-
-    # On va boucler et retenir ce qui nous intéresse..
-    list_mobs = []
-    with st.spinner('Chargement des monstres...'):
-        for monstre in data_mobs[0]:
-            unit = monstre['unit_id']
-            master_id = monstre['unit_master_id']
-            list_mobs.append([unit, master_id])
-
-        # On met ça en dataframe
-        df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre'])
-
-        # Maintenant, on a besoin d'identifier les id.
-        # Pour cela, on va utiliser l'api de swarfarm
-
-        # swarfarm
-
-        swarfarm = st.session_state.swarfarm[[
-            'com2us_id', 'name']].set_index('com2us_id')
-        df_mobs['name_monstre'] = df_mobs['id_monstre'].map(
-            swarfarm.to_dict(orient="dict")['name'])
-
-        # On peut faire le mapping...
-
-        df_mobs = df_mobs[['id_unit', 'name_monstre']].set_index('id_unit')
-        
-
-    st.success('Chargement des monstres effectués !')
-
-    data_class.identify_monsters(st.session_state.identification_monsters)
 
     # # Indicateurs
     # ## Runes +15
@@ -166,6 +130,7 @@ def optimisation_rune():
     st.success('Vérification des runes et des modifications possibles effectué !')
 
     data = data_class.data_grind
+    
     data_short = data_class.data_short
 
     # ## Meules manquantes par stat (total)
@@ -182,13 +147,6 @@ def optimisation_rune():
         df_rune = data_class.df_rune
 
         df_count = data_class.df_count
-
-        # Graphique
-        fig_hero_manquante = px.histogram(df_count, x='Set', y='Meules (hero) manquantes pour la stat max',
-                                          color='Propriété Meules', title="Meules heroiques manquantes pour la stat max", text_auto=True)
-
-        fig_lgd_manquante = px.histogram(df_count, x='Set', y='Gemmes (hero) manquantes',
-                                         color='Propriété Gemmes', title="Gemmes heroiques manquantes pour la stat max", text_auto=True)
 
         # Inventaire
 
@@ -226,7 +184,7 @@ def optimisation_rune():
     #     quality : 14
 
     @st.cache_data(show_spinner=False)
-    def charge_data(data, data_short, df_rune, df_count, df_inventaire, user_id, meule:bool):
+    def charge_data(data, data_short, df_rune, df_count, df_inventaire, user_id, meule:bool, all_data:bool):
         with st.spinner('Chargement des données concaténées...Prévoir quelques secondes'):
 
             df_inventaire = pd.DataFrame(df_inventaire)
@@ -327,7 +285,10 @@ def optimisation_rune():
             
             # Gestion des substats
             
-            st.dataframe(data)
+            
+            
+            if all_data:
+                st.dataframe(data)
             
             if meule:
             
@@ -368,9 +329,10 @@ def optimisation_rune():
 
             return data_xlsx, data, data_short, df_rune, df_count, df_inventaire
 
-    show_stat = st.checkbox('Afficher les stats de base ou les stats avec meules ?', value=True, key='checkbox_data', help='Le premier chargement sera plus long')
+    show_stat = st.checkbox('Afficher les stats en incluant les meules ?', value=True, key='checkbox_data', help='Le premier chargement sera plus long')
+    show_all = st.checkbox('Afficher la data complète', key='data_complete', help='Montre toute la data utilisée. Le premier chargement sera plus long')
     data_xlsx, data, data_short, df_rune, df_count, df_inventaire = charge_data(
-        data, data_short, df_rune, df_count, df_inventaire, st.session_state.compteid, show_stat)
+        data, data_short, df_rune, df_count, df_inventaire, st.session_state.compteid, show_stat, show_all)
 
 
 
@@ -380,11 +342,11 @@ def optimisation_rune():
     data_short_filter = filter_dataframe(data_short, 'data_short')
     st.dataframe(data_short_filter.drop('Id_rune', axis=1))
 
-    st.download_button('Télécharger la data (Excel)', data_xlsx, file_name='grind.xlsx',
+    st.download_button('Télécharger la data (Excel)', data_xlsx, file_name=f'optimisation runes {st.session_state["pseudo"]}.xlsx',
                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 
-    del data, data_short, df_rune, df_count, df_inventaire
+    del data, data_short, df_rune, df_count, df_inventaire, data_xlsx, data_short_filter
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:

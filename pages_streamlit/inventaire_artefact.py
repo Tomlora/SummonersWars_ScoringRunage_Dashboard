@@ -1,17 +1,15 @@
 
 import streamlit as st
-from fonctions.gestion_bdd import requete_perso_bdd
-from fonctions.artefact import Artefact
 from streamlit_extras.switch_page_button import switch_page
-from streamlit_extras.dataframe_explorer import dataframe_explorer
 from fonctions.visualisation import filter_dataframe
 from streamlit_extras.colored_header import colored_header
 import pandas as pd
 from fonctions.export import export_excel
 from streamlit_extras.no_default_selectbox import selectbox
-
 from st_pages import add_indentation
 from fonctions.visuel import css
+
+
 css()
 
 add_indentation()
@@ -21,8 +19,6 @@ add_indentation()
 
 def inventaire_arte():
 
-    st.session_state.data_arte.identify_monsters(
-        st.session_state.identification_monsters)
 
     data_inventaire : pd.DataFrame = st.session_state.data_arte.data_a.copy()
 

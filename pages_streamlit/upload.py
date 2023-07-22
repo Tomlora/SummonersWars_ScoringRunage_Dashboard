@@ -14,7 +14,7 @@ from fonctions.artefact import Artefact
 from st_pages import add_indentation
 from sqlalchemy.exc import InternalError, OperationalError
 from dateutil import tz
-
+import gc
 
 try:
     st.set_page_config(layout='wide')
@@ -23,20 +23,16 @@ except:
 
 
 css()
+add_indentation()
 
 @st.cache_data
 def show_lottie(img, height=300 , width=300):
     st_lottie(img, height=height, width=width)
 
-
-add_indentation()
-
-
 @st.cache_data
 def chargement_params():
     category_selected = ['Violent', 'Seal', 'Will', 'Destroy', 'Despair', 'Intangible']
     category_value = ", ".join(category_selected)
-
 
     category_selected_spd = ['Violent', 'Seal', 'Will', 'Destroy', 'Despair', 'Swift', 'Intangible']
     category_value_spd = ", ".join(category_selected_spd)
@@ -44,7 +40,6 @@ def chargement_params():
     return category_selected,category_selected_spd, coef_set, coef_set_spd
 
 st.session_state.category_selected, st.session_state.category_selected_spd, st.session_state.coef_set, st.session_state.coef_set_spd = chargement_params()
-
 
 @st.cache_data(ttl=timedelta(minutes=30))
 def nb_data():
@@ -71,6 +66,13 @@ def load_swarfarm():
     swarfarm[['element', 'archetype']] = swarfarm[['element', 'archetype']].astype('category')
     return swarfarm
 
+
+def format_sql(df):
+    df['id'] = st.session_state['id_joueur']
+    df['date'] = date_du_jour()
+    
+    return df
+
 if 'submitted' not in st.session_state:
     st.session_state.submitted = False
 
@@ -94,8 +96,6 @@ except OperationalError as e:
     st.session_state['submitted'] = False
 
                     
-
-
 def upload_sw():
     
     col1, col2, col3 = st.columns([0.25,0.50,0.25])
@@ -107,7 +107,7 @@ def upload_sw():
                             help='Json SW Exporter',
                             key='file')
             
-            
+        
             st.session_state['submitted'] = st.form_submit_button('Calcule mon score')
             st.info(body='Vous serez redirigé automatiquement à la fin du téléchargement.', icon="🚨")
             st.warning(body="L'application est par defaut en mode elargi. L'affichage est modifiable dans le menu en haut à droite",
@@ -125,30 +125,38 @@ def upload_sw():
 
     if st.session_state['file'] is not None and st.session_state.submitted:
         
+
+        
         def telechargement_json():
             st.session_state.swarfarm = load_swarfarm()
             
             
             with st.spinner('Chargement du json...'):
                 try:
-                # On charge le json
-                    st.session_state.data_json = json.load(st.session_state['file'])
+
                     
-                    # on supprime
+                    st.session_state.data_json = json.load(st.session_state.file)
+                    st.session_state.file.close()
                     st.session_state.pop('file')
-    
-
-                    # infos du compte
-
-                    st.session_state.pseudo = st.session_state.data_json['wizard_info']['wizard_name']
-                    st.session_state.compteid = st.session_state.data_json['wizard_info']['wizard_id']
-                    st.session_state.lang = st.session_state.data_json['wizard_info']['wizard_last_country']
-                    st.session_state.mana = st.session_state.data_json['wizard_info']['wizard_mana']
                     
-                    st.session_state.arena_win = st.session_state.data_json['pvp_info']['arena_win']
-                    st.session_state.arena_lose = st.session_state.data_json['pvp_info']['arena_lose']
-                    st.session_state.rank_wb = st.session_state.data_json['my_worldboss_best_ranking']['ranking']
-                    st.session_state.dmg_wb = st.session_state.data_json['my_worldboss_best_ranking']['accumulate_damage']
+
+                    
+                    # infos du compte
+                    try:
+                        st.session_state.pseudo = st.session_state.data_json['wizard_info']['wizard_name']
+                        st.session_state.compteid = st.session_state.data_json['wizard_info']['wizard_id']
+                        st.session_state.lang = st.session_state.data_json['wizard_info']['wizard_last_country']
+                        st.session_state.mana = st.session_state.data_json['wizard_info']['wizard_mana']
+                        
+                        st.session_state.arena_win = st.session_state.data_json['pvp_info']['arena_win']
+                        st.session_state.arena_lose = st.session_state.data_json['pvp_info']['arena_lose']
+                        st.session_state.rank_wb = st.session_state.data_json['my_worldboss_best_ranking']['ranking']
+                        st.session_state.dmg_wb = st.session_state.data_json['my_worldboss_best_ranking']['accumulate_damage']
+                        
+                    except KeyError: # fichier pas au bon format
+                        st.warning('Fichier incompatible')
+                        st.session_state.submitted = False
+                        exit()
                     
                     
                     try:
@@ -156,19 +164,66 @@ def upload_sw():
                         st.session_state.guilde = st.session_state.data_json['guild']['guild_info']['name']
                     except TypeError: # pas de guilde
                         st.session_state.guildeid = 0
-                        st.session_state.guilde = 'Aucune'          
+                        st.session_state.guilde = 'Aucune' 
+                        
+                    # Base monsters
+                        
+                    data_mobs = pd.DataFrame.from_dict(
+                            st.session_state['data_json'], orient="index").transpose()
+
+                    data_mobs = data_mobs['unit_list']
+
+                        # On va boucler et retenir ce qui nous intéresse..
+                    list_mobs = []
+
+                    for monstre in data_mobs[0]:
+                        unit = monstre['unit_id']
+                        master_id = monstre['unit_master_id']
+                        stars = monstre['class']
+                        level = monstre['unit_level']
+                        list_mobs.append([unit, master_id, stars, level,
+                                          monstre['atk'], monstre['def'], monstre['spd'], monstre['resist'], monstre['accuracy'],
+                                        monstre['critical_rate'], monstre['critical_damage']])
+                        
+                        for i in range(6):  # itération sur les runes de 1 à 6
+                            if len(monstre['runes']) > i:
+                                list_mobs[-1].append(monstre['runes'][i]['rune_id'])
+                            else:  # s'il n'a pas de rune dans le slot, on met 0
+                                list_mobs[-1].append(0)
+
+                            # On met ça en dataframe
+                    st.session_state.df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre', '*', 'level',
+                                                                                'atk', 'def', 'spd',
+                                                                                'resist', 'accuracy', 'CRIT', 'DCC',
+                                                                                'Rune1', 'Rune2', 'Rune3', 'Rune4', 'Rune5', 'Rune6'])
+                        
+                    # swarfarm
+
+                    swarfarm = st.session_state.swarfarm[[
+                                'com2us_id', 'name']].set_index('com2us_id')
+                    st.session_state.df_mobs['name_monstre'] = st.session_state.df_mobs['id_monstre'].map(
+                                swarfarm.to_dict(orient="dict")['name'])
                     
 
+                    # On peut faire le mapping...
 
-                    data_rune = Rune(st.session_state.data_json)
+                    df_identification = st.session_state.df_mobs[['id_unit', 'name_monstre']].set_index('id_unit')
+                    
+                    st.session_state.identification_monsters = df_identification.to_dict(orient="dict")['name_monstre']         
+                    
+                    # On peut désormais s'occuper des runes
+                    
+                    data_rune = Rune(st.session_state.data_json, st.session_state.identification_monsters)
                         
                     st.session_state.data_rune = data_rune
                     
 
                     st.session_state.set_rune = list(data_rune.set_to_show.values())
                     st.session_state.set_rune.sort()
+                    
+                    # Artefact
             
-                    st.session_state.data_arte = Artefact(st.session_state.data_json)
+                    st.session_state.data_arte = Artefact(st.session_state.data_json, st.session_state.identification_monsters)
                     
                     # st.session_state.data_grind = data_rune.data.copy()
                     st.session_state.data_avg = data_rune.calcul_efficiency_describe()
@@ -232,32 +287,57 @@ def upload_sw():
                     # Enregistrement SQL
 
                     # Scoring general 
-                    tcd_value['id'] = st.session_state['id_joueur']
-                    tcd_value['date'] = date_du_jour()
+                    tcd_value = format_sql(tcd_value)
+
                         
                     st.session_state.tcd = tcd_value.copy()
 
                     sauvegarde_bdd(tcd_value, 'sw', 'append')
                     
                     del tcd_value
+                    
+                    # Qualité des runes
+                    
+                    data_rune.count_quality()
+                    
+                    st.session_state.df_quality = st.session_state.data_rune.data_qual
+                    st.session_state.df_quality_per_slot = st.session_state.data_rune.data_qual_per_slot
+
+                    # Score qualité runes
+                    
+                    st.session_state.df_scoring_quality, st.session_state.score_qual = data_rune.score_quality(coef_set_spd)
 
                     
-                    requete_perso_bdd('''INSERT INTO public.sw_score(score_general, date, id_joueur, score_spd, score_arte, mana)
-                    VALUES (:score_general, :date, :id_joueur, :score_spd, :score_arte, :mana);''',
+                    requete_perso_bdd('''INSERT INTO public.sw_score(score_general, date, id_joueur, score_spd, score_arte, mana, score_qual)
+                    VALUES (:score_general, :date, :id_joueur, :score_spd, :score_arte, :mana, :score_qual);''',
                     {'id_joueur' : int(st.session_state['id_joueur']),
                     'date' : date_du_jour(),
                     'score_general' : int(st.session_state['score']),
                     'score_spd' : int(st.session_state['score_spd']),
                     'score_arte' : int(st.session_state['score_arte']),
-                    'mana' : int(st.session_state['mana'])})
+                    'mana' : int(st.session_state['mana']),
+                    'score_qual' : int(st.session_state['score_qual'])})
+                    
+                    df_scoring_quality_to_save = st.session_state.df_scoring_quality.copy()
+                    
+                    df_scoring_quality_to_save = format_sql(df_scoring_quality_to_save)
+                    
+                    # df_scoring_quality_to_save['id'] = st.session_state['id_joueur']
+                    # df_scoring_quality_to_save['date'] = date_du_jour()
+                    
+                    sauvegarde_bdd(df_scoring_quality_to_save, 'sw_score_qual', 'append')
+                    
+                    del df_scoring_quality_to_save
 
                         
                         # scoring detail
                         
                     tcd_detail_score_save = st.session_state.tcd_detail_score.copy()
+                    
+                    tcd_detail_score_save = format_sql(tcd_detail_score_save)
                         
-                    tcd_detail_score_save['id'] = st.session_state['id_joueur']
-                    tcd_detail_score_save['date'] = date_du_jour()
+                    # tcd_detail_score_save['id'] = st.session_state['id_joueur']
+                    # tcd_detail_score_save['date'] = date_du_jour()
                         
                         # on veut éviter les doublons donc :  
                         
@@ -279,13 +359,12 @@ def upload_sw():
                     
                     del tcd_detail_score_save
                     
-                    # st.session_state.data_rune.calcul_efficiency_describe_top()
                         
                         # Scoring speed
                     tcd_spd_save : pd.DataFrame = st.session_state.tcd_spd.copy()
-                        
-                    tcd_spd_save['id'] = st.session_state['id_joueur']
-                    tcd_spd_save['date'] = date_du_jour()
+                    
+                    tcd_spd_save = format_sql(tcd_spd_save)
+
                         
                     sauvegarde_bdd(tcd_spd_save, 'sw_spd', 'append')
                     
@@ -294,9 +373,10 @@ def upload_sw():
                         # Scoring arte
                         
                     tcd_arte_save : pd.DataFrame = st.session_state.tcd_arte.copy()
+                    
+                    tcd_arte_save = format_sql(tcd_arte_save)
                         
-                    tcd_arte_save['id'] = st.session_state['id_joueur']
-                    tcd_arte_save['date'] = date_du_jour()
+
                         
                     sauvegarde_bdd(tcd_arte_save, 'sw_arte', 'append')
                     
@@ -304,8 +384,9 @@ def upload_sw():
                     
                     arte_max_save : pd.DataFrame = st.session_state.data_arte.df_max.copy()
                     
-                    arte_max_save['id'] = st.session_state['id_joueur']
-                    arte_max_save['date'] = date_du_jour()
+                    arte_max_save = format_sql(arte_max_save)
+                    
+
                     
                     # on supprime les anciennes données
                     requete_perso_bdd('''DELETE FROM sw_arte_max WHERE "id" = :id''', dict_params={'id' : st.session_state['id_joueur']})
@@ -334,8 +415,8 @@ def upload_sw():
                     arte_count = st.session_state.arte_count.copy()
 
                     
-                    arte_count['id'] = st.session_state['id_joueur']
-                    arte_count['date'] = date_du_jour()
+                    arte_count = format_sql(arte_count)
+
                     
                     del df, count_sub2, count_sub3, count_sub4, count2, count3, count4
                     
@@ -363,11 +444,9 @@ def upload_sw():
                         # Scoring max_value
                         
                     df_max = st.session_state.df_max.copy()
-                        
-                    df_max['id'] = st.session_state['id_joueur']
-                    df_max['date'] = date_du_jour()
                     
-                        
+                    df_max = format_sql(df_max)
+                                                
                     # on supprime les anciennes données
                     requete_perso_bdd('''DELETE FROM sw_max WHERE "id" = :id''', dict_params={'id' : st.session_state['id_joueur']})
                         
@@ -376,47 +455,20 @@ def upload_sw():
                     
                     del df_max
                     
-                    # MAJ guilde
 
+                    # MAJ guilde
+                    
+                    
                     update_info_compte(st.session_state['pseudo'], st.session_state['guildeid'],
                                         st.session_state['compteid'])  # on update le compte
                     
-                        # Base monsters
-                        
-                    data_mobs = pd.DataFrame.from_dict(
-                            st.session_state['data_json'], orient="index").transpose()
 
-                    data_mobs = data_mobs['unit_list']
-
-                        # On va boucler et retenir ce qui nous intéresse..
-                    list_mobs = []
-
-                    for monstre in data_mobs[0]:
-                        unit = monstre['unit_id']
-                        master_id = monstre['unit_master_id']
-                        list_mobs.append([unit, master_id])
-
-                            # On met ça en dataframe
-                    df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre'])
 
                     # Maintenant, on a besoin d'identifier les id.
                     # Pour cela, on va utiliser l'api de swarfarm
 
-                    # swarfarm
-
-                    swarfarm = st.session_state.swarfarm[[
-                                'com2us_id', 'name']].set_index('com2us_id')
-                    df_mobs['name_monstre'] = df_mobs['id_monstre'].map(
-                                swarfarm.to_dict(orient="dict")['name'])
-                    
-
-                    # On peut faire le mapping...
-
-                    df_identification = df_mobs[['id_unit', 'name_monstre']].set_index('id_unit')
-                    
-                    st.session_state.identification_monsters = df_identification.to_dict(orient="dict")['name_monstre']
-                    
-                    del df_identification, df_mobs, data_mobs
+                                        
+                    del df_identification, data_mobs
                     
                     # PVP / World Boss
                     
@@ -438,8 +490,8 @@ def upload_sw():
 
                     st.session_state['submitted'] = True
                     
-
-
+                    
+                    gc.collect()
                         
                     # On passe à la page suivante    
                     switch_page('General')
@@ -462,6 +514,6 @@ def upload_sw():
         telechargement_json()
         
             
-upload_sw()            
-            
+upload_sw()     
+
 st.caption('Made by Tomlora')

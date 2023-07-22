@@ -21,22 +21,16 @@ def stats_runage():
                                WHERE id = {st.session_state['id_joueur']}
                                GROUP BY rune_set''', index_col='rune_set').transpose()
     
-    tab_efficience, tab_pts, tab_substat, tab_eff = st.tabs(['Efficience', 'Top 10 stats', 'Substats par slot', 'Efficience par slot'])
+    tab_efficience, tab_pts, tab_substat, tab_eff, tab_qual = st.tabs(['Efficience', 'Top 10 stats', 'Substats par slot', 'Efficience par slot', 'Qualité'])
     
     with tab_efficience:
         
         
         st.session_state.data_rune.calcul_potentiel()
-        st.session_state.data_rune.identify_monsters(st.session_state.identification_monsters, 'data_grind')
         
          # on récupère les données
         df_efficience : pd.DataFrame = st.session_state.data_rune.data_grind.copy()
-        
-        
-        # on identifie les monstres
-        df_efficience['rune_equiped'] = df_efficience['rune_equiped'].astype('str')
-        df_efficience['rune_equiped'].replace(
-                {'0': 'Inventaire'}, inplace=True)
+
         
         # list_set = df_efficience['rune_set'].unique().tolist()
         
@@ -235,6 +229,38 @@ def stats_runage():
 
                 fig.update_layout(polar=dict(radialaxis=dict(gridcolor='lightgrey')))
                 st.plotly_chart(fig)
+        
+    with tab_qual:
+               
+        trier_par_slot = st.checkbox('Trier par slot', value=False)
+        
+        if trier_par_slot:
+            data_qual = st.session_state.df_quality_per_slot.reset_index()
+        
+        else:
+            data_qual = st.session_state.df_quality.reset_index()
+            
+        data_qual_filter = filter_dataframe(data_qual)
+        st.dataframe(data_qual_filter, use_container_width=True)
+        
+        st.subheader('Répartition 📊')
+        select_set = selectbox('Choisir un set', data_qual['rune_set'].unique().tolist(), key='set_qual')
+        
+        if select_set != None:
+            data_qual_filter = data_qual[data_qual['rune_set'] == select_set]
+            
+            if trier_par_slot:
+               fig = px.pie(data_qual_filter, values='nombre', names='qualité_original', color='rune_slot', title=f'Qualité des runes {select_set}') 
+            else:
+                fig = px.pie(data_qual_filter, values='nombre', names='qualité_original', color='qualité_original', title=f'Qualité des runes {select_set}')
+
+
+            st.plotly_chart(fig)
+        
+        
+        
+    
+    del data_qual, df_rune_grp, df_rune_grp_eff
 
 
 if 'submitted' in st.session_state:

@@ -17,8 +17,7 @@ style_metric_cards(background_color='#03152A', border_color='#0083B9', border_le
 
 def grind_arte():
     
-    # on identifie les monstres
-    st.session_state.data_arte.identify_monsters(st.session_state.identification_monsters)
+
             
     # on récupère les données        
     df_efficience : pd.DataFrame = st.session_state.data_arte.data_a
@@ -44,7 +43,7 @@ def grind_arte():
     # on sort par efficience    
     df_efficience = df_efficience.sort_values('efficiency', ascending=False)
         
-    # top 400
+    # top choisi
     df_efficience = df_efficience.head(top).reset_index()
     
     col1, col2 = st.columns(2)
@@ -88,14 +87,20 @@ def grind_arte():
     col3, col4 = st.columns(2)
     
     with col3:
-        df_archetype = df_efficience[df_efficience["arte_type"] == "ELEMENT"].reset_index(drop=True)
-        fig = px.line(df_archetype, x=df_archetype.index, y='efficiency', hover_data=['arte_type', 'arte_attribut', 'arte_equiped'], title='Element')
-        st.plotly_chart(fig)
+        try:
+            df_archetype = df_efficience[df_efficience["arte_type"] == "ELEMENT"].reset_index(drop=True)
+            fig = px.line(df_archetype, x=df_archetype.index, y='efficiency', hover_data=['arte_type', 'arte_attribut', 'arte_equiped'], title='Element')
+            st.plotly_chart(fig)
+        except ValueError:
+            pass
     
     with col4:
-        df_element = df_efficience[df_efficience["arte_type"] == "ARCHETYPE"].reset_index(drop=True)
-        fig = px.line(df_element, x=df_element.index, y='efficiency', hover_data=['arte_type', 'arte_attribut', 'arte_equiped'], title='Archetype')
-        st.plotly_chart(fig)  
+        try:
+            df_element = df_efficience[df_efficience["arte_type"] == "ARCHETYPE"].reset_index(drop=True)
+            fig = px.line(df_element, x=df_element.index, y='efficiency', hover_data=['arte_type', 'arte_attribut', 'arte_equiped'], title='Archetype')
+            st.plotly_chart(fig)  
+        except ValueError:
+            pass
         
         
     

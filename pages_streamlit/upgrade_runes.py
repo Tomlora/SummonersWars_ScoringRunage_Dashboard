@@ -93,14 +93,6 @@ def upgrade_r():
     # on récupère les données
     df_rune : pd.DataFrame = st.session_state.data_rune.data_set.copy()
     
-    # on identifie les monstres
-    df_rune['rune_equiped'] = df_rune['rune_equiped'].replace(st.session_state.identification_monsters)
-        
-        # on identifie les monstres
-    df_rune['rune_equiped'] = df_rune['rune_equiped'].astype('str')
-    df_rune['rune_equiped'].replace(
-                {'0': 'Inventaire'}, inplace=True)
-    
     # on prépare les inputs
     set = df_rune['rune_set'].unique().tolist()
     

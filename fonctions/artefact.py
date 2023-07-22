@@ -85,7 +85,7 @@ dict_arte_main_stat = {
 
 
 class Artefact():
-    def __init__(self, data_json):
+    def __init__(self, data_json, monsters):
         self.data_json = data_json
         self.player_arte = {}
         for arte in self.data_json['artifacts']:
@@ -226,7 +226,11 @@ class Artefact():
         
         self.data_a.reset_index(inplace=True)
         
+        self.data_a[['arte_type', 'arte_attribut']] = self.data_a[['arte_type', 'arte_attribut']].astype('category')
         
+        self.data_a['arte_equiped'] = self.data_a['arte_equiped'].replace({0 : 'Inventaire'})
+        self.data_a['arte_equiped'] = self.data_a['arte_equiped'].replace(monsters)
+        self.data_a['arte_equiped'] = self.data_a['arte_equiped'].astype('category')
         
     def scoring_arte(self):
         self.data_eff = self.data_a[['efficiency', 'arte_type', 'main_type']]
@@ -297,10 +301,7 @@ class Artefact():
         return self.tcd_arte, self.score_a
     
     
-    def identify_monsters(self, monsters:dict):
-        
-        self.data_a['arte_equiped'] = self.data_a['arte_equiped'].replace({0 : 'Inventaire'})
-        self.data_a['arte_equiped'] = self.data_a['arte_equiped'].replace(monsters)
+
         
 
     def calcul_value_max(self):

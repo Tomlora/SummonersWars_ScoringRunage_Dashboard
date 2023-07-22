@@ -118,7 +118,6 @@ sub_max = max_sub_by_proc(4)
 def upgrade_a():
     
     # on identifie les monstres
-    st.session_state.data_arte.identify_monsters(st.session_state.identification_monsters)
             
     # on récupère les données        
     df_arte : pd.DataFrame = st.session_state.data_arte.data_a.copy()

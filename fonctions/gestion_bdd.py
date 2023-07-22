@@ -1,20 +1,19 @@
-
-import pandas as pd
-import streamlit as st
-from sqlalchemy import *
-
-import os
+from pandas import read_sql, DataFrame
+from streamlit import cache_resource, session_state
+from sqlalchemy import create_engine, text, Float, BigInteger
+from os import environ
 
 # https://betterprogramming.pub/how-to-execute-plain-sql-queries-with-sqlalchemy-627a3741fdb1
 
-DB = os.environ.get('API_SQL')
+DB = environ.get('API_SQL')
 
-@st.cache_resource
+@cache_resource
 def init_connection():
     engine = create_engine(DB, echo=False)
     return engine.connect()
 
 conn = init_connection()
+
 
 def lire_bdd(nom_table, format: str = "df", index=None, distinct: bool = False):
     """Lire la BDD
@@ -33,13 +32,13 @@ def lire_bdd(nom_table, format: str = "df", index=None, distinct: bool = False):
     else:
         requetesql = text(f'SELECT * FROM {nom_table}')
     try:
-        df = pd.read_sql(requetesql, con=conn, index_col=index)
+        df = read_sql(requetesql, con=conn, index_col=index)
     except KeyError:
         nom_table = nom_table.lower()
-        df = pd.read_sql(requetesql, con=conn, index_col='Joueur')
+        df = read_sql(requetesql, con=conn, index_col='Joueur')
     except:
         nom_table = nom_table.lower()
-        df = pd.read_sql(requetesql, con=conn, index_col=index)
+        df = read_sql(requetesql, con=conn, index_col=index)
     df = df.transpose()
     if format == "dict":
         df = df.to_dict()
@@ -65,9 +64,9 @@ def lire_bdd_perso(requests: str, format: str = "df", index_col: str = "joueur",
     # conn = engine.connect()
 
     if params == None:
-        df = pd.read_sql(text(requests), con=conn, index_col=index_col)
+        df = read_sql(text(requests), con=conn, index_col=index_col)
     else:
-        df = pd.read_sql(text(requests), con=conn,
+        df = read_sql(text(requests), con=conn,
                          index_col=index_col, params=params)
 
     df = df.transpose()
@@ -91,8 +90,8 @@ def sauvegarde_bdd(df, nom_table, methode_save='replace', dtype={'Score': Float(
     """
     # conn = engine.connect()
     # si la variable envoyée n'est pas un dataframe, on l'a met au format dataframe
-    if not isinstance(df, pd.DataFrame):
-        df = pd.DataFrame(df)
+    if not isinstance(df, DataFrame):
+        df = DataFrame(df)
         df = df.transpose()
     df.to_sql(nom_table, con=conn, if_exists=methode_save, index=index,
               method='multi', dtype=dtype)
@@ -119,7 +118,8 @@ def supprimer_data(joueur, date):
                     DELETE FROM sw_max WHERE "id" = :joueur AND date = :date;
                     DELETE FROM sw_arte_max WHERE "id" =:joueur AND date = :date;
                     DELETE FROM sw_wb WHERE "id_joueur" =:joueur AND date = :date;
-                    DELETE FROM sw_pvp WHERE "id_joueur" =:joueur AND date = :date;''')  # :var_name
+                    DELETE FROM sw_pvp WHERE "id_joueur" =:joueur AND date = :date;
+                    DELETE FROM sw_score_qual WHERE "id" = :joueur AND date = :date;''')  # :var_name
     conn.execute(sql1, params_sql)
     conn.commit()
 
@@ -140,6 +140,7 @@ def supprimer_data_all(joueur):
                     DELETE FROM sw_user WHERE "id" = :joueur;
                     DELETE FROM sw_wb WHERE "id_joueur" =:joueur;
                     DELETE FROM sw_pvp WHERE "id_joueur" =:joueur;
+                    DELETE FROM sw_score_qual WHERE "id_joueur" =:joueur;
                     ''')  
     conn.execute(sql1, params_sql)
     conn.commit()
@@ -228,7 +229,7 @@ def optimisation_int(data, int_cols_before:list, int_cols_after:str='int16'):
 def cleaning_only_guilde(x):
     x['private'] = 0
     if x['visibility'] == 2:
-        if x['guilde'] != st.session_state.guilde:
+        if x['guilde'] != session_state.guilde:
             x['private'] = 1
     return x
 

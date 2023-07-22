@@ -9,13 +9,13 @@ from pandas.api.types import (
     is_numeric_dtype,
     is_object_dtype,
 )
-import pandas as pd
+
 import streamlit as st
 
 
 
 
-def transformation_stats_visu(nom_table, joueur, distinct: bool = False, score='score_general'):
+def transformation_stats_visu(nom_table, joueur, distinct: bool = False, score='score_general', ascending=True):
     """Met en page les scorings d'un joueur.
 
     Parameters
@@ -36,9 +36,9 @@ def transformation_stats_visu(nom_table, joueur, distinct: bool = False, score='
     """
     # Lire la bdd
     if nom_table == 'sw_score':
-        df_actuel = lire_bdd_perso('''SELECT DISTINCT score_general, date, id_joueur, score_spd, score_arte FROM public.sw_score;''', index_col='id_joueur')
+        df_actuel : pd.DataFrame = lire_bdd_perso('''SELECT DISTINCT score_general, date, id_joueur, score_spd, score_arte, score_qual FROM public.sw_score;''', index_col='id_joueur')
     else:
-        df_actuel = lire_bdd(nom_table, distinct=distinct)
+        df_actuel : pd.DataFrame = lire_bdd(nom_table, distinct=distinct)
     df_actuel = df_actuel.transpose()
     df_actuel.reset_index(inplace=True)
 
@@ -75,31 +75,31 @@ def transformation_stats_visu(nom_table, joueur, distinct: bool = False, score='
                             '100', '110', '120'], var_name='Palier', value_name='Nombre')
         df_actuel['datetime'] = pd.to_datetime(
             df_actuel['date'], format='%d/%m/%Y')
-        df_actuel.sort_values(by=['datetime', 'Set', 'Palier'], inplace=True)
-        df_actuel.drop(['datetime'], axis=1, inplace=True)
+        df_actuel.sort_values(by=['datetime', 'Set', 'Palier'], inplace=True, ascending=[ascending, True, True])
+        # df_actuel.drop(['datetime'], axis=1, inplace=True)
         
     elif nom_table == 'sw_arte':
         df_actuel = pd.melt(df_actuel, id_vars=['date', 'arte_type', 'type'], value_vars=[
                             '80', '85', '90', '95', '100+'], var_name='Palier', value_name='Nombre')
         df_actuel['datetime'] = pd.to_datetime(
             df_actuel['date'], format='%d/%m/%Y')
-        df_actuel.sort_values(by=['datetime', 'arte_type', 'type'], inplace=True)
-        df_actuel.drop(['datetime'], axis=1, inplace=True)
+        df_actuel.sort_values(by=['datetime', 'arte_type', 'type'], inplace=True, ascending=[ascending, True, True])
+        # df_actuel.drop(['datetime'], axis=1, inplace=True)
         
     elif nom_table == 'sw_spd':
         df_actuel = pd.melt(df_actuel, id_vars=['date', 'Set'], value_vars=[
                             '23-25', '26-28', '29-31', '32-35', '36+'], var_name='Palier', value_name='Nombre')
         df_actuel['datetime'] = pd.to_datetime(
             df_actuel['date'], format='%d/%m/%Y')
-        df_actuel.sort_values(by=['datetime', 'Set', 'Palier'], inplace=True)
-        df_actuel.drop(['datetime'], axis=1, inplace=True)
+        df_actuel.sort_values(by=['datetime', 'Set', 'Palier'], inplace=True, ascending=[ascending, True, True])
+        # df_actuel.drop(['datetime'], axis=1, inplace=True)
     else:
         # df_actuel = pd.pivot_table(df_actuel, 'score', index='date')
         df_actuel[score] = df_actuel[score].astype('int')
         df_actuel['datetime'] = pd.to_datetime(
             df_actuel['date'], format='%d/%m/%Y')
-        df_actuel.sort_values(by=['datetime'], inplace=True)
-        df_actuel.drop(['datetime'], axis=1, inplace=True)
+        df_actuel.sort_values(by=['datetime'], ascending=ascending, inplace=True)
+        # df_actuel.drop(['datetime'], axis=1, inplace=True)
 
     return df_actuel
 
@@ -163,7 +163,7 @@ def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='f
         for column in to_filter_columns:
             left, right = st.columns((1, 20))
             # Treat columns with < 10 unique values as categorical
-            if is_categorical_dtype(df[column]) or df[column].nunique() < nunique:
+            if is_categorical_dtype(df[column]) and df[column].nunique() < nunique:
                 left.write("↳")
                 user_cat_input = right.multiselect(
                     f"Valeurs pour {column}",

@@ -20,6 +20,17 @@ with col2:
     img = load_lottieurl('https://assets7.lottiefiles.com/private_files/lf30_rzhdjuoe.json')
     st_lottie(img, height=200, width=200)
     
+    
+with st.expander('Version 18/07/2023', expanded=True):
+    st.info("- Ajout du scoring qualité\n\n"+
+            "- Amélioration de la stabilité de l'app :+1:\n\n"+
+            "- Amélioration de certains filtres \n\n"+
+            "- Ajout de la qualité et qualité originelle des runes dans les différents onglets")   
+    
+with st.expander('Version 14/07/2023', expanded=True):
+    st.info("- Amélioration de l'onglet Evolution\n\n"+
+            "- Amélioration de la lisibilité de l'onglet Creer un build")   
+        
 with st.expander('Version 08/07/2023', expanded=True):
     st.info("- Amélioration de l'onglet Inventaire Artefact")   
     
@@ -35,7 +46,7 @@ with st.expander('Version 30/06/2023', expanded=True):
             "- Amélioration de l'onglet Inventaire d'Artefact\n\n"+
             "- Refonte de l'onglet Statistiques pour Runes et Artefacts")        
     
-with st.expander('Version 29/06/2023', expanded=True):
+with st.expander('Version 29/06/2023', expanded=False):
     st.info("- Ajout de la courbe d'efficience des runes et artefacts dans Statistiques")
     
 with st.expander('Version 25/06/2023', expanded=False):

@@ -14,8 +14,6 @@ css()
 
 add_indentation()
 
-
-
 def cleaning_only_guilde(x):
     x['private'] = 0
     if x['visibility'] == 2:
@@ -23,6 +21,8 @@ def cleaning_only_guilde(x):
             x['private'] = 1
 
     return x
+
+
 
 def timelapse_graph(dataset):
         # make list of continents
