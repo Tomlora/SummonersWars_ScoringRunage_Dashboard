@@ -19,7 +19,12 @@ col1, col2, col3 = st.columns([0.4,0.2,0.4])
 with col2:
     img = load_lottieurl('https://assets7.lottiefiles.com/private_files/lf30_rzhdjuoe.json')
     st_lottie(img, height=200, width=200)
+
+with st.expander('Version 09/08/2023', expanded=True):
+    st.info("- Détail des stats artefacts dans l'onglet General ") 
     
+with st.expander('Version 27/07/2023', expanded=True):
+    st.info("- Ajout du classement par rune dans Statistiques (Runes)")      
     
 with st.expander('Version 18/07/2023', expanded=True):
     st.info("- Ajout du scoring qualité\n\n"+
@@ -34,12 +39,12 @@ with st.expander('Version 14/07/2023', expanded=True):
 with st.expander('Version 08/07/2023', expanded=True):
     st.info("- Amélioration de l'onglet Inventaire Artefact")   
     
-with st.expander('Version 01/07/2023', expanded=True):
+with st.expander('Version 01/07/2023', expanded=False):
     st.info("- Ajout des Pages Upgrade (Rune + Artefact)\n\n"+
             "- Amélioration de la lisibilité des tableaux dans Optimisation de Runes\n\n"+
             "- Ajout de l'onglet Monstres et des Pages Donjon/Raid")    
     
-with st.expander('Version 30/06/2023', expanded=True):
+with st.expander('Version 30/06/2023', expanded=False):
     st.info("- Ajout des nouveaux sets \n\n"+
             "- Ajout des nouveaux bonus d'artefacts\n\n"+
             "- Ajout des nouveaux monstres\n\n"+

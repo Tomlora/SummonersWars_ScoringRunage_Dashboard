@@ -8,6 +8,7 @@ from fonctions.export import export_excel
 from streamlit_extras.no_default_selectbox import selectbox
 from st_pages import add_indentation
 from fonctions.visuel import css
+from datetime import timedelta
 
 
 css()
@@ -115,44 +116,51 @@ def inventaire_arte():
             color_name="blue-70",
         )
     
+    check_detail_arte = st.checkbox('Afficher les détails', value=False, key='detail_arte')
     
-    data_inventaire.rename(columns={'first_sub' : 'Substat 1', 'second_sub' : 'Substat 2', 'third_sub' : 'Substat 3', 'fourth_sub' : 'Substat 4',
-                                    'first_sub_value' : 'Substat valeur 1', 'second_sub_value' : 'Substat valeur 2', 'third_sub_value' : 'Substat valeur 3', 'fourth_sub_value' : 'Substat valeur 4'},
-                           inplace=True)
-    
-    
-
-
-    melt = data_inventaire.melt(id_vars=['Type', 'Attribut', 'Equipé', 'efficience', 'main_type', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'],
-                        value_vars=['Substat valeur 1', 'Substat valeur 2', 'Substat valeur 3', 'Substat valeur 4'])
-
-    def changement_variable(x):
-        number = x.variable[-1]
-        type = x[f'Substat {number}']
-                    
-        return type
-    
-    melt['variable'] = melt.apply(changement_variable, axis=1)
+    if check_detail_arte:
+        
+        @st.cache_data(ttl=timedelta(minutes=30), show_spinner='Calcul en cours.. Peut prendre 1 minute')
+        def chargement_detail_inventaire(joueur_id, data_inventaire):
+            data_inventaire.rename(columns={'first_sub' : 'Substat 1', 'second_sub' : 'Substat 2', 'third_sub' : 'Substat 3', 'fourth_sub' : 'Substat 4',
+                                                'first_sub_value' : 'Substat valeur 1', 'second_sub_value' : 'Substat valeur 2', 'third_sub_value' : 'Substat valeur 3', 'fourth_sub_value' : 'Substat valeur 4'},
+                                    inplace=True)
                 
-    pivot = melt.pivot_table(index=['Type', 'Attribut', 'Equipé', 'efficience', 'main_type'],
-                                    columns='variable',
-                                    values='value',
-                                    aggfunc='first',
-                                    fill_value=0).reset_index()
-    
+                
 
-    data_inventaire = data_inventaire.merge(pivot, on=['Type', 'Attribut', 'Equipé', 'efficience', 'main_type']).drop(columns=['Substat 1', 'Substat 2', 'Substat 3', 'Substat 4', 'Substat valeur 1', 'Substat valeur 2', 'Substat valeur 3', 'Substat valeur 4'])
 
-    
-    
-    
-    df_filter2 = filter_dataframe(data_inventaire, key='filtrer_data')
-    
-    st.dataframe(df_filter2.sort_values('efficience', ascending=False))
-    data_xlsx2 = export_excel(df_filter2.sort_values('efficience', ascending=False), 'Id_Artefacts', 'Artefacts')
-    
-    st.download_button('Télécharger la data (Excel)', data_xlsx2, file_name='artefacts_details.xlsx',
-                           mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            melt = data_inventaire.melt(id_vars=['Type', 'Attribut', 'Equipé', 'efficience', 'main_type', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'],
+                                    value_vars=['Substat valeur 1', 'Substat valeur 2', 'Substat valeur 3', 'Substat valeur 4'])
+
+            def changement_variable(x):
+                number = x.variable[-1]
+                type = x[f'Substat {number}']
+                                
+                return type
+                
+            melt['variable'] = melt.apply(changement_variable, axis=1)
+                
+                            
+            pivot = melt.pivot_table(index=['Type', 'Attribut', 'Equipé', 'efficience', 'main_type'],
+                                                columns='variable',
+                                                values='value',
+                                                aggfunc='first',
+                                                fill_value=0).reset_index()
+                
+
+            data_inventaire_final = data_inventaire.merge(pivot, on=['Type', 'Attribut', 'Equipé', 'efficience', 'main_type']).drop(columns=['Substat 1', 'Substat 2', 'Substat 3', 'Substat 4', 'Substat valeur 1', 'Substat valeur 2', 'Substat valeur 3', 'Substat valeur 4'])
+
+            return data_inventaire_final
+                
+        data_inventaire_final = chargement_detail_inventaire(st.session_state.compteid, data_inventaire)
+        
+        df_filter2 = filter_dataframe(data_inventaire_final, key='filtrer_data')
+                
+        st.dataframe(df_filter2.sort_values('efficience', ascending=False))
+        data_xlsx2 = export_excel(df_filter2.sort_values('efficience', ascending=False), 'Id_Artefacts', 'Artefacts')
+                
+        st.download_button('Télécharger la data (Excel)', data_xlsx2, file_name='artefacts_details.xlsx',
+                                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     
 if 'submitted' in st.session_state:
     if st.session_state.submitted:

@@ -423,6 +423,7 @@ def general_page():
                     
                     def show_arte_table(keyword, substat, exclure='None'):
                         
+                       
                         i = 0
                         index_keyword = []
                         
@@ -436,12 +437,12 @@ def general_page():
                                 element = index_keyword[n]
                                 col_arte1, _, col_arte2 = st.columns([0.4,0.1,0.4])
                                 with col_arte1:
-                                    visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[element],
+                                    visualisation_top_arte(df_arte[['substat', 'arte_attribut', 'main_type', '1', '2', '3', '4', '5']], substat[element],
                                                         order=order)
                                 try:
                                     if keyword in substat[element+1]:
                                         with col_arte2:
-                                            visualisation_top_arte(df_arte[['substat', 'arte_attribut', '1', '2', '3', '4', '5']], substat[element+1],
+                                            visualisation_top_arte(df_arte[['substat', 'arte_attribut', 'main_type', '1', '2', '3', '4', '5']], substat[element+1],
                                                                 order=order)
                                 except IndexError: # il n'y en a plus
                                     pass

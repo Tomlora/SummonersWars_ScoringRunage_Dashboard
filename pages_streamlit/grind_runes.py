@@ -342,6 +342,7 @@ def optimisation_rune():
     data_short_filter = filter_dataframe(data_short, 'data_short')
     st.dataframe(data_short_filter.drop('Id_rune', axis=1))
 
+
     st.download_button('Télécharger la data (Excel)', data_xlsx, file_name=f'optimisation runes {st.session_state["pseudo"]}.xlsx',
                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 

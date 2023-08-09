@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+from fonctions.gestion_bdd import lire_bdd_perso
 from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
 from streamlit_extras.switch_page_button import switch_page
@@ -11,6 +11,8 @@ from st_pages import add_indentation
 css()
 
 add_indentation()
+
+
 
 
 def comparaison_entre_joueurs():

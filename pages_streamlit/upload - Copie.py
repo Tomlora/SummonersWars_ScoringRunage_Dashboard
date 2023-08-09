@@ -8,13 +8,13 @@ from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
 from params.coef import coef_set, coef_set_spd, liste_substat_arte
 from streamlit_extras.switch_page_button import switch_page
-from fonctions.gestion_bdd import sauvegarde_bdd, update_info_compte, get_user, requete_perso_bdd, cancel, lire_bdd_perso
+from fonctions.gestion_bdd import sauvegarde_bdd, update_info_compte, get_user, requete_perso_bdd, cancel, get_number_row
 from fonctions.runes import Rune
 from fonctions.artefact import Artefact
 from st_pages import add_indentation
 from sqlalchemy.exc import InternalError, OperationalError
 from dateutil import tz
-# import tracemalloc
+import tracemalloc
 import gc
 
 try:
@@ -47,15 +47,9 @@ def nb_data():
     timezone=tz.gettz('Europe/Paris')
     heure_update = datetime.now(timezone)
     heure = heure_update.strftime("%H:%M")
-    # nb_user = get_number_row("sw_user")
-    # nb_guilde = get_number_row("sw_guilde")
-    # nb_score = get_number_row("sw_score")
-    df_count = lire_bdd_perso('SELECT * from public.count_rows', index_col='table').T
-    
-    nb_user = df_count.loc['sw_user'].values[0]
-    nb_guilde = df_count.loc['sw_guilde'].values[0]
-    nb_score = df_count.loc['sw_score'].values[0]
-    
+    nb_user = get_number_row("sw_user")
+    nb_guilde = get_number_row("sw_guilde")
+    nb_score = get_number_row("sw_score")
     return nb_user, nb_guilde, nb_score, heure
 
 @st.cache_data(ttl=timedelta(minutes=30))
@@ -105,12 +99,12 @@ except OperationalError as e:
                     
 def upload_sw():
     
-    # tracemalloc.start()
+    tracemalloc.start()
     
-    # current, peak = tracemalloc.get_traced_memory()
+    current, peak = tracemalloc.get_traced_memory()
     
-    # print(current / (1024*1024))
-    # print(peak / (1024 * 1024))
+    print(current / (1024*1024))
+    print(peak / (1024 * 1024))
 
     col1, col2, col3 = st.columns([0.25,0.50,0.25])
     with col2:
@@ -139,10 +133,10 @@ def upload_sw():
 
     if st.session_state['file'] is not None and st.session_state.submitted:
         
-        # current, peak = tracemalloc.get_traced_memory()
+        current, peak = tracemalloc.get_traced_memory()
     
-        # print(current / (1024*1024))
-        # print(peak / (1024 * 1024))
+        print(current / (1024*1024))
+        print(peak / (1024 * 1024))
         
         def telechargement_json():
             st.session_state.swarfarm = load_swarfarm()
@@ -400,7 +394,6 @@ def upload_sw():
                     st.session_state.data_arte.calcul_value_max()
                     
                     arte_max_save : pd.DataFrame = st.session_state.data_arte.df_max.copy()
-                
                     
                     arte_max_save = format_sql(arte_max_save)
                     
@@ -440,14 +433,14 @@ def upload_sw():
                     
                     df_top = st.session_state.data_arte.top()
                     
-                    df_top.fillna(0, inplace=True)              
+                    df_top.fillna(0, inplace=True)
                     
                     df_top['id'] = st.session_state['id_joueur']
                     
                     requete_perso_bdd('''DELETE from sw_arte_top
                                         WHERE id = :id_joueur''', dict_params={'id_joueur' : st.session_state['id_joueur']})
                     
-                    sauvegarde_bdd(df_top.drop('main_type', axis=1), 'sw_arte_top', 'append', index=False)
+                    sauvegarde_bdd(df_top, 'sw_arte_top', 'append', index=False)
                     
                     del df_top
 

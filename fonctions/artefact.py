@@ -371,14 +371,14 @@ class Artefact():
     def top(self):
         
         def prepare_data(data_max, aggfunc):        
-            df_first = pd.pivot_table(data_max, index=['first_sub', 'arte_attribut',], values='first_sub_value', aggfunc=aggfunc).reset_index()
-            df_second = pd.pivot_table(data_max, index=['second_sub', 'arte_attribut'], values='second_sub_value', aggfunc=aggfunc).reset_index()
-            df_third = pd.pivot_table(data_max, index=['third_sub', 'arte_attribut'], values='third_sub_value', aggfunc=aggfunc).reset_index()
-            df_fourth = pd.pivot_table(data_max, index=['fourth_sub', 'arte_attribut'], values='fourth_sub_value', aggfunc=aggfunc).reset_index()
+            df_first = pd.pivot_table(data_max, index=['first_sub', 'arte_attribut', 'main_type'], values='first_sub_value', aggfunc=aggfunc).reset_index()
+            df_second = pd.pivot_table(data_max, index=['second_sub', 'arte_attribut', 'main_type'], values='second_sub_value', aggfunc=aggfunc).reset_index()
+            df_third = pd.pivot_table(data_max, index=['third_sub', 'arte_attribut', 'main_type'], values='third_sub_value', aggfunc=aggfunc).reset_index()
+            df_fourth = pd.pivot_table(data_max, index=['fourth_sub', 'arte_attribut', 'main_type'], values='fourth_sub_value', aggfunc=aggfunc).reset_index()
 
-            df_max = df_first.merge(df_second, how='outer', left_on=['first_sub', 'arte_attribut'], right_on=['second_sub', 'arte_attribut'])
-            df_max = df_max.merge(df_third, how='outer', left_on=['first_sub', 'arte_attribut'], right_on=['third_sub', 'arte_attribut'])
-            df_max = df_max.merge(df_fourth, how='outer', left_on=['first_sub', 'arte_attribut'], right_on=['fourth_sub', 'arte_attribut'])
+            df_max = df_first.merge(df_second, how='outer', left_on=['first_sub', 'arte_attribut', 'main_type'], right_on=['second_sub', 'arte_attribut', 'main_type'])
+            df_max = df_max.merge(df_third, how='outer', left_on=['first_sub', 'arte_attribut', 'main_type'], right_on=['third_sub', 'arte_attribut', 'main_type'])
+            df_max = df_max.merge(df_fourth, how='outer', left_on=['first_sub', 'arte_attribut', 'main_type'], right_on=['fourth_sub', 'arte_attribut', 'main_type'])
             
             df_max = df_max[df_max['first_sub'] != 'Aucun']
             
@@ -416,7 +416,7 @@ class Artefact():
          
         self.df_top[['5', '4', '3', '2', '1']] = self.df_top['top5'].apply(lambda x: pd.Series(list(x))) 
         
-        self.df_top = self.df_top[['first_sub', 'arte_attribut', '1', '2', '3', '4', '5']]
+        self.df_top = self.df_top[['first_sub', 'arte_attribut', 'main_type', '1', '2', '3', '4', '5']]
                     
         self.df_top.rename(columns={'first_sub' : 'substat'}, inplace=True)
         
@@ -451,24 +451,49 @@ attack = return_style('#FFFFFF', '#2E86C1')
 defense = return_style('#FFFFFF', '#C0392B')
 hp = return_style('#FFFFFF', '#45B39D')
 support = return_style('#FFFFFF', '#6E2C00')
-                                                                           
-styles = [
-        dict(selector="thead tr th.col_heading.level0.col0.css-3d58hu.edw49t11", props=water),
-        dict(selector="thead tr th.col_heading.level0.col1.css-3d58hu.edw49t11", props=feu),
-        dict(selector="thead tr th.col_heading.level0.col2.css-3d58hu.edw49t11", props=vent),
-        dict(selector="thead tr th.col_heading.level0.col3.css-3d58hu.edw49t11", props=light),
-        dict(selector="thead tr th.col_heading.level0.col4.css-3d58hu.edw49t11", props=dark),
-        dict(selector="thead tr th.col_heading.level0.col5.css-3d58hu.edw49t11", props=attack),
-        dict(selector="thead tr th.col_heading.level0.col6.css-3d58hu.edw49t11", props=defense),
-        dict(selector="thead tr th.col_heading.level0.col7.css-3d58hu.edw49t11", props=hp),
-        dict(selector="thead tr th.col_heading.level0.col8.css-3d58hu.edw49t11", props=support),
-        ]   
-    
+
+atk_lv1 = return_style('#FFFFFF', '#77B5FE')
+def_lv1 = return_style('#FFFFFF', '#FB335B')
+supp_lv1 = return_style('#000000', '#B0F2B6')
+
+dict_color = {'EAU' : water,
+              'FEU' : feu,
+              'VENT' : vent,
+              'LUMIERE' : light,
+              'TENEBRE' : dark,
+              'ATTACK' : attack,
+              'DEFENSE' : defense,
+              'HP' : hp,
+              'SUPPORT' : support}
+
+dict_color_lv1 = {'ATK' : atk_lv1,
+              'DEF' : def_lv1,
+              'HP' : supp_lv1}
+
+                                                     
+# styles = [
+#         dict(selector="thead tr th.col_heading.level0.col0.css-3d58hu.e1q9reml1", props=water),
+#         dict(selector="thead tr th.col_heading.level0.col1.css-3d58hu.e1q9reml1", props=water),
+#         dict(selector="thead tr th.col_heading.level0.col2.css-3d58hu.e1q9reml1", props=water),
+#         dict(selector="thead tr th.col_heading.level0.col3.css-3d58hu.e1q9reml1", props=feu),
+#         dict(selector="thead tr th.col_heading.level0.col4.css-3d58hu.e1q9reml1", props=feu),
+#         dict(selector="thead tr th.col_heading.level0.col5.css-3d58hu.e1q9reml1", props=feu),
+#         dict(selector="thead tr th.col_heading.level0.col7.css-3d58hu.e1q9reml1", props=vent),
+#         dict(selector="thead tr th.col_heading.level0.col8.css-3d58hu.e1q9reml1", props=vent),
+#         dict(selector="thead tr th.col_heading.level0.col9.css-3d58hu.e1q9reml1", props=vent),
+#         dict(selector="thead tr th.col_heading.level0.col9.css-3d58hu.e1q9reml1", props=vent),
+#         dict(selector="thead tr th.col_heading.level0.col9.css-3d58hu.e1q9reml1", props=vent),
+#         dict(selector="thead tr th.col_heading.level0.col10.css-3d58hu.e1q9reml1", props=vent),
+#         dict(selector="thead tr th.col_heading.level0.col11.css-3d58hu.e1q9reml1", props=vent),
+#         dict(selector="thead tr th.col_heading.level0.col12.css-3d58hu.e1q9reml1", props=vent),
+#         ]   
+        
+
 def visualisation_top_arte(df, column, use_container_width0=True, order=None):
         
     df_filter = df[df['substat'] == column]
         
-    tcd = pd.pivot_table(values=['5','4','3','2','1'], columns=['arte_attribut'], data=df_filter, aggfunc='max')
+    tcd = pd.pivot_table(values=['5','4','3','2','1'], columns=['arte_attribut', 'main_type'], data=df_filter, aggfunc='max')
     
     if not tcd.empty:
         
@@ -479,7 +504,8 @@ def visualisation_top_arte(df, column, use_container_width0=True, order=None):
             existing_cols = [col for col in order if col in tcd.columns]
             tcd = tcd.loc[:, existing_cols]
         
+        style_table = [dict(selector=f"thead tr th.col_heading.level0.col{i}.css-3d58hu.e1q9reml1", props=dict_color[column[0].upper()]) for i, column in enumerate(tcd.columns)] + [dict(selector=f"thead tr th.col_heading.level1.col{i}.css-3d58hu.e1q9reml1", props=dict_color_lv1[column[1].upper()]) for i, column in enumerate(tcd.columns)]
         # table
-        df2=tcd.astype('int').astype('str').style.set_properties(**{'text-align': 'center'}).set_table_styles(styles)
+        df2=tcd.astype('int', errors='ignore').astype('str').style.set_properties(**{'text-align': 'center'}).set_table_styles(style_table)
         st.table(df2)    
         # st.dataframe(tcd, use_container_width=use_container_width)

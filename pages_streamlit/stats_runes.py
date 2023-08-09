@@ -9,6 +9,7 @@ from st_pages import add_indentation
 from fonctions.visuel import css
 from fonctions.gestion_bdd import lire_bdd_perso
 from streamlit_extras.no_default_selectbox import selectbox
+from streamlit_extras.add_vertical_space import add_vertical_space
 css()
 
 add_indentation()
@@ -17,10 +18,12 @@ add_indentation()
 
 def stats_runage():
     
-    df_points = lire_bdd_perso(f'''SELECT rune_set, max(points) as points, max(moyenne) as moyenne, max(mediane) as mediane from sw_detail
-                               WHERE id = {st.session_state['id_joueur']}
-                               GROUP BY rune_set''', index_col='rune_set').transpose()
+    df_points = lire_bdd_perso(f'''SELECT rune_set, sw_detail.id, max(points) as points, max(moyenne) as moyenne, max(mediane) as mediane, sw_user.guilde_id from sw_detail
+                                    INNER join sw_user on sw_user.id = sw_detail.id
+                                GROUP BY sw_user.guilde_id, sw_detail.id, sw_detail.rune_set''', index_col='rune_set').transpose()
     
+
+
     tab_efficience, tab_pts, tab_substat, tab_eff, tab_qual = st.tabs(['Efficience', 'Top 10 stats', 'Substats par slot', 'Efficience par slot', 'Qualité'])
     
     with tab_efficience:
@@ -129,9 +132,35 @@ def stats_runage():
         df_max_selected = df_max[df_max['rune_set'] == set_select]
         
 
+        checkbox_filtre_guilde = st.checkbox('Filtrer sur ma guilde ?', value=False, key='filtre_guilde_stats')
 
         try:
-            st.markdown(f'Points : :green[{df_points.loc[set_select, "points"]}] | Efficience(Mediane) : :violet[{round(df_points.loc[set_select, "mediane"],2)}] | Efficience (Moyenne) : :orange[{round(df_points.loc[set_select, "moyenne"],2)}]')
+            
+            if checkbox_filtre_guilde:
+                df_points = df_points[df_points['guilde_id'] == st.session_state['guildeid']]
+            
+            # points de l'utilisateur
+            df_points_user = df_points[df_points['id'] == st.session_state['id_joueur']]
+            
+            # son classement
+            df_points_set = df_points[df_points.index == set_select]
+            df_points_set.set_index('id', inplace=True)
+            df_points_set['pts_rank'] = df_points_set['points'].rank(ascending=False, method='min').astype('int')
+            df_points_set['mediane_rank'] = df_points_set['mediane'].rank(ascending=False, method='min').astype('int')
+            df_points_set['moyenne_rank'] = df_points_set['moyenne'].rank(ascending=False, method='min').astype('int')
+            
+            st.text('Ton compte :')
+            st.markdown(f'Points : :green[{df_points_user.loc[set_select, "points"]}]     |      Efficience(Mediane) : :violet[{round(df_points_user.loc[set_select, "mediane"],2)}]     |    Efficience (Moyenne) : :orange[{round(df_points_user.loc[set_select, "moyenne"],2)}]')
+
+            add_vertical_space(2)
+            
+            st.text('General (Moyenne):')
+            st.markdown(f'Points : :green[{round(df_points.loc[set_select, "points"].mean(),2)}]     |    Efficience(Mediane) : :violet[{round(df_points.loc[set_select, "mediane"].mean(),2)}]     |    Efficience (Moyenne) : :orange[{round(df_points.loc[set_select, "moyenne"].mean(),2)}]')
+            
+            add_vertical_space(2)
+            
+            st.text(f'Classement ({df_points_set.shape[0]} joueurs)')
+            st.markdown(f'Points : :green[{df_points_set.loc[st.session_state["id_joueur"], "pts_rank"]}]     |    Efficience(Mediane) : :violet[{df_points_set.loc[st.session_state["id_joueur"], "mediane_rank"]}]     |    Efficience (Moyenne) : :orange[{df_points_set.loc[st.session_state["id_joueur"], "moyenne_rank"]}]')
             st.table(df_max_selected.pivot_table(values=value_tcd, index=['rune_set', 'substat'], aggfunc='max')[value_tcd].transpose())
         except KeyError:
             st.info("Pas de statistiques sur ce set")
