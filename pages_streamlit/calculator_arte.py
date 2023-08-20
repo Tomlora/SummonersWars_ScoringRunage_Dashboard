@@ -66,6 +66,22 @@ def max_sub_by_proc(proc):
     }
     return sub_max
 
+import json
+@st.cache_data
+def translation(langue):
+    if langue == 'Français':
+        return json.load(open('langue/fr.json', encoding='utf-8'))
+    elif langue == 'English':
+        return json.load(open('langue/en.json', encoding='utf-8'))
+    
+
+    
+try:
+    if not 'langue' in st.session_state:
+        st.session_state.langue = translation("Français") 
+except:
+    pass  
+
 
 def stats(n):
 
@@ -99,7 +115,7 @@ sub_max = max_sub_by_proc(0)
 
 def calculateur_efficiency():
 
-    st.info("Cet onglet n'a pas besoin de json", icon="ℹ️")
+    st.info(st.session_state.langue['no_json_need'], icon="ℹ️")
 
 
     st.markdown("***")

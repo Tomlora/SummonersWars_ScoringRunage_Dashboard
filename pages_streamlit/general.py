@@ -83,26 +83,26 @@ def general_page():
 
                 with score_column:
                     # Score du joueur
-                    st.metric('Score Rune', st.session_state['score'])
+                    st.metric(st.session_state.langue['Score_Rune'], st.session_state['score'])
                     st.metric('Date', st.session_state.tcd.iloc[0]['date'])
 
 
 
                 tab1, tab2, tab3, tab4, tab_arte = st.tabs(
-                    ['Autre scorings', 'Detail du scoring', 'Efficience moyenne par set', 'Monstres', 'Artefacts'])
+                    [st.session_state.langue['Autres_scoring'], st.session_state.langue['Detail_scoring'], st.session_state.langue['Efficience_avg_set'], st.session_state.langue['monstres'], st.session_state.langue['artefacts']])
 
                 with tab1:
-                    with st.expander('Autre scorings', expanded=True):
+                    with st.expander(st.session_state.langue['Autres_scoring'], expanded=True):
 
                         # ---------------- Scoring arte + speed
 
                         tcd_column_spd, _, score_column_arte = st.columns([0.4,0.1,0.4])
 
                         with tcd_column_spd:
-                            st.metric('Score Speed', st.session_state['score_spd'])
+                            st.metric(st.session_state.langue['Score_Speed'], st.session_state['score_spd'])
 
                         with score_column_arte:
-                            st.metric(F'Score Arte (Eff moyenne : {round(st.session_state.data_arte.data_a["efficiency"].mean(),2)})', st.session_state['score_arte'])
+                            st.metric(F'{st.session_state.langue["Score_Arte"]} ({st.session_state.langue["Efficience_avg"]} : {round(st.session_state.data_arte.data_a["efficiency"].mean(),2)})', st.session_state['score_arte'])
 
                             # ---------------- Df arte + speed
 
@@ -121,7 +121,7 @@ def general_page():
                             st.dataframe(st.session_state.tcd_arte, use_container_width=True)
                             
 
-                        st.metric('Score qualité rune',st.session_state.score_qual)
+                        st.metric(st.session_state.langue['Score_quality_rune'],st.session_state.score_qual)
                         st.session_state.df_scoring_quality = get_img_runes(st.session_state.df_scoring_quality)
                         st.dataframe(st.session_state.df_scoring_quality.set_index('img').dropna(how='all'),
                                      use_container_width=True,
@@ -130,7 +130,7 @@ def general_page():
 
 
                 with tab2:
-                    with st.expander('Detail du scoring'):
+                    with st.expander(st.session_state.langue['Detail_scoring']):
 
                         column_detail_scoring1, _, column_detail_scoring2 = st.columns([0.4,0.1,0.4])
 
@@ -142,7 +142,7 @@ def general_page():
 
 
                         with column_detail_scoring2:
-                            txt = 'Une rune 100 vaut 1 point \nUne rune 110 vaut 2 points\nUne Rune 120 vaut 3 points\n\n\nCoefficient : \n'
+                            txt = st.session_state.langue['Explication_scoring']
 
                             for rune, score in coef_set.items():
                                 txt += f'{rune.upper()} : {score} \n'
@@ -150,7 +150,7 @@ def general_page():
                             st.text(txt)
 
                 with tab3:
-                    with st.expander('Efficience par set'):
+                    with st.expander(st.session_state.langue['Efficience_set']):
                         col1_tab3, _, col2_tab3 = st.columns([0.4,0.05,0.4])
                         
                         with col1_tab3:
@@ -163,9 +163,9 @@ def general_page():
                         with col2_tab3:
                             fig = go.Figure()
                             fig.add_trace(go.Histogram(
-                                y=st.session_state.data_avg['max'], x=st.session_state.data_avg.index, histfunc='avg', name='max'))
+                                y=st.session_state.data_avg['max'], x=st.session_state.data_avg.index, histfunc='avg', name=st.session_state.langue['max']))
                             fig.add_trace(go.Histogram(
-                                y=st.session_state.data_avg['moyenne'], x=st.session_state.data_avg.index, histfunc='avg', name='mean'))
+                                y=st.session_state.data_avg['moyenne'], x=st.session_state.data_avg.index, histfunc='avg', name=st.session_state.langue['avg']))
                             fig.update_layout(
                                 barmode="overlay",
                                 bargap=0.1)
@@ -174,10 +174,10 @@ def general_page():
 
 
                 with tab4:
-                    with st.expander('Liste de monstres'):
+                    with st.expander(st.session_state.langue['list_monsters']):
 
                         st.warning(
-                            body="Pour des raisons de performance, l'autel de scellement n'est inclus que dans l'onglet spécifié", icon="🚨")
+                            body=st.session_state.langue['performance_storage'], icon="🚨")
 
                         # @st.cache_data(show_spinner=False)
                         # def chargement_mobs(user_id):
@@ -362,7 +362,7 @@ def general_page():
                                     st.markdown(df_html, unsafe_allow_html=True)
                             except KeyError:
                                 st.error(
-                                    "Vous n'avez pas encore de monstres dans votre autel de scellement")
+                                    st.session_state.langue['no_storage'])
 
                 # Stockage monstres
 
@@ -416,7 +416,7 @@ def general_page():
                         df_arte = df_arte[df_arte['arte_attribut'].isin(liste_attribut)]
                         
                     if elem_only and attribut_only:
-                        st.warning('Cette combinaison est impossible')
+                        st.warning(st.session_state.langue['combo_arte_error'])
                     
                     
                     

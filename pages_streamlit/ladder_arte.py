@@ -9,15 +9,6 @@ css()
 add_indentation()
 
 
-dict_type = {'Score general' : 'score_general',
-                 'Score speed' : 'score_spd',
-                 'Score sur un set' : 'score sur un set',
-                 'Score speed sur un set' : 'score spd sur un set',
-                 'Score artefact' : 'score_arte'}
-    
-
-
-
 def mise_en_forme_classement(df, variable='score', columns='score'):
     """Met en forme le classement final :  
     
@@ -46,7 +37,7 @@ def mise_en_forme_classement(df, variable='score', columns='score'):
 
         df = df[columns]
 
-        filtre_guilde = st.checkbox('Filtrer sur ma guilde')
+        filtre_guilde = st.checkbox(st.session_state.langue['filter_guilde'])
 
         if filtre_guilde:
             df = df[df['guilde']
@@ -62,7 +53,7 @@ def mise_en_forme_classement(df, variable='score', columns='score'):
                     use_container_width=True)
     
     else:
-        st.warning('Pas de données disponibles')
+        st.warning(st.session_state.langue['no_data'])
 
     return df
 
@@ -78,10 +69,10 @@ def classement_arte():
     # On lit la BDD
     # on récupère la data
     
-    st.info("**Note** : Mise à jour toutes les **10** minutes. Données à partir du 24/03/2023", icon="ℹ️")
+    st.info(f'**Note** : {st.session_state.langue["update_ladder"]}', icon="ℹ️")
 
     if st.session_state.visibility == 0:
-        st.warning('Vous avez choisi de ne pas apparaitre. Vous pouvez changer cela dans les paramètres.', icon="ℹ️")
+        st.warning(st.session_state.langue['no_visibility'], icon="ℹ️")
 
     data = load_data_arte()
         
@@ -93,9 +84,9 @@ def classement_arte():
     liste_substat = list(data['substat'].unique())
     liste_substat.sort()
         
-    filtre_attribut = st.selectbox('Filtrer sur un attribut', liste_attribut, len(liste_attribut)-1)
-    filtre_type = st.selectbox('Filtrer sur un type', liste_filtre, len(liste_filtre)-1)
-    filtre_substat = st.selectbox('Filtrer sur un substat', liste_substat)
+    filtre_attribut = st.selectbox(st.session_state.langue['filter_one_attribut'], liste_attribut, len(liste_attribut)-1)
+    filtre_type = st.selectbox(st.session_state.langue['filter_one_type'], liste_filtre, len(liste_filtre)-1)
+    filtre_substat = st.selectbox(st.session_state.langue['filter_one_substat'], liste_substat)
     
         
     if filtre_attribut != 'Tous' and filtre_attribut != 'AUCUN':

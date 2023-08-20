@@ -19,6 +19,9 @@ col1, col2, col3 = st.columns([0.4,0.2,0.4])
 with col2:
     img = load_lottieurl('https://assets7.lottiefiles.com/private_files/lf30_rzhdjuoe.json')
     st_lottie(img, height=200, width=200)
+    
+with st.expander('Version 20/08/2023', expanded=True):
+    st.info("- English Version ") 
 
 with st.expander('Version 09/08/2023', expanded=True):
     st.info("- Détail des stats artefacts dans l'onglet General ") 

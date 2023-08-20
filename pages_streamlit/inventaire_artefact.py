@@ -59,7 +59,7 @@ def inventaire_arte():
     data_inventaire.drop(['unit_style', 'main_value', 'first_sub_value_max', 'second_sub_value_max', 'third_sub_value_max', 'fourth_sub_value_max'], axis=1, inplace=True)
 
 
-    check_v8 = st.checkbox('Fusionner les anciens substats avec ceux de la v8 ?', help='Si coché, il peut donc y avoir des doublons dans les substats')
+    check_v8 = st.checkbox(st.session_state.langue['fusion_substat_arte_v8'], help=st.session_state.langue['fusion_substat_arte_v8_help'])
     
     if check_v8:
         data_inventaire[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']] = data_inventaire[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']].replace({'RENFORCEMENT ATK' : 'RENFORCEMENT ATK/DEF', 
@@ -68,8 +68,8 @@ def inventaire_arte():
                                                                                                                                                 'CRIT DMG S4' : 'CRIT DMG S3/S4',
                                                                                                                                                 'REVENGE' : 'REVENGE ET COOP',
                                                                                                                                                 'COOP DMG' : 'REVENGE ET COOP',})
-    rec_spec = selectbox('Recherche spécifique', options=list(options.keys()),
-                 help='Permet de filtrer les artefacts en fonction de leur substat sur plusieurs lignes',
+    rec_spec = selectbox(st.session_state.langue['recherche_spec'], options=list(options.keys()),
+                 help=st.session_state.langue['recherche_spec_help_arte'],
                  index=0)
     
     if rec_spec != None:
@@ -77,7 +77,7 @@ def inventaire_arte():
             rec_spec = 'DMG SUR'
             
             
-        nb_spec = st.slider('Nombre de substats minimum', min_value=1, max_value=4, value=1, step=1)
+        nb_spec = st.slider(st.session_state.langue['nb_substat_mini'], min_value=1, max_value=4, value=1, step=1)
         
         
         data_inventaire['totalsub'] = data_inventaire['first_sub'] + data_inventaire['second_sub'] + data_inventaire['third_sub'] + data_inventaire['fourth_sub']
@@ -91,7 +91,7 @@ def inventaire_arte():
         data_inventaire = data_inventaire[data_inventaire['critere'] >= nb_spec]
         
 
-        filter_detail = selectbox('Filtrer sur une substat', options=options[rec_spec])
+        filter_detail = selectbox(st.session_state.langue['filter_one_substat'], options=options[rec_spec])
         if filter_detail != None:
             data_inventaire = data_inventaire[(data_inventaire['first_sub'].str.contains(filter_detail)) | (data_inventaire['second_sub'].str.contains(filter_detail)) | (data_inventaire['third_sub'].str.contains(filter_detail)) | (data_inventaire['fourth_sub'].str.contains(filter_detail))]
         
@@ -106,21 +106,21 @@ def inventaire_arte():
     
     data_xlsx = export_excel(df_filter.sort_values('efficience', ascending=False), 'Id_Artefacts', 'Artefacts')
 
-    st.download_button('Télécharger la data (Excel)', data_xlsx, file_name='artefacts.xlsx',
+    st.download_button(st.session_state.langue['download_excel'], data_xlsx, file_name='artefacts.xlsx',
                            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     
     
     colored_header(
-            label="Detaillé",
+            label=st.session_state.langue['detail'],
             description="",
             color_name="blue-70",
         )
     
-    check_detail_arte = st.checkbox('Afficher les détails', value=False, key='detail_arte')
+    check_detail_arte = st.checkbox(st.session_state.langue['show_detail'], value=False, key='detail_arte')
     
     if check_detail_arte:
         
-        @st.cache_data(ttl=timedelta(minutes=30), show_spinner='Calcul en cours.. Peut prendre 1 minute')
+        @st.cache_data(ttl=timedelta(minutes=30), show_spinner=st.session_state.langue['calcul_inventaire_arte'])
         def chargement_detail_inventaire(joueur_id, data_inventaire):
             data_inventaire.rename(columns={'first_sub' : 'Substat 1', 'second_sub' : 'Substat 2', 'third_sub' : 'Substat 3', 'fourth_sub' : 'Substat 4',
                                                 'first_sub_value' : 'Substat valeur 1', 'second_sub_value' : 'Substat valeur 2', 'third_sub_value' : 'Substat valeur 3', 'fourth_sub_value' : 'Substat valeur 4'},

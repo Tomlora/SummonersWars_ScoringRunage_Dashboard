@@ -11,12 +11,12 @@ css()
 add_indentation()
 
 
-dict_type = {'Score general' : 'score_general',
-                 'Score speed' : 'score_spd',
-                 'Score sur un set' : 'score sur un set',
-                 'Score speed sur un set' : 'score spd sur un set',
-                 'Score artefact' : 'score_arte',
-                 'Score qualité' : 'score_qual'}
+dict_type = {st.session_state.langue['Score_Rune'] : 'score_general',
+                 st.session_state.langue['Score_Speed'] : 'score_spd',
+                 f'{st.session_state.langue["Score_Rune"]} (Set)' : 'score sur un set',
+                 f'{st.session_state.langue["Score_Speed"]} (Set)' : 'score spd sur un set',
+                 st.session_state.langue['Score_Arte'] : 'score_arte',
+                 st.session_state.langue['Score_Qualite'] : 'score_qual'}
     
 set_to_show = ['Violent', 'Will', 'Destroy', 'Despair', 'Swift',
                 'Blade', 'Endure', 'Energy', 'Fatal', 'Focus', 'Guard', 'Nemesis',
@@ -51,7 +51,7 @@ def mise_en_forme_classement(df, variable='score'):
 
         df = df[['joueur', variable, 'date', 'guilde']]
 
-        filtre_guilde = st.checkbox('Filtrer sur ma guilde')
+        filtre_guilde = st.checkbox(st.session_state.langue['filter_guilde'])
 
         if filtre_guilde:
             df = df[df['guilde']
@@ -67,7 +67,7 @@ def mise_en_forme_classement(df, variable='score'):
                     use_container_width=True)
     
     else:
-        st.warning('Pas de données disponibles')
+        st.warning(st.session_state.langue['no_data'])
 
     return df
 
@@ -77,12 +77,12 @@ def classement():
     # On lit la BDD
     # on récupère la data
     
-    st.info("**Note** : Données mises à jour toutes les **10** minutes", icon="ℹ️")
+    st.info(f'**Note** : {st.session_state.langue["update_ladder"]}', icon="ℹ️")
 
     if st.session_state.visibility == 0:
-        st.warning('Vous avez choisi de ne pas apparaitre. Vous pouvez changer cela dans les paramètres.', icon="ℹ️")
+        st.warning(st.session_state.langue['no_visibility'], icon="ℹ️")
 
-    @st.cache_data(ttl=timedelta(minutes=10), show_spinner='Chargement...')
+    @st.cache_data(ttl=timedelta(minutes=10), show_spinner=st.session_state.langue['loading_data'])
     def load_data_ladder():
         data = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_score.date, sw_score.score_general, sw_score.score_spd, sw_score.score_arte, sw_score.score_qual, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user
@@ -92,15 +92,14 @@ def classement():
 
     data = load_data_ladder()
 
-    choice_radio = st.radio('Type de classement', options=[
-                          'Score general', 'Score sur un set', 'Score speed', 'Score speed sur un set', 'Score artefact', 'Score qualité'], index=0, horizontal=True)
+    choice_radio = st.radio(st.session_state.langue['Classement'], options=dict_type.keys(), index=0, horizontal=True)
     
     
     classement = dict_type[choice_radio]
 
     if classement == 'score sur un set':
         # set = st.radio('Quel set ?', options=coef_set.keys(), horizontal=True)
-        set = st.radio('Quel set ?', options=st.session_state.set_rune, horizontal=True)
+        set = st.radio('Set ?', options=st.session_state.set_rune, horizontal=True)
 
         if set in ['Violent', 'Will', 'Despair', 'Destroy']:
             data_set = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw.date, sw."Set", sw."100", sw."110", sw."120", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
@@ -135,7 +134,7 @@ def classement():
 
     elif classement == 'score spd sur un set':
         set_spd = st.radio(
-            'Quel set ?', options=coef_set_spd.keys(), horizontal=True)
+            'Set ?', options=coef_set_spd.keys(), horizontal=True)
 
         data_spd = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_spd.date, sw_spd."Set", sw_spd."23-25", sw_spd."26-28", sw_spd."29-31", sw_spd."32-35", sw_spd."36+", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user

@@ -49,14 +49,14 @@ def charger_data(id_joueur):
 
 def palier_page():
     
-    check_detail = st.checkbox('Avoir le détail des sets', key='detail_set')
+    check_detail = st.checkbox(st.session_state.langue['get_detail_set'], key='detail_set')
 
     if check_detail:
     
         data_detail_global, data_qual_global = charger_data(st.session_state['id_joueur'])
         
         
-        select_set = st.multiselect('Selectionner un set', data_detail_global['Set'].unique().tolist(),
+        select_set = st.multiselect(st.session_state.langue['select_set'], data_detail_global['Set'].unique().tolist(),
                                     default=data_detail_global['Set'].unique().tolist()[0], key='evol_set')
         
         data_detail_filter = data_detail_global[data_detail_global['Set'].isin(select_set)]
@@ -73,7 +73,7 @@ def palier_page():
         
         
         
-        tab1, tab2 = st.tabs(['Général', 'Qualité'])
+        tab1, tab2 = st.tabs([st.session_state.langue['general'], st.session_state.langue['qualité']])
         
         with tab1:
             col1, _, col2 = st.columns([40,5, 60])
@@ -93,11 +93,11 @@ def palier_page():
                                     '100', '110', '120', 'points'], var_name='Palier', value_name='Nombre')
                         
                 if len(options_date) > 30:
-                            list_tail = st.slider('Selectionner les derniers reportings:', 5, len(options_date), 30, help="Cette option s'affiche lorsque vous avez plus de 30 reportings différents")
+                            list_tail = st.slider(f'{st.session_state.langue["select_last_reporting"]}:', 5, len(options_date), 30, help=st.session_state.langue['select_last_reporting_help'])
                             options_date = options_date[:list_tail]
 
                 options_select = st.multiselect(
-                            'Selectionner les dates à afficher :', options_date, options_date, key='evol_date1')
+                            f'{st.session_state.langue["select_date_to_show"]} :', options_date, options_date, key='evol_date1')
                 
                 data_detail_filter = filter_data(data_detail_filter, options_select)
             
@@ -147,11 +147,11 @@ def palier_page():
                 data_scoring_filter.sort_values('datetime', ascending=True, inplace=True)
                         
                 if len(options_date) > 30:
-                            list_tail = st.slider('Selectionner les derniers reportings:', 5, len(options_date), 30, help="Cette option s'affiche lorsque vous avez plus de 30 reportings différents")
+                            list_tail = st.slider(f'{st.session_state.langue["select_last_reporting"]}', 5, len(options_date), 30, help=st.session_state.langue['select_last_reporting_help'])
                             options_date = options_date[:list_tail]
 
                 options_select_qual = st.multiselect(
-                            'Selectionner les dates à afficher :', options_date, options_date, key='evol_date2')
+                            f'{st.session_state.langue["select_date_to_show"]}:', options_date, options_date, key='evol_date2')
                 
                 data_scoring_filter = filter_data(data_scoring_filter, options_select_qual)
             
@@ -198,11 +198,11 @@ def palier_page():
                 options_date = data_scoring['date'].unique().tolist()
                 
                 if len(options_date) > 30:
-                    list_tail = st.slider('Selectionner les derniers reportings:', 5, len(options_date), 30, help="Cette option s'affiche lorsque vous avez plus de 30 reportings différents")
+                    list_tail = st.slider(f'{st.session_state.langue["select_last_reporting"]}:', 5, len(options_date), 30, help=st.session_state.langue['select_last_reporting_help'])
                     options_date = options_date[:list_tail]
 
                 options_select = st.multiselect(
-                    'Selectionner les dates à afficher :', options_date, options_date, key='evol_date3')
+                    f'{st.session_state.langue["select_date_to_show"]} :', options_date, options_date, key='evol_date3')
 
                 data_detail = filter_data(data_detail, options_select)
                 data_scoring = filter_data(data_scoring, options_select)
@@ -234,7 +234,7 @@ def palier_page():
                 st.text("")
                 
 
-                st.subheader('Score general')
+                st.subheader(st.session_state.langue['score_general'])
                 
 
                 
@@ -348,7 +348,7 @@ def palier_page():
                     st.plotly_chart(fig100)
                     
                     
-                st.subheader('Score Qualité')
+                st.subheader(st.session_state.langue['Score_Qualite'])
                 
                 
                 fig = go.Figure()

@@ -102,6 +102,12 @@ except OperationalError as e:
     st.warning('Erreur')
     st.session_state['submitted'] = False
 
+@st.cache_data
+def translation(langue):
+    if langue == 'Français':
+        return json.load(open('langue/fr.json', encoding='utf-8'))
+    elif langue == 'English':
+        return json.load(open('langue/en.json', encoding='utf-8'))
                     
 def upload_sw():
     
@@ -111,30 +117,40 @@ def upload_sw():
     
     # print(current / (1024*1024))
     # print(peak / (1024 * 1024))
+    
+
+        
+    
+    
 
     col1, col2, col3 = st.columns([0.25,0.50,0.25])
     with col2:
+
         st.title('Scoring SW')
+        
+        langue = st.radio('Langue', ['Français', 'English'], index=0, key='translations', horizontal=True, help='En cours... / Incoming...')
+    
+        st.session_state.langue = translation(langue)
         with st.form('Data du compte'):
-            st.file_uploader('Choisis un json',
+            st.file_uploader(st.session_state.langue['uploader_fichier'],
                             type=['json'],
                             help='Json SW Exporter',
                             key='file')
             
         
             st.session_state['submitted'] = st.form_submit_button('Calcule mon score')
-            st.info(body='Vous serez redirigé automatiquement à la fin du téléchargement.', icon="🚨")
-            st.warning(body="L'application est par defaut en mode elargi. L'affichage est modifiable dans le menu en haut à droite",
+            
+            st.info(body=st.session_state.langue['telechargement_wait'], icon="🚨")
+            st.warning(body=st.session_state.langue['mode_appli'],
                        icon="⚠️")
             
-            st.markdown(f':blue[{heure}] : :green[{nb_user}] utilisateurs | :violet[{nb_guilde}] guildes | :orange[{nb_score}] scores')
+            st.markdown(f':blue[{heure}] : :green[{nb_user}] {st.session_state.langue["utilisateurs"]} | :violet[{nb_guilde}] {st.session_state.langue["guildes"]} | :orange[{nb_score}] {st.session_state.langue["scores"]}')
 
 
     if not st.session_state.submitted:
         col1, col2, col3 = st.columns(3)
         with col2:
             img = load_lottieurl('https://assets5.lottiefiles.com/packages/lf20_ABViugg18Y.json')
-            
             show_lottie(img)
 
     if st.session_state['file'] is not None and st.session_state.submitted:
@@ -148,7 +164,7 @@ def upload_sw():
             st.session_state.swarfarm = load_swarfarm()
             
             
-            with st.spinner('Chargement du json...'):
+            with st.spinner(st.session_state.langue['loading_json']):
                 try:
 
                     
@@ -171,7 +187,7 @@ def upload_sw():
                         st.session_state.dmg_wb = st.session_state.data_json['my_worldboss_best_ranking']['accumulate_damage']
                         
                     except KeyError: # fichier pas au bon format
-                        st.warning('Fichier incompatible')
+                        st.warning(st.session_state.langue['error_incompatible'])
                         st.session_state.submitted = False
                         exit()
                     

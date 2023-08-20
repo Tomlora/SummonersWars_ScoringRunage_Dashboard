@@ -11,7 +11,7 @@ css()
 add_indentation()
 
 
-dict_type = {'Arene' : 'arene',
+dict_type = {st.session_state.langue["arene"] : 'arene',
              'World Boss' : 'WB'}
     
 
@@ -50,7 +50,7 @@ def mise_en_forme_classement(df, variable='score', autres_var=None, ascending=Fa
 
         df = df[variable_to_show]
 
-        filtre_guilde = st.checkbox('Filtrer sur ma guilde')
+        filtre_guilde = st.checkbox(st.session_state.langue['filter_guilde'])
 
         if filtre_guilde:
             df = df[df['guilde']
@@ -64,7 +64,7 @@ def mise_en_forme_classement(df, variable='score', autres_var=None, ascending=Fa
                     use_container_width=True)
     
     else:
-        st.warning('Pas de données disponibles')
+        st.warning(st.session_state.langue['no_data'])
 
     return df
 
@@ -74,12 +74,12 @@ def classement():
     # On lit la BDD
     # on récupère la data
     
-    st.info("**Note** : Données mises à jour toutes les **10** minutes", icon="ℹ️")
+    st.info(f'**Note** : {st.session_state.langue["update_ladder"]}', icon="ℹ️")
 
     if st.session_state.visibility == 0:
-        st.warning('Vous avez choisi de ne pas apparaitre. Vous pouvez changer cela dans les paramètres.', icon="ℹ️")
+        st.warning(st.session_state.langue['no_visibility'], icon="ℹ️")
 
-    @st.cache_data(ttl=timedelta(minutes=10), show_spinner='Chargement...')
+    @st.cache_data(ttl=timedelta(minutes=10), show_spinner=st.session_state.langue["loading_data"])
     def load_data_ladder():
         data = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id,
                               sw_pvp.date, sw_pvp.win, sw_pvp.lose,
@@ -93,7 +93,7 @@ def classement():
 
     data = load_data_ladder()
 
-    choice_radio = st.radio('Type de classement', options=['Arene','World Boss'], index=0, horizontal=True)
+    choice_radio = st.radio(st.session_state.langue['Classement'], options=dict_type.keys(), index=0, horizontal=True)
     
     
     classement = dict_type[choice_radio]

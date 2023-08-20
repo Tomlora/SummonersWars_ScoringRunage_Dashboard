@@ -114,33 +114,33 @@ def export_excel(data, data_short, data_property, data_count, data_inventaire):
 def optimisation_rune():
 
     data_class = st.session_state.data_rune
-    with st.spinner('Calcul du potentiel des runes...'):
+    with st.spinner(st.session_state.langue['calcul_potentiel_rune']):
 
         data_class.calcul_potentiel()
 
-    st.success('Calcul du potentiel des runes effectué !')
+    st.success(st.session_state.langue['calcul_potentiel_rune_success'])
 
 
     # # Indicateurs
     # ## Runes +15
 
-    with st.spinner('Vérification des runes et des modifications possibles  ...'):
+    with st.spinner(st.session_state.langue['calcul_verif_rune']):
         data_class.grind()
 
-    st.success('Vérification des runes et des modifications possibles effectué !')
+    st.success(st.session_state.langue['calcul_verif_rune_success'])
 
     data = data_class.data_grind
     
     data_short = data_class.data_short
 
     # ## Meules manquantes par stat (total)
-    with st.spinner('Calcul des stats manquantes...'):
+    with st.spinner(st.session_state.langue['calcul_rune_miss']):
         df_property = data_class.count_meules_manquantes()
 
-    st.success('Calcul des stats manquantes effectués !')
+    st.success(st.session_state.langue['calcul_rune_miss_success'])
 
     # Même calcul mais par set
-    with st.spinner('Ajout des informations pour identifier les runes...'):
+    with st.spinner(st.session_state.langue['calcul_add_info']):
 
         data_class.count_rune_with_potentiel_left()
 
@@ -176,7 +176,7 @@ def optimisation_rune():
             df_inventaire[0][i]['stat'] = data_class.property[stat]
             df_inventaire[0][i]['quality'] = COM2US_QUALITY_MAP[quality]
 
-    st.success('Les informations pour identifier les runes ont été ajoutés !')
+    st.success(st.session_state.langue['calcul_add_info_success'])
 
     #     Exemple découpage : item : 150814
     #     rune : 15
@@ -185,7 +185,7 @@ def optimisation_rune():
 
     @st.cache_data(show_spinner=False)
     def charge_data(data, data_short, df_rune, df_count, df_inventaire, user_id, meule:bool, all_data:bool):
-        with st.spinner('Chargement des données concaténées...Prévoir quelques secondes'):
+        with st.spinner(st.session_state.langue['calcul_loading_rune']):
 
             df_inventaire = pd.DataFrame(df_inventaire)
 
@@ -329,21 +329,21 @@ def optimisation_rune():
 
             return data_xlsx, data, data_short, df_rune, df_count, df_inventaire
 
-    show_stat = st.checkbox('Afficher les stats en incluant les meules ?', value=True, key='checkbox_data', help='Le premier chargement sera plus long')
-    show_all = st.checkbox('Afficher la data complète', key='data_complete', help='Montre toute la data utilisée. Le premier chargement sera plus long')
+    show_stat = st.checkbox(st.session_state.langue['show_include_meule'], value=True, key='checkbox_data', help=st.session_state.langue['show_include_meule_help'])
+    show_all = st.checkbox(st.session_state.langue['data_complete'], key='data_complete', help=st.session_state.langue['data_complete_help'])
     data_xlsx, data, data_short, df_rune, df_count, df_inventaire = charge_data(
         data, data_short, df_rune, df_count, df_inventaire, st.session_state.compteid, show_stat, show_all)
 
 
 
     st.subheader('Summary')
-    st.info("Aucune donnée n'est conservée")
+    st.info(st.session_state.langue['info_conservation_data'])
     
     data_short_filter = filter_dataframe(data_short, 'data_short')
     st.dataframe(data_short_filter.drop('Id_rune', axis=1))
 
 
-    st.download_button('Télécharger la data (Excel)', data_xlsx, file_name=f'optimisation runes {st.session_state["pseudo"]}.xlsx',
+    st.download_button(st.session_state.langue['download_excel'], data_xlsx, file_name=f'optimisation runes {st.session_state["pseudo"]}.xlsx',
                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 

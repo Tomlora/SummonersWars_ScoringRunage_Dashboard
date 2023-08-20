@@ -39,7 +39,7 @@ def mise_en_forme_classement(df, variable='score'):
 
     df = df[['joueur', variable, 'date', 'guilde']]
 
-    filtre_guilde = st.checkbox('Filtrer sur ma guilde')
+    filtre_guilde = st.checkbox(st.session_state.langue['filter_guilde'])
 
     if filtre_guilde:
         df = df[df['guilde']
@@ -67,13 +67,13 @@ def classement_value():
     # on récupère la data
     
     if st.session_state.visibility == 0:
-        st.warning('Vous avez choisi de ne pas apparaitre. Vous pouvez changer cela dans les paramètres.', icon="ℹ️")
+        st.warning(st.session_state.langue['no_visibility'], icon="ℹ️")
     
-    st.info("**Note** : Données mises à jour toutes les **10** minutes", icon="ℹ️")
+    st.info(f'**Note** : {st.session_state.langue["update_ladder"]}', icon="ℹ️")
     
-    type_ranking = st.radio('Type de ranking', ['Max', 'Moyenne'], horizontal=True)
+    type_ranking = st.radio(st.session_state.langue['Classement'], ['Max', st.session_state.langue["avg"].capitalize()], horizontal=True)
 
-    @st.cache_data(ttl=timedelta(minutes=10), show_spinner='Chargement des données...')
+    @st.cache_data(ttl=timedelta(minutes=10), show_spinner=st.session_state.langue["loading_data"])
     def load_data_value():
         data = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_max.date, sw_max.substat, sw_max.max_value, sw_max.rune_set, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user
@@ -81,7 +81,7 @@ def classement_value():
                             where sw_user.visibility != 0 and sw_max.substat != 'Aucun' ''').transpose().reset_index()
         return data
     
-    @st.cache_data(ttl=timedelta(minutes=10), show_spinner='Chargement des données...')
+    @st.cache_data(ttl=timedelta(minutes=10), show_spinner=st.session_state.langue["loading_data"])
     def load_data_value_avg(top):
         data = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_max.date, sw_max.substat, sw_max.{top}, sw_max.rune_set, (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user
@@ -93,18 +93,18 @@ def classement_value():
         data = load_data_value()
         value = 'max_value'
     
-    elif type_ranking == 'Moyenne':
+    elif type_ranking == st.session_state.langue["avg"].capitalize():
         var_top = st.radio('Top', [5,10,15,25], horizontal=True)
         value = f'top{var_top}' 
         data = load_data_value_avg(value)
 
     st.subheader('Ranking value')
 
-    stat = st.selectbox('Substat à selectionner', options=data['substat'].unique())
+    stat = st.selectbox('Substat', options=data['substat'].unique())
     
     data_tri = data[data['substat'] == stat]
     
-    rune = selectbox('Set de runes', options=st.session_state.set_rune)
+    rune = selectbox('Set Rune', options=st.session_state.set_rune)
     
     if rune != None:
         data_tri = data_tri[data_tri['rune_set'] == rune]

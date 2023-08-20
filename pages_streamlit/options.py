@@ -29,24 +29,24 @@ def params():
     liste_date = df_actuel['date'].unique().tolist()
 
     with st.form('Supprimer des données'):
-        st.subheader('Supprimer un enregistrement (Validation définitive !)')
+        st.subheader(st.session_state.langue['delete_one_save'])
         date_retenu = st.selectbox('Date', liste_date)
         validation_suppression = st.form_submit_button(
-            'Valider la suppression')
+            st.session_state.langue['valider'])
 
     if validation_suppression:
         supprimer_data(st.session_state['id_joueur'], date_retenu)
         st.text('Supprimé')
 
     with st.form('Supprimer toutes mes données'):
-        st.subheader('Tout supprimer (Validation définitive !)')
+        st.subheader(st.session_state.langue['delete_all'])
         validation_suppression_definitive = st.form_submit_button(
-            'Valider la suppression définitive')
+            st.session_state.langue['supprimer'])
 
     if validation_suppression_definitive:
 
         supprimer_data_all(st.session_state['id_joueur'])
-        st.text('Supprimé')
+        st.text(st.session_state.langue['supprimer'])
 
 
 

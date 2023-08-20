@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit_extras.add_vertical_space import add_vertical_space
 from math import ceil
 from streamlit_extras.metric_cards import style_metric_cards
-
+import json
 from st_pages import add_indentation
 
 from fonctions.visuel import css
@@ -10,7 +10,21 @@ from fonctions.visuel import css
 css()
 
 add_indentation()
-   
+
+@st.cache_data
+def translation(langue):
+    if langue == 'Français':
+        return json.load(open('langue/fr.json', encoding='utf-8'))
+    elif langue == 'English':
+        return json.load(open('langue/en.json', encoding='utf-8'))
+    
+
+    
+try:
+    if not 'langue' in st.session_state:
+        st.session_state.langue = translation("Français") 
+except:
+    pass  
     
 style_metric_cards(background_color='#03152A', border_color='#0083B9', border_left_color='#0083B9', border_size_px=0, box_shadow=False, border_radius_px=300)
 
@@ -51,7 +65,7 @@ def arte(hp, atk, defense, vit, number):
         dmg_def = round(defense * arte_def,2)
         dmg_vit = round(vit * arte_vit,2)
     with col2:
-        st.write('Degats')
+        st.write('DMG')
         st.markdown(f':green[{dmg_hp}]')
         add_vertical_space(3)
         st.markdown(f':blue[{dmg_atk}]')
@@ -69,7 +83,7 @@ with col2:
         col2_1, col2_2 = st.columns(2)
 
         with col2_1:
-            st.subheader('Batiments (%)')
+            st.subheader(f'{st.session_state.langue["Batiments"]} (%)')
             hp_bat, atk_bat, def_bat, vit_bat = input_stats('batiments', value=20, max_hp=20, max_atk=20, max_def=20, max_vit=15, value_spd=15)
         with col2_2:
             st.subheader('Lead (%)')

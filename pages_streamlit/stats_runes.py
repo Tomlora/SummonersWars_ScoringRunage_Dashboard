@@ -24,7 +24,7 @@ def stats_runage():
     
 
 
-    tab_efficience, tab_pts, tab_substat, tab_eff, tab_qual = st.tabs(['Efficience', 'Top 10 stats', 'Substats par slot', 'Efficience par slot', 'Qualité'])
+    tab_efficience, tab_pts, tab_substat, tab_eff, tab_qual = st.tabs([st.session_state.langue['Efficience'], 'Top 10 stats', 'Substats (Slot)', 'Efficience (Slot)', st.session_state.langue['qualité']])
     
     with tab_efficience:
         
@@ -39,7 +39,7 @@ def stats_runage():
         
         # list_set.sort()
         
-        set_select_efficience = selectbox('Choisir un set', st.session_state.set_rune , key='efficience')
+        set_select_efficience = selectbox('Set', st.session_state.set_rune , key='efficience')
         
         
         # filtre sur un set ?
@@ -47,7 +47,7 @@ def stats_runage():
             df_efficience = df_efficience[df_efficience['rune_set'] == set_select_efficience]
             
         
-        top = st.slider('Nombre de runes à afficher', 10, df_efficience.shape[0], round(df_efficience.shape[0] / 2), 10)     
+        top = st.slider(st.session_state.langue['nb_rune_to_show'], 10, df_efficience.shape[0], round(df_efficience.shape[0] / 2), 10)     
         
         # on sort par efficience    
         df_efficience = df_efficience.sort_values('efficiency', ascending=False)
@@ -97,7 +97,7 @@ def stats_runage():
             
         fig.add_trace(go.Scatter(x=df_efficience.index, y=df_efficience['efficiency'],
                     mode='lines',
-                    name='efficiency'))
+                    name=st.session_state.langue['Efficience']))
 
         fig.add_trace(go.Scatter(x=df_efficience_hero.index, y=df_efficience_hero['efficiency_max_hero'],
                     mode='lines',
@@ -132,7 +132,7 @@ def stats_runage():
         df_max_selected = df_max[df_max['rune_set'] == set_select]
         
 
-        checkbox_filtre_guilde = st.checkbox('Filtrer sur ma guilde ?', value=False, key='filtre_guilde_stats')
+        checkbox_filtre_guilde = st.checkbox(st.session_state.langue['filter_guilde'], value=False, key='filtre_guilde_stats')
 
         try:
             
@@ -159,11 +159,11 @@ def stats_runage():
             
             add_vertical_space(2)
             
-            st.text(f'Classement ({df_points_set.shape[0]} joueurs)')
+            st.text(f'{st.session_state.langue["Classement"]} ({df_points_set.shape[0]} {st.session_state.langue["joueurs"]})')
             st.markdown(f'Points : :green[{df_points_set.loc[st.session_state["id_joueur"], "pts_rank"]}]     |    Efficience(Mediane) : :violet[{df_points_set.loc[st.session_state["id_joueur"], "mediane_rank"]}]     |    Efficience (Moyenne) : :orange[{df_points_set.loc[st.session_state["id_joueur"], "moyenne_rank"]}]')
             st.table(df_max_selected.pivot_table(values=value_tcd, index=['rune_set', 'substat'], aggfunc='max')[value_tcd].transpose())
         except KeyError:
-            st.info("Pas de statistiques sur ce set")
+            st.info(st.session_state.langue['no_data'])
         
         
         del df_max_selected, df_max
@@ -174,11 +174,11 @@ def stats_runage():
 
         df_rune = st.session_state.data_rune.count_per_slot()
         
-        set_selected = selectbox('Choisir un set', st.session_state.set_rune, key='set_slot')
+        set_selected = selectbox('Set', st.session_state.set_rune, key='set_slot')
         
-        sub_selected = st.selectbox('Choisir une substat', df_rune['first_sub'].unique().tolist(), key='substat_slot')
+        sub_selected = st.selectbox('Substat', df_rune['first_sub'].unique().tolist(), key='substat_slot')
         
-        value_mini = st.number_input('Valeur minimum', min_value=0, format='%i', value=15, key='value_mini')
+        value_mini = st.number_input(st.session_state.langue['value_min'], min_value=0, format='%i', value=15, key='value_mini')
         
         df_rune['rune_slot'] = df_rune['rune_slot'].apply(lambda x: f'Slot {x}')
         
@@ -189,7 +189,7 @@ def stats_runage():
                                 r='count', 
                             theta='rune_slot',
                             line_close=True,
-                            title=f'Nombre de runes  avec {value_mini} minimum en substat par slot')
+                            title=f'{st.session_state.langue["nb_substat"].format(value_mini)}')
 
             fig.update_layout(polar=dict(radialaxis=dict(gridcolor='lightgrey')))
             st.plotly_chart(fig)
@@ -199,14 +199,15 @@ def stats_runage():
             df_rune_grp = df_rune[(df_rune['first_sub'] == sub_selected) & (df_rune['first_sub_value_total'] >= value_mini) & (df_rune['rune_set'] == set_selected)].groupby(['rune_set', 'rune_slot']).sum().reset_index()
             
             if df_rune_grp.empty:
-                st.info("Pas de statistiques sur ce set")
+                st.info(st.session_state.langue['no_data'])
             else:
                 fig = px.line_polar(df_rune_grp,
                                     r='count', 
                                     theta='rune_slot',
                                     color='rune_set',
                                     line_close=True,
-                                    title=f'Nombre de runes {set_selected} avec {value_mini} minimum en {sub_selected.upper()} par slot')
+                                    title=f'{st.session_state.langue["nb_substat_set_selected"].format(set_selected, value_mini, sub_selected.upper())}')
+                
 
 
                 fig.update_layout(polar=dict(radialaxis=dict(gridcolor='lightgrey')))
@@ -214,13 +215,13 @@ def stats_runage():
         
     with tab_eff:
     
-        st.subheader('Efficience par slot')
+        st.subheader(f'{st.session_state.langue["Efficience"]} (Slot)')
 
         df_efficience = st.session_state.data_rune.count_efficience_per_slot()
         
-        set_selected = selectbox('Choisir un set',st.session_state.set_rune, key='set_slot_eff')
+        set_selected = selectbox('Set',st.session_state.set_rune, key='set_slot_eff')
         
-        eff_mini = st.number_input('Valeur minimum', min_value=0, format='%i', value=100, key='value_mini_eff')
+        eff_mini = st.number_input(st.session_state.langue['value_min'], min_value=0, format='%i', value=100, key='value_mini_eff')
         
         df_efficience = df_efficience[df_efficience['efficiency'] >= eff_mini]
         
@@ -237,7 +238,7 @@ def stats_runage():
                                     r='Nombre', 
                                 theta='rune_slot',
                                 line_close=True,
-                                title=f'Nombre de runes  avec une efficience de  {eff_mini}% minimum par slot')
+                                title=f'{st.session_state.langue["nb_effi"].format(eff_mini)}')
             
             fig.update_layout(polar=dict(radialaxis=dict(gridcolor='lightgrey')))
             st.plotly_chart(fig)
@@ -246,7 +247,7 @@ def stats_runage():
 
             df_rune_grp_eff = df_efficience_count[df_efficience_count['rune_set'] == set_selected].groupby(['rune_set', 'rune_slot']).sum().reset_index()
             if df_rune_grp_eff.empty:
-                st.info("Pas de statistiques sur ce set")
+                st.info(st.session_state.langue['no_data'])
             else:
                 fig = px.line_polar(df_rune_grp_eff,
                                         r='Nombre', 
@@ -261,7 +262,7 @@ def stats_runage():
         
     with tab_qual:
                
-        trier_par_slot = st.checkbox('Trier par slot', value=False)
+        trier_par_slot = st.checkbox(st.session_state.langue['tri_slot'], value=False)
         
         if trier_par_slot:
             data_qual = st.session_state.df_quality_per_slot.reset_index()
@@ -272,8 +273,8 @@ def stats_runage():
         data_qual_filter = filter_dataframe(data_qual)
         st.dataframe(data_qual_filter, use_container_width=True)
         
-        st.subheader('Répartition 📊')
-        select_set = selectbox('Choisir un set', data_qual['rune_set'].unique().tolist(), key='set_qual')
+        st.subheader(f'{st.session_state.langue["repartition"]} 📊')
+        select_set = selectbox('Set', data_qual['rune_set'].unique().tolist(), key='set_qual')
         
         if select_set != None:
             data_qual_filter = data_qual[data_qual['rune_set'] == select_set]

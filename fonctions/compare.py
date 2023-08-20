@@ -95,7 +95,7 @@ def comparaison_rune_graph(df, name, score='score_general', score_joueur='score'
     fig.add_trace(go.Scatter(
         x=['Score personnel'],
         y=[int(st.session_state[score_joueur])],
-        name='Score personnel',
+        name=st.session_state.pseudo,
         mode='markers',
         marker_color='rgba(255,255,255,1)',  # à modifier
         marker=dict(size=[30]),

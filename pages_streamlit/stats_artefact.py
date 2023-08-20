@@ -26,8 +26,8 @@ def grind_arte():
         
     list_type.sort()
         
-    type_select = selectbox('Choisir un type', list_type , key='type_arte')
-    attribut_select = selectbox('Choisir un attribut', list_attribut , key='attribut_arte')
+    type_select = selectbox(st.session_state.langue['filter_one_type'], list_type , key='type_arte')
+    attribut_select = selectbox(st.session_state.langue['filter_one_attribut'], list_attribut , key='attribut_arte')
     
         # filtre sur un set ?
     if type_select != None:
@@ -36,7 +36,7 @@ def grind_arte():
     if attribut_select != None:
         df_efficience = df_efficience[df_efficience['arte_attribut'] == attribut_select]
         
-    top = st.slider("Nombre d'artefacts à afficher", 10, df_efficience.shape[0], round(df_efficience.shape[0]/2), 10) 
+    top = st.slider(st.session_state.langue['nb_artefact_to_show'], 10, df_efficience.shape[0], round(df_efficience.shape[0]/2), 10) 
         
 
         
@@ -54,10 +54,10 @@ def grind_arte():
         
     with col2:
         
-        st.text(f'Efficience moyenne {df_efficience["efficiency"].mean():.2f}')
-        st.text(f'50% de tes artefacts ont plus de : {df_efficience["efficiency"].median():.2f}')
-        st.text(f'Efficience moyenne par archetype {df_efficience[df_efficience["arte_type"] == "ARCHETYPE"]["efficiency"].mean():.2f}')
-        st.text(f'Efficience moyenne par element {df_efficience[df_efficience["arte_type"] == "ELEMENT"]["efficiency"].mean():.2f}')
+        st.text(f'{st.session_state.langue["Efficience_avg"]} {df_efficience["efficiency"].mean():.2f}')
+        st.text(f'{st.session_state.langue["artefact_50%"]} : {df_efficience["efficiency"].median():.2f}')
+        st.text(f'{st.session_state.langue["eff_moyenne_archetype"]} {df_efficience[df_efficience["arte_type"] == "ARCHETYPE"]["efficiency"].mean():.2f}')
+        st.text(f'{st.session_state.langue["eff_moyenne_element"]} {df_efficience[df_efficience["arte_type"] == "ELEMENT"]["efficiency"].mean():.2f}')
         
         st.subheader(f'Parmi le top {top}:')
         col2_1, col2_2 = st.columns(2)
@@ -70,12 +70,12 @@ def grind_arte():
             count_archetype = df_efficience[df_efficience["arte_type"] == "ARCHETYPE"]['efficiency'].count()
             st.metric('Archetype', count_archetype, round(count_archetype / top * 100,2), help="Le nombre coloré correspond au % du top")
             
-    with st.expander('Plus de détails...'):
+    with st.expander(st.session_state.langue["detail"]):
         
         fig = px.pie(df_efficience.groupby(['arte_attribut'], as_index=False).count(),
                      values='efficiency',
                      names='arte_attribut',
-                     title='Répartition par attribut')
+                     title=st.session_state.langue["repartition_attribut"])
         
         fig.update_traces(textposition='inside', textinfo='percent+value+label')
             
@@ -107,7 +107,7 @@ def grind_arte():
 
     
     colored_header(
-            label="Valeur maximale des artefacts",
+            label=st.session_state.langue["value_max"],
             description="",
             color_name="blue-70",
         )
@@ -117,7 +117,7 @@ def grind_arte():
     
     st.dataframe(df_filter)
     
-    tab1, tab2, tab3, tab4 = st.tabs(['Par Type', 'Par Attribut', 'Par substat', 'Par mot clé'])
+    tab1, tab2, tab3, tab4 = st.tabs(['Type', 'Attribut', 'Substat', st.session_state.langue["mot-cle"]])
 
     with tab1:
         st.dataframe(st.session_state.data_arte.df_max_arte_type.sort_values(by=['arte_type', 'substat'], ascending=True))
@@ -129,7 +129,7 @@ def grind_arte():
         st.dataframe(st.session_state.data_arte.df_max_substat.sort_values(by=['substat'], ascending=True))
         
     with tab4:
-        st.info("Cet onglet montre le nombre d'artefacts ayant au minimum X substats combinés.", icon="ℹ️")
+        st.info(st.session_state.langue["mot-cle_help"], icon="ℹ️")
         st.dataframe(st.session_state.arte_count[['substat', 'count2', 'count3', 'count4']].rename(
             columns={'count2': '2', 'count3': '3', 'count4': '4'}))
 

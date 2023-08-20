@@ -24,7 +24,7 @@ st.title('Création de build')
 def build():
 
         # # swarfarm
-    @st.cache_data(ttl='1h', show_spinner='Chargement des runes...')
+    @st.cache_data(ttl='1h', show_spinner=st.session_state.langue['loading_rune'])
     def charger_data(joueur):
         swarfarm = st.session_state.swarfarm[[
             'com2us_id', 'name', 'image_filename', 'url']].set_index('com2us_id')
@@ -111,7 +111,7 @@ def build():
     
 
 
-    with st.expander('Chercher mes runes'):
+    with st.expander(st.session_state.langue['search_runes']):
         data_build_filter = filter_dataframe(
             st.session_state.data_rune.data_build.drop(['id_rune', 'Substat 1', 'Substat 1 total', 'Substat 2', 'Substat 2 total', 'Substat 3', 'Substat 3 total', 'Substat 4', 'Substat 4 total', 'Aucun'], axis=1), 'data_build', type_number='int')
         
@@ -126,7 +126,7 @@ def build():
 
         data_xlsx = export_excel(data_build_filter.drop('img', axis=1), 'Id_rune', 'Runes')
 
-        st.download_button('Télécharger la data (Excel)', data_xlsx, file_name='runes.xlsx',
+        st.download_button(st.session_state.langue['download_excel'], data_xlsx, file_name='runes.xlsx',
                            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
     col1, col2 = st.columns([0.8, 0.2])
@@ -134,9 +134,9 @@ def build():
 
     # DataFrame avec les monstres
     with col1:
-        st.subheader('Chercher un monstre')
+        st.subheader(st.session_state.langue['search_monster'])
         monster_selected = st.selectbox(
-            'Monstre', options=df_mobs['name_monstre'].unique())
+            st.session_state.langue['monstres'], options=df_mobs['name_monstre'].unique())
     with col2:
         image = swarfarm.loc[swarfarm['name'] ==
                              monster_selected]['image_filename'].values[0]
@@ -151,11 +151,11 @@ def build():
 
     if len(df_build_save) > 0:
         # Si un build existe, on ouvre la liste déroulante des build
-        with st.expander('Charger un build'):
+        with st.expander(st.session_state.langue['load_build']):
             liste_build = df_build_save['nom_build'].unique().tolist()
             liste_build.append('Aucun')
             build_selected = st.selectbox(
-                'Selection du build', options=liste_build, index=len(liste_build)-1, help="En cas de retour à la selection 'Aucun', il faut le selectionner deux fois")
+                'Selection du build', options=liste_build, index=len(liste_build)-1, help=st.session_state.langue['help_selected_build'])
     else:
         build_selected = 'Aucun'
 
@@ -255,10 +255,10 @@ def build():
         if id_rune != 0 and id_rune != -1:
             if num_rune != df_rune['Slot'].values[0]:
                 st.warning(
-                    f'Slot de cette rune : {df_rune["Slot"].values[0]}', icon="🚨")
+                    f'Slot : {df_rune["Slot"].values[0]}', icon="🚨")
 
-            return f'Rune {num_rune} : :blue[{df_rune["Set rune"].values[0]}] :orange[(Equipé sur {df_rune["Equipé"].values[0]})]\
-            <br><br>Stat principal : :blue[{df_rune["Stat principal"].values[0]}] :green[({df_rune["Valeur stat principal"].values[0]})]\
+            return f'Rune {num_rune} : :blue[{df_rune["Set rune"].values[0]}] :orange[({st.session_state.langue["equiped_on"]} {df_rune["Equipé"].values[0]})]\
+            <br><br>{st.session_state.langue["main_stat"]} : :blue[{df_rune["Stat principal"].values[0]}] :green[({df_rune["Valeur stat principal"].values[0]})]\
             <br>Innate : :blue[{df_rune["innate_type"].values[0]}] :green[({df_rune["innate_value"].values[0]})]\
             <br><br>Sub1 : :blue[{df_rune["Substat 1"].values[0]}] :green[({df_rune["Substat 1 total"].values[0]})]\
             <br>Sub2 : :blue[{df_rune["Substat 2"].values[0]}] :green[({df_rune["Substat 2 total"].values[0]})]\
@@ -439,9 +439,9 @@ def build():
                              build_selected), unsafe_allow_html=True)
                 except KeyError as e:
                     if e.args[0] == -1:
-                        st.info("Pas de rune sur ce slot", icon="🚨")
+                        st.info(st.session_state.langue['no_rune_slot'], icon="🚨")
                     else:
-                        st.warning("Cette rune n'existe pas", icon="🚨")
+                        st.warning(st.session_state.langue['no_existed_rune'], icon="🚨")
 
     with col4:  # Rune 2/4/6
         with st.container():
@@ -451,9 +451,9 @@ def build():
                              build_selected), unsafe_allow_html=True)
                 except KeyError as e:
                     if e.args[0] == -1:
-                        st.info("Pas de rune sur ce slot", icon="🚨")
+                        st.info(st.session_state.langue['no_rune_slot'], icon="🚨")
                     else:
-                        st.warning("Cette rune n'existe pas", icon="🚨")
+                        st.warning(st.session_state.langue['no_existed_rune'], icon="🚨")
 
     # Si le build est personnalisé, on affiche un bouton pour le supprimer.
     if build_selected != 'Aucun':
@@ -466,10 +466,10 @@ def build():
                 st.success('Build supprimé')
 
     # Formulaire pour sauvegarder les build
-    with st.form('Sauvegarder ce build'):
-        build_name = st.text_input('Nom du build : ', 'Par default')
+    with st.form(st.session_state.langue['sauvegarder_build']):
+        build_name = st.text_input(f'{st.session_state.langue["name_build"]} : ', 'Par default')
 
-        submitted_build = st.form_submit_button('Sauvegarder')
+        submitted_build = st.form_submit_button(st.session_state.langue['sauvegarder'])
 
     if submitted_build:
         # on enregistre si formulaire validé.
@@ -490,9 +490,9 @@ def build():
                                'rune4': int(st.session_state.data_rune.data_build.loc[st.session_state.number_4]['id_rune']),
                                'rune5': int(st.session_state.data_rune.data_build.loc[st.session_state.number_5]['id_rune']),
                                'rune6': int(st.session_state.data_rune.data_build.loc[st.session_state.number_6]['id_rune'])})
-            st.success('Build sauvegardé !')
+            st.success(st.session_state.langue['sauvegarder'])
         else:
-            st.warning('Nom de build déjà utilisé pour ce monstre', icon="⚠️")
+            st.warning(st.session_state.langue['existed_name_build'], icon="⚠️")
 
 
 if 'submitted' in st.session_state:

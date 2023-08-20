@@ -16,13 +16,12 @@ css()
 add_indentation()
 
 
-st.title('Où utiliser ?')
-st.info("**Note** : Cet onglet étant nouveau, il peut y avoir des incohérences", icon="ℹ️")
-st.info("Chaque monstre dispose de 4 stats à priorité élevé, 4 à priorité moyenne et 8 à priorité faible", icon="ℹ️")
+st.title(st.session_state.langue['where_to_use'])
+st.info(st.session_state.langue['where_to_use_description'], icon="ℹ️")
 
 add_vertical_space(1)
 
-@st.cache_data(show_spinner='Chargement de la data...')
+@st.cache_data(show_spinner=st.session_state.langue['loading_data'])
 def charger_data_artefact():
     df = lire_bdd('sw_where2use', index='index').T
     
@@ -38,12 +37,28 @@ def charger_data_artefact():
 
     return df
 
+import json
+@st.cache_data
+def translation(langue):
+    if langue == 'Français':
+        return json.load(open('langue/fr.json', encoding='utf-8'))
+    elif langue == 'English':
+        return json.load(open('langue/en.json', encoding='utf-8'))
+    
+
+    
+try:
+    if not 'langue' in st.session_state:
+        st.session_state.langue = translation("Français") 
+except:
+    pass  
+
 
 
 dict_priority = {'Faible': 1, 'Moyen': 2, 'Elevé': 3}
 def choose_stats(stats, key):
-    stats = selectbox('Choisissez la stat à afficher', stats, key=f"{key}", no_selection_label='Aucun')
-    priority = st.selectbox('Choisissez la priorité', ['Faible', 'Moyen', 'Elevé'], key=f"{key}2")
+    stats = selectbox(st.session_state.langue['select_stat'], stats, key=f"{key}", no_selection_label='Aucun')
+    priority = st.selectbox(st.session_state.langue['select_priority'], ['Faible', 'Moyen', 'Elevé'], key=f"{key}2")
     priority = dict_priority[priority]
     
     return stats, priority
@@ -51,7 +66,7 @@ def choose_stats(stats, key):
 
 df_where_to_use = charger_data_artefact()
 
-tab1, tab2 = st.tabs(['Recherche par Artefact', 'Recherche par Monstre'])
+tab1, tab2 = st.tabs([st.session_state.langue['search_artefact'], st.session_state.langue['search_monster']])
 
 stats = df_where_to_use.columns.drop(['Family', 'Element', 'Awakened', 'Attribute', 'Preferred stats', 'Include', 'name', 'url', 'natural_stars'])
 
@@ -77,7 +92,7 @@ with tab1:
             df_final = df_final[df_final[stat] >= priority]
 
     if stat1 == None and stat2 == None and stat3 == None and stat4 == None:
-        st.warning('Veuillez sélectionner au moins une stat')
+        st.warning(st.session_state.langue['fill_first_value'])
     else:
         # Modif DF
         df_final = df_final[['Awakened', 'Attribute', 'Element', 'Family', 'Preferred stats', 'url', 'natural_stars']]  

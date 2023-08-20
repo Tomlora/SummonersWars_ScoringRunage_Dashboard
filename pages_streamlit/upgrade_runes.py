@@ -51,7 +51,7 @@ def stats(df, n):
 
         with column3:
             value = st.number_input(
-                f'Valeur de base', format='%i', min_value=0, key=f'value{n}')
+                st.session_state.langue['valeur'], format='%i', min_value=0, key=f'value{n}')
 
         with column5:
             max_stats = max_sub_by_proc(proc)[stats_selected]
@@ -61,7 +61,7 @@ def stats(df, n):
 
             with column6:
                 value_meule = st.number_input(
-                    'Meule', format='%i', min_value=0, key=f'meule{n}')
+                    st.session_state.langue['meule'], format='%i', min_value=0, key=f'meule{n}')
 
         else:
             value_meule = 0
@@ -158,11 +158,11 @@ def upgrade_r():
     
     if stats1 != None:
         if df_rune.shape[0] > 0:
-            st.text(f'Tu as {df_rune.shape[0]} meilleures runes que celle-ci')
+            st.text(st.session_state.langue['improve_rune'].format(df_rune.shape[0]))
         else:
-            st.text("C'est ta meilleure rune !")
+            st.text(st.session_state.langue['best_rune'])
         
-        with st.expander('Afficher les runes'):
+        with st.expander(st.session_state.langue['show_rune']):
             if df_rune.shape[0] > 0:
                 st.dataframe(df_rune[['rune_equiped', 'level', 'efficiency', 'main_type', 'innate_type', 'first_sub', 'first_sub_value_total', 'second_sub', 'second_sub_value_total', 'third_sub', 'third_sub_value_total', 'fourth_sub', 'fourth_sub_value_total']]\
                     .sort_values(by='efficiency', ascending=False)\
@@ -176,7 +176,7 @@ def upgrade_r():
                                          'fourth_sub_value_total': 'Value4'}))
 
     else:
-        st.info('Remplis au moins la première substat')
+        st.info(st.session_state.langue['fill_first_value'])
 
 
 
@@ -185,7 +185,7 @@ def upgrade_r():
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    
         st.title('Upgrade Rune')
-        st.text("Le but de cet onglet est de montrer le positionnemennt d'une nouvelle rune sur ton compte")
+        st.text(st.session_state.langue['description_upgrade'])
         upgrade_r()
     
     else:

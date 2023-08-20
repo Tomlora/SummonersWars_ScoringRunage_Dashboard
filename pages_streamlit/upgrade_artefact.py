@@ -90,7 +90,7 @@ def stats(df, n):
 
         with column3:
             value = st.number_input(
-                f'Valeur de base', format='%i', min_value=0, key=f'value{n}')
+                st.session_state.langue['valeur'], format='%i', min_value=0, key=f'value{n}')
 
         with column5:
             max_stats = max_sub_by_proc(proc)[stats_selected]
@@ -124,7 +124,7 @@ def upgrade_a():
     
     # on fusionne anciennes/nouvelles stats
     
-    check_v8 = st.checkbox('Fusionner les anciens substats avec ceux de la v8 ?', help='Si coché, il peut donc y avoir des doublons dans les substats')
+    check_v8 = st.checkbox(st.session_state.langue['fusion_substat_arte_v8'], help=st.session_state.langue['fusion_substat_arte_v8_help'])
     
     if check_v8:
         df_arte[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']] = df_arte[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']].replace({'RENFORCEMENT ATK' : 'RENFORCEMENT ATK/DEF', 
@@ -192,11 +192,11 @@ def upgrade_a():
     
     if stats1 != None:
         if df_arte.shape[0] > 0:
-            st.text(f'Tu as {df_arte.shape[0]} meilleurs artefacts que celle-ci')
+            st.text(st.session_state.langue['improve_artefact'].format(df_arte.shape[0]))
         else:
-            st.text("C'est ton meilleur artefact !")
+            st.text(st.session_state.langue['best_artefact'])
         
-        with st.expander('Afficher les artefacts'):
+        with st.expander(st.session_state.langue['show_artefact']):
             if df_arte.shape[0] > 0:
                 st.dataframe(df_arte[['arte_equiped', 'level', 'efficiency', 'main_type', 'first_sub', 'first_sub_value', 'second_sub', 'second_sub_value', 'third_sub', 'third_sub_value', 'fourth_sub', 'fourth_sub_value']]\
                     .sort_values(by='efficiency', ascending=False)\
@@ -210,7 +210,7 @@ def upgrade_a():
                                          'fourth_sub_value': 'Value4'}))
 
     else:
-        st.info('Remplis au moins la première substat')
+        st.info(st.session_state.langue['fill_first_value'])
 
 
 
@@ -220,7 +220,7 @@ def upgrade_a():
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    
         st.title('Upgrade Artefact')
-        st.text("Le but de cet onglet est de montrer le positionnemennt d'un nouvel artefact sur ton compte")
+        st.text(st.session_state.langue['description_upgrade'])
         upgrade_a()
     
     else:

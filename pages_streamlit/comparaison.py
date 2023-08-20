@@ -40,16 +40,16 @@ def comparaison_entre_joueurs():
         comparaison1_1, comparaison1_2, comparaison1_3 , comparaison1_4 = st.columns(4)
 
         with comparaison1_1:
-            st.metric('Joueurs', size_general)
+            st.metric(st.session_state.langue['joueurs'], size_general)
 
         with comparaison1_2:
             delta1_2 = int(
                             st.session_state['score']) - avg_score_general
-            st.metric('Moyenne Score', avg_score_general, delta1_2)
+            st.metric(st.session_state.langue['Avg_score'], avg_score_general, delta1_2)
 
         with comparaison1_3:
             delta1_3 = int(st.session_state['score']) - max_general
-            st.metric('Record score', max_general, delta1_3)
+            st.metric(st.session_state.langue['Best_score'], max_general, delta1_3)
                         
                     
                         
@@ -59,7 +59,7 @@ def comparaison_entre_joueurs():
         with comparaison1_4:
             rank_general = int(
                             df_max.loc[st.session_state['pseudo']]['rank'])
-            st.metric('Classement', rank_general)
+            st.metric(st.session_state.langue['Classement'], rank_general)
 
         with rank2_1:
             fig_general = comparaison_rune_graph(df_max, 'General')
@@ -67,7 +67,7 @@ def comparaison_entre_joueurs():
                         
         with rank2_2:
             add_vertical_space(10)
-            st.info('Lecture : \n\n Q1 signifie 1/4 des joueurs \n\n Q3 signifie 3/4 des joueurs \n\n Les points sont des scores qui se démarquent de la majorité des joueurs')
+            st.info(st.session_state.langue['explain_graph'])
 
                     # Par rapport à sa guilde
     with tab_guilde:
@@ -75,22 +75,22 @@ def comparaison_entre_joueurs():
         comparaison2_1, comparaison2_2, comparaison2_3, comparaison2_4 = st.columns(4)
 
         with comparaison2_1:
-            st.metric('Joueurs', size_guilde)
+            st.metric(st.session_state.langue['joueurs'], size_guilde)
 
         with comparaison2_2:
             delta2_2 = int(
                             st.session_state['score']) - avg_score_guilde
-            st.metric('Moyenne Score', avg_score_guilde, delta2_2)
+            st.metric(st.session_state.langue['Avg_score'], avg_score_guilde, delta2_2)
 
         with comparaison2_3:
             delta2_3 = int(st.session_state['score']) - max_guilde
-            st.metric('Record score', max_guilde, delta2_3)
+            st.metric(st.session_state.langue['Best_score'], max_guilde, delta2_3)
 
         with comparaison2_4:
 
             rank_guilde = int(
                             df_guilde.loc[st.session_state['pseudo']]['rank'])
-            st.metric('Classement', rank_guilde)
+            st.metric(st.session_state.langue['Classement'], rank_guilde)
                         
         rank3_1, rank3_2 = st.columns(2)
 
@@ -101,7 +101,7 @@ def comparaison_entre_joueurs():
                     
         with rank3_2:
             add_vertical_space(10)
-            st.info('Lecture : \n\n Q1 signifie 1/4 des joueurs \n\n Q3 signifie 3/4 des joueurs \n\n Les points sont des scores qui se démarquent de la majorité des joueurs')
+            st.info(st.session_state.langue['explain_graph'])
                         
                     
         # artefact
@@ -121,23 +121,23 @@ def comparaison_entre_joueurs():
         comparaison1_1, comparaison1_2, comparaison1_3 , comparaison1_4 = st.columns(4)
 
         with comparaison1_1:
-                st.metric('Joueurs', size_general_arte)
+                st.metric(st.session_state.langue['joueurs'], size_general_arte)
 
         with comparaison1_2:
                 delta1_2 = int(
                     st.session_state['score_arte']) - avg_arte
-                st.metric('Moyenne Score', avg_arte, delta1_2)
+                st.metric(st.session_state.langue['Avg_score'], avg_arte, delta1_2)
 
         with comparaison1_3:
                 delta1_3 = int(st.session_state['score_arte']) - max_arte
-                st.metric('Record score', max_arte, delta1_3)
+                st.metric(st.session_state.langue['Best_score'], max_arte, delta1_3)
 
         rank2_1, rank2_2 = st.columns(2)
 
         with comparaison1_4:
                 rank_general_arte = int(
                             df_arte_max.loc[st.session_state['pseudo']]['rank'])
-                st.metric('Classement', rank_general_arte)
+                st.metric(st.session_state.langue['Classement'], rank_general_arte)
 
                         # with rank2_2:
         fig_general = comparaison_rune_graph(df_arte_max, 'General', 'score_arte', 'score_arte')
@@ -149,22 +149,22 @@ def comparaison_entre_joueurs():
         comparaison2_1, comparaison2_2, comparaison2_3, comparaison2_4 = st.columns(4)
 
         with comparaison2_1:
-                st.metric('Joueurs', size_arte_guilde)
+                st.metric(st.session_state.langue['joueurs'], size_arte_guilde)
 
         with comparaison2_2:
                 delta2_2 = int(
                             st.session_state['score']) - avg_score_arte_guilde
-                st.metric('Moyenne Score', avg_score_arte_guilde, delta2_2)
+                st.metric(st.session_state.langue['Avg_score'], avg_score_arte_guilde, delta2_2)
 
         with comparaison2_3:
                 delta2_3 = int(st.session_state['score_arte']) - max_arte_guilde
-                st.metric('Record score', max_arte_guilde, delta2_3)
+                st.metric(st.session_state.langue['Best_score'], max_arte_guilde, delta2_3)
 
         with comparaison2_4:
 
                 rank_arte_guilde = int(
                             df_arte_guilde.loc[st.session_state['pseudo']]['rank'])
-                st.metric('Classement', rank_arte_guilde)
+                st.metric(st.session_state.langue['Classement'], rank_arte_guilde)
 
         fig_guilde_arte = comparaison_rune_graph(
                         df_arte_guilde, st.session_state['guilde'], 'score_arte', score_joueur='score_arte')

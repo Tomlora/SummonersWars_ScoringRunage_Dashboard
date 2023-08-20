@@ -30,6 +30,21 @@ def max_sub_by_proc(proc):
                'ACC': 8 * proc}  # ACC
     return sub_max
 
+import json
+@st.cache_data
+def translation(langue):
+    if langue == 'Français':
+        return json.load(open('langue/fr.json', encoding='utf-8'))
+    elif langue == 'English':
+        return json.load(open('langue/en.json', encoding='utf-8'))
+    
+
+    
+try:
+    if not 'langue' in st.session_state:
+        st.session_state.langue = translation("Français") 
+except:
+    pass  
 
 def stats(n):
 
@@ -83,7 +98,7 @@ def calculateur_efficiency():
 
     with column0_1:
         value0 = st.number_input(
-            f'Valeur', format='%i', min_value=0, key='value0')
+            st.session_state.langue["valeur"], format='%i', min_value=0, key='value0')
 
     st.markdown("***")
 
@@ -103,7 +118,7 @@ def calculateur_efficiency():
 
     stats4, value4, total4,  value_max_hero4, value_max_lgd4 = stats(4)
 
-    st.subheader('Efficience')
+    st.subheader(st.session_state.langue["Efficience"])
 
     if value0 == 0:
         efficiency = round(((1 + total1 / sub_max[stats1]
@@ -145,9 +160,9 @@ def calculateur_efficiency():
                                      + value_max_lgd4 / sub_max[stats4])
                                     / 2.8)*100, 2)
 
-    st.markdown(f'Efficience : :green[{efficiency}]')
-    st.markdown(f'Efficience max heroique : :violet[{efficiency_max_hero}]')
-    st.markdown(f'Efficience max lgd : :orange[{efficiency_max_lgd}]')
+    st.markdown(f'{st.session_state.langue["Efficience"]} : :green[{efficiency}]')
+    st.markdown(f'{st.session_state.langue["Efficience"]} max heroique : :violet[{efficiency_max_hero}]')
+    st.markdown(f'{st.session_state.langue["Efficience"]} max lgd : :orange[{efficiency_max_lgd}]')
 
     def reset():
         '''Reset les boutons'''
