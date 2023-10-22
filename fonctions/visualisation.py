@@ -137,7 +137,7 @@ def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='f
     Returns:
         pd.DataFrame: Filtered dataframe
     """
-    modify = st.checkbox("Add filters", key=key, value=disabled)
+    modify = st.checkbox(st.session_state.langue['add_filters'], key=key, value=disabled)
 
     if not modify:
         return df
@@ -159,14 +159,14 @@ def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='f
     modification_container = st.container()
 
     with modification_container:
-        to_filter_columns = st.multiselect("Filtrer la data sur", df.columns)
+        to_filter_columns = st.multiselect(st.session_state.langue['filters_data'], df.columns)
         for column in to_filter_columns:
             left, right = st.columns((1, 20))
             # Treat columns with < 10 unique values as categorical
             if is_categorical_dtype(df[column]) and df[column].nunique() < nunique:
                 left.write("↳")
                 user_cat_input = right.multiselect(
-                    f"Valeurs pour {column}",
+                    f"{column} -> {st.session_state.langue['valeur_filter']}",
                     df[column].unique(),
                     default=list(df[column].unique()),
                 )
@@ -183,7 +183,7 @@ def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='f
                     _max = int(df[column].max())
                     step = 1
                 user_num_input = right.slider(
-                    f"Valeurs pour {column}",
+                    f"{column} -> {st.session_state.langue['valeur_filter']}",
                     min_value=_min,
                     max_value=_max,
                     value=(_min, _max),
@@ -193,7 +193,7 @@ def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='f
             elif is_datetime64_any_dtype(df[column]):
                 left.write("↳")
                 user_date_input = right.date_input(
-                    f"Valeurs pour {column}",
+                    f"{column} -> {st.session_state.langue['valeur_filter']}",
                     value=(
                         df[column].min(),
                         df[column].max(),
@@ -207,7 +207,7 @@ def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='f
             else:
                 left.write("↳")
                 user_text_input = right.text_input(
-                    f"Mot ou partie de mot dans {column}",
+                    f"{column} -> {st.session_state.langue['mot_ou_partie']}",
                 )
                 if user_text_input:
                     df = df[df[column].astype(

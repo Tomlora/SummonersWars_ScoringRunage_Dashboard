@@ -4,6 +4,7 @@ from streamlit_extras.switch_page_button import switch_page
 from datetime import timedelta
 from st_pages import add_indentation
 from fonctions.visuel import css
+from fonctions.artefact import dict_arte_effect_english
 css()
 
 add_indentation()
@@ -75,12 +76,27 @@ def classement_arte():
         st.warning(st.session_state.langue['no_visibility'], icon="ℹ️")
 
     data = load_data_arte()
-        
-
-    liste_attribut = ['Tous', 'EAU', 'FEU', 'VENT', 'LUMIERE', 'TENEBRE', 'ATTACK', 'DEFENSE', 'HP', 'SUPPORT', 'AUCUN']
     
-    liste_filtre = ['Tous', 'ELEMENT', 'ARCHETYPE', 'AUCUN']
-        
+    if st.session_state.translations_selected == 'Français':
+        liste_attribut = ['Tous', 'EAU', 'FEU', 'VENT', 'LUMIERE', 'TENEBRE', 'ATTACK', 'DEFENSE', 'HP', 'SUPPORT', 'AUCUN']
+        liste_filtre = ['Tous', 'ELEMENT', 'ARCHETYPE', 'AUCUN']
+    elif st.session_state.translations_selected == 'English':
+        liste_attribut = ['All', 'WATER', 'FIRE', 'WIND', 'LIGHT', 'DARK', 'ATTACK', 'DEFENSE', 'HP', 'SUPPORT', 'NONE']
+        data['arte_attribut'] = data['arte_attribut'].replace({'EAU' : 'WATER',
+                                                               'FEU' : 'FIRE',
+                                                               'VENT' : 'WIND',
+                                                               'LUMIERE' : 'LIGHT',
+                                                               'TENEBRE' : 'DARK',
+                                                               'ATTACK' : 'ATTACK',
+                                                               'DEFENSE' : 'DEFENSE',
+                                                               'HP' : 'HP',
+                                                               'SUPPORT' : 'SUPPORT',
+                                                               'AUCUN' : 'NONE',
+                                                               'Tous' : 'ALL'})
+        data['substat'] = data['substat'].replace(dict_arte_effect_english)
+        liste_filtre = ['ALL', 'ELEMENT', 'ARCHETYPE', 'NONE']
+    
+            
     liste_substat = list(data['substat'].unique())
     liste_substat.sort()
         
@@ -89,26 +105,26 @@ def classement_arte():
     filtre_substat = st.selectbox(st.session_state.langue['filter_one_substat'], liste_substat)
     
         
-    if filtre_attribut != 'Tous' and filtre_attribut != 'AUCUN':
+    if not filtre_attribut in ['Tous', 'ALL'] and not filtre_attribut in ['AUCUN', 'NONE']:
         data = data[data['arte_attribut'] == filtre_attribut]
             
-    if filtre_type != 'Tous' and filtre_type != 'AUCUN':
+    if not filtre_type in ['Tous', 'ALL'] and not filtre_type in ['AUCUN', 'NONE']:
         data = data[data['arte_type'] == filtre_type]
         
             
-    if filtre_substat != 'Tous':
+    if not filtre_substat in ['Tous', 'ALL']:
         data = data[data['substat'] == filtre_substat]
             
 
-    if filtre_attribut == 'AUCUN' and filtre_type != 'AUCUN':
+    if filtre_attribut in ['AUCUN', 'NONE'] and not filtre_type in ['AUCUN', 'NONE']:
         data_filtre = data.groupby(['joueur', 'arte_type', 'substat', 'date', 'guilde']).agg({'valeur' : 'max', 'visibility': 'max'}).reset_index()
         mise_en_forme_classement(data_filtre, 'valeur', ['joueur', 'valeur', 'date', 'guilde'])
     
-    elif filtre_type == 'AUCUN' and filtre_attribut != 'AUCUN':
+    elif filtre_type in ['AUCUN', 'NONE'] and not filtre_attribut in ['AUCUN', 'NONE']:
         data_filtre = data.groupby(['joueur', 'arte_attribut', 'substat', 'date', 'guilde']).agg({'valeur' : 'max', 'visibility': 'max'}).reset_index()
         mise_en_forme_classement(data_filtre, 'valeur', ['joueur', 'valeur', 'date', 'guilde'])
         
-    elif filtre_attribut == 'AUCUN' and filtre_type == 'AUCUN':
+    elif filtre_attribut in ['AUCUN', 'NONE'] and filtre_type in ['AUCUN', 'NONE']:
         data_filtre = data.groupby(['joueur', 'substat', 'date', 'guilde']).agg({'valeur' : 'max', 'visibility': 'max'}).reset_index()
         mise_en_forme_classement(data_filtre, 'valeur', ['joueur', 'valeur', 'date', 'guilde'])
     
@@ -132,4 +148,4 @@ else:
     switch_page('Upload JSON')
     
     
-st.caption('Made by Tomlora')
+st.caption('Made by Tomlora :sunglasses:')

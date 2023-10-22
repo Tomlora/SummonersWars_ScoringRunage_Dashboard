@@ -88,7 +88,7 @@ sub_max = max_sub_by_proc(4)
 
 def calculateur_efficiency():
 
-    st.info("Cet onglet n'a pas besoin de json", icon="ℹ️")
+    st.info(st.session_state.langue['no_json_need'], icon="ℹ️")
 
     column0_0, column0_1 = st.columns(2)
 
@@ -192,4 +192,4 @@ def calculateur_efficiency():
 st.title("Calculateur d'efficience")
 calculateur_efficiency()
 
-st.caption('Made by Tomlora')
+st.caption('Made by Tomlora :sunglasses:')

@@ -128,9 +128,9 @@ def upload_sw():
 
         st.title('Scoring SW')
         
-        langue = st.radio('Langue', ['Français', 'English'], index=0, key='translations', horizontal=True, help='En cours... / Incoming...')
+        st.session_state.translations_selected = st.radio('Langue', ['Français', 'English'], index=0, key='translations', horizontal=True, help='En cours... / Incoming...')
     
-        st.session_state.langue = translation(langue)
+        st.session_state.langue = translation(st.session_state.translations_selected)
         with st.form('Data du compte'):
             st.file_uploader(st.session_state.langue['uploader_fichier'],
                             type=['json'],
@@ -138,11 +138,13 @@ def upload_sw():
                             key='file')
             
         
-            st.session_state['submitted'] = st.form_submit_button('Calcule mon score')
+            st.session_state['submitted'] = st.form_submit_button(st.session_state.langue['calcul_upload'])
             
             st.info(body=st.session_state.langue['telechargement_wait'], icon="🚨")
             st.warning(body=st.session_state.langue['mode_appli'],
                        icon="⚠️")
+            st.info(body=st.session_state.langue['warning_telechargement'], icon='☕')
+            st.info(body=st.session_state.langue['warning_choice'], icon='🔒')
             
             st.markdown(f':blue[{heure}] : :green[{nb_user}] {st.session_state.langue["utilisateurs"]} | :violet[{nb_guilde}] {st.session_state.langue["guildes"]} | :orange[{nb_score}] {st.session_state.langue["scores"]}')
 
@@ -286,6 +288,7 @@ def upload_sw():
                         
                     st.session_state.df_max = data_rune.calcul_value_max() # TODO : Reduire le temps de calcul
                     
+                    st.session_state.df_max_slot = data_rune.calcul_value_max_per_slot()
                     
 
 
@@ -548,6 +551,6 @@ def upload_sw():
         telechargement_json()
         
             
-upload_sw()     
-
-st.caption('Made by Tomlora')
+upload_sw()    
+ 
+st.caption('Made by Tomlora :sunglasses:')

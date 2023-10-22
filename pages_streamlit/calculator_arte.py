@@ -172,4 +172,4 @@ def calculateur_efficiency():
 st.title("Calculateur d'efficience")
 calculateur_efficiency()
 
-st.caption('Made by Tomlora')
+st.caption('Made by Tomlora :sunglasses:')

@@ -19,6 +19,26 @@ col1, col2, col3 = st.columns([0.4,0.2,0.4])
 with col2:
     img = load_lottieurl('https://assets7.lottiefiles.com/private_files/lf30_rzhdjuoe.json')
     st_lottie(img, height=200, width=200)
+
+
+with st.expander('Version 20/10/2023', expanded=True):
+    st.info("- Possibilité de télécharger les tableaux Artefacts dans General\n\n"+
+            "- Correction des Artefacts dmg supp hp qui étaient arrondis à l'entier supérieur\n\n"+
+            "- Correction d'une erreur qui pouvait ignorer des artefacts dans la vue Artefact dans General\n\n"+
+            "- Detail par Slot dans Statistiques (Top 10 stats)")   
+
+with st.expander('Version 30/09/2023', expanded=True):
+    st.info("- Ajout des nouveaux monstres \n\n"+
+            "- Correction des tableaux Artefacts qui n'étaient plus en couleur \n\n"+
+            "- Correction de bugs")   
+    
+    
+with st.expander('Version 30/08/2023', expanded=True):
+    st.info("- Ajout d'un tag Reap paramétrable dans Optimisation")   
+    
+with st.expander('Version 29/08/2023', expanded=True):
+    st.info("- Ajout d'un calculateur de DMG Lushen  \n\n"+
+            "- Ajout d'une ToDoList téléchargeable ou sauvegardable sur ses runes") 
     
 with st.expander('Version 20/08/2023', expanded=True):
     st.info("- English Version ") 
@@ -69,3 +89,7 @@ with st.expander('Version 10/06/2023', expanded=False):
 with st.expander('Version 13/05/2023', expanded=False):
     st.info("- Ajout du calcul des dmg additionnels Artefact \n\n"+
             "- Ajout de Where2Use pour les artefacts")
+    
+
+
+st.caption('Made by Tomlora :sunglasses:')

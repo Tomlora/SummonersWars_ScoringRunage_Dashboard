@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 import pandas as pd
 from st_pages import add_indentation
-
+from fonctions.artefact import dict_arte_effect_english
 from streamlit_extras.no_default_selectbox import selectbox
 
 from fonctions.visuel import css
@@ -70,6 +70,10 @@ def max_sub_by_proc(proc):
         'CRIT DMG S3/S4'  : 6 * proc,
         'PREMIER HIT CRIT DMG' : 6 * proc
     }
+    
+    if st.session_state.translations_selected == 'English':
+        sub_max = {dict_arte_effect_english[key] : value for key, value in sub_max.items()}
+        
     return sub_max
 
 
@@ -124,15 +128,43 @@ def upgrade_a():
     
     # on fusionne anciennes/nouvelles stats
     
+    if st.session_state.translations_selected == 'English':
+        df_arte['arte_attribut'] = df_arte['arte_attribut'].replace({'EAU' : 'WATER',
+                                                                'FEU' : 'FIRE',
+                                                                'VENT' : 'WIND',
+                                                                'LUMIERE' : 'LIGHT',
+                                                                'TENEBRE' : 'DARK',
+                                                                'ATTACK' : 'ATTACK',
+                                                                'DEFENSE' : 'DEFENSE',
+                                                                'HP' : 'HP',
+                                                                'SUPPORT' : 'SUPPORT',
+                                                                'AUCUN' : 'NONE',
+                                                                'Tous' : 'ALL'})
+        
+        for column in ['first_sub', 'second_sub', 'third_sub', 'fourth_sub']:
+            df_arte[column] = df_arte[column].replace(dict_arte_effect_english)
+                
+
     check_v8 = st.checkbox(st.session_state.langue['fusion_substat_arte_v8'], help=st.session_state.langue['fusion_substat_arte_v8_help'])
     
     if check_v8:
-        df_arte[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']] = df_arte[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']].replace({'RENFORCEMENT ATK' : 'RENFORCEMENT ATK/DEF', 
+        if st.session_state.translations_selected == 'Français':
+            df_arte[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']] = df_arte[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']].replace({'RENFORCEMENT ATK' : 'RENFORCEMENT ATK/DEF', 
                                                                                                                                                 'RENFORCEMENT DEF' : 'RENFORCEMENT ATK/DEF',
                                                                                                                                                 'CRIT DMG S3' : 'CRIT DMG S3/S4',
                                                                                                                                                 'CRIT DMG S4' : 'CRIT DMG S3/S4',
                                                                                                                                                 'REVENGE' : 'REVENGE ET COOP',
                                                                                                                                                 'COOP DMG' : 'REVENGE ET COOP',})
+        
+        elif st.session_state.translations_selected == 'English':
+
+            df_arte[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']] = df_arte[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']].replace({'ATK Increased' : 'ATK/DEF Increased', 
+                                                                                                                                                    'DEF Increased' : 'ATK/DEF Increased',
+                                                                                                                                                    'CRIT DMG S3' : 'CRIT DMG S3/S4',
+                                                                                                                                                    'CRIT DMG S4' : 'CRIT DMG S3/S4',
+                                                                                                                                                    'REVENGE' : 'REVENGE AND COOP',
+                                                                                                                                                    'COOP DMG' : 'REVENGE AND COOP',})            
+            
     list_type = df_arte['arte_type'].unique().tolist()
     
         
@@ -229,4 +261,4 @@ if 'submitted' in st.session_state:
 else:
     switch_page('Upload JSON')
 
-st.caption('Made by Tomlora')
+st.caption('Made by Tomlora :sunglasses:')

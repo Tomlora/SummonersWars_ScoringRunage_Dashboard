@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from time import time
 from fonctions.gestion_bdd import optimisation_int
+import streamlit as st
 
 
         # id des crafts
@@ -342,7 +343,7 @@ class Rune():
         
         # on cherche les monstres
         self.data['rune_equiped'] = self.data['rune_equiped'].replace(monsters)
-        self.data['rune_equiped'] = self.data['rune_equiped'].replace({0 : 'Inventaire'})
+        self.data['rune_equiped'] = self.data['rune_equiped'].replace({0 : st.session_state.langue['Inventaire']})
         self.data['rune_equiped'] = self.data['rune_equiped'].astype('category')
         
         self.set_rune = self.data['rune_set'].unique().tolist()
@@ -363,7 +364,8 @@ class Rune():
         self.data_set = self.data[self.data['level'] >= 12]
         
         self.data_set = map_stats(self.data_set, ['innate_type', 'first_sub', 'second_sub', 'third_sub', 'fourth_sub', 'main_type'])
-        
+   
+      
             
 
     def scoring_rune(self, category_selected, coef_set):
@@ -669,8 +671,11 @@ class Rune():
             df_fourth = pd.pivot_table(data_max, index=['fourth_sub', 'rune_set'], values='fourth_sub_value_total', aggfunc=aggfunc).reset_index()
 
             df_max = df_first.merge(df_second, left_on=['first_sub', 'rune_set'], right_on=['second_sub', 'rune_set'])
+            df_max['first_sub'].fillna(df_max['second_sub'], inplace=True)
             df_max = df_max.merge(df_third, left_on=['first_sub', 'rune_set'], right_on=['third_sub', 'rune_set'])
+            df_max['first_sub'].fillna(df_max['third_sub'], inplace=True)
             df_max = df_max.merge(df_fourth, left_on=['first_sub', 'rune_set'], right_on=['fourth_sub', 'rune_set'])
+            df_max['first_sub'].fillna(df_max['fourth_sub'], inplace=True)
             
             df_max = df_max[df_max['first_sub'] != 'Aucun']
             
@@ -749,6 +754,103 @@ class Rune():
 
         
         return self.df_max
+    
+    def calcul_value_max_per_slot(self):
+
+
+        
+        def prepare_data(data_max, aggfunc):        
+            df_first = pd.pivot_table(data_max, index=['first_sub', 'rune_set', 'rune_slot'], values='first_sub_value_total', aggfunc=aggfunc).reset_index()
+            df_second = pd.pivot_table(data_max, index=['second_sub', 'rune_set', 'rune_slot'], values='second_sub_value_total', aggfunc=aggfunc).reset_index()
+            df_third = pd.pivot_table(data_max, index=['third_sub', 'rune_set', 'rune_slot'], values='third_sub_value_total', aggfunc=aggfunc).reset_index()
+            df_fourth = pd.pivot_table(data_max, index=['fourth_sub', 'rune_set', 'rune_slot'], values='fourth_sub_value_total', aggfunc=aggfunc).reset_index()
+            
+            
+
+            df_max = df_first.merge(df_second, how='outer', left_on=['first_sub', 'rune_set', 'rune_slot'], right_on=['second_sub', 'rune_set', 'rune_slot'])
+            df_max['first_sub'].fillna(df_max['second_sub'], inplace=True)
+            df_max = df_max.merge(df_third,how='outer', left_on=['first_sub', 'rune_set', 'rune_slot'], right_on=['third_sub', 'rune_set', 'rune_slot'])
+            df_max['first_sub'].fillna(df_max['third_sub'], inplace=True)
+            df_max = df_max.merge(df_fourth, how='outer', left_on=['first_sub', 'rune_set', 'rune_slot'], right_on=['fourth_sub', 'rune_set', 'rune_slot'])
+            df_max['first_sub'].fillna(df_max['fourth_sub'], inplace=True)
+            
+            df_max['third_sub'] = df_max['third_sub'].fillna(df_max['fourth_sub'])
+            df_max['second_sub'] = df_max['second_sub'].fillna(df_max['third_sub'])
+            df_max['first_sub'] = df_max['first_sub'].fillna(df_max['second_sub'])
+            df_max[['first_sub_value_total', 'second_sub_value_total', 'third_sub_value_total', 'fourth_sub_value_total']] = df_max[['first_sub_value_total', 'second_sub_value_total', 'third_sub_value_total', 'fourth_sub_value_total']].fillna(0)
+            df_max = df_max[df_max['first_sub'] != 'Aucun']
+            
+
+            return df_max
+        
+
+       
+        # MAX
+        
+        
+        self.df_max_slot = prepare_data(self.data_max, 'max')
+
+            
+        self.df_max_slot.drop(['second_sub', 'third_sub', 'fourth_sub'], axis=1, inplace=True)
+        
+        self.df_max_slot['max_value'] = self.df_max_slot[['first_sub_value_total', 'second_sub_value_total', 'third_sub_value_total', 'fourth_sub_value_total']].max(axis=1)
+        self.df_max_slot.rename(columns={'first_sub' : 'substat'}, inplace=True)
+        self.df_max_slot.set_index('substat', inplace=True)
+        
+        self.df_max_slot = self.df_max_slot[['rune_set', 'rune_slot', 'max_value']]
+        
+        
+        # AVG
+
+        # NOTE : Cette partie prend trop de temps
+        def calcul_avg(data_max, n):
+            
+            df_avg = prepare_data(data_max, lambda x: x.nlargest(n).tolist())
+            
+            
+            
+            df_avg = df_avg.applymap(lambda x: [0] if x == 0 else x)
+            df_avg['value'] = df_avg[['first_sub_value_total', 'second_sub_value_total', 'third_sub_value_total', 'fourth_sub_value_total']].sum(axis=1, skipna=True)
+            
+            
+            
+            
+            return df_avg
+            
+
+        self.df_best_value_slot = calcul_avg(self.data_max, 10)
+                
+        self.df_max_slot = optimisation_int(self.df_max_slot, ['int64'])
+        
+        self.df_best_value_slot = self.df_best_value_slot[['first_sub', 'rune_set', 'rune_slot', 'value']]
+        
+        def fill_value(x):
+            long = len(x)
+            if long < 10:
+                for i in range(10-long): 
+                    x.append(0) 
+            return x
+        
+        self.df_best_value_slot['value'] = self.df_best_value_slot['value'].apply(fill_value)
+        self.df_best_value_slot[f'value'] = self.df_best_value_slot['value'].apply(lambda liste: np.sort(np.array(liste))[-10:])
+        
+
+        self.df_best_value_slot[['10', '9', '8', '7', '6', '5', '4', '3', '2', '1']] = self.df_best_value_slot['value'].apply(lambda x: pd.Series(list(x))) 
+        
+        self.df_best_value_slot.drop(['value'], axis=1, inplace=True)
+        self.df_best_value_slot.rename(columns={'first_sub' : 'substat'}, inplace=True)
+
+        
+        self.df_best_value_slot = optimisation_int(self.df_best_value_slot, ['int64'])
+        
+       
+        self.df_max_slot = self.df_max_slot.reset_index().merge(self.df_best_value_slot, on=['substat', 'rune_set', 'rune_slot'])
+
+        self.df_max_slot.set_index('substat', inplace=True)
+
+        
+        return self.df_max_slot    
+
     
     
     def calcul_potentiel(self):
@@ -1094,11 +1196,11 @@ class Rune():
             df_fourth = pd.pivot_table(data_max, index=['fourth_sub', 'rune_set', 'rune_slot', 'fourth_sub_value_total'], values='fourth_sub_value', aggfunc=aggfunc).reset_index()
 
             df_per_slot = df_first.merge(df_second, left_on=['first_sub', 'rune_set', 'rune_slot', 'first_sub_value_total'], right_on=['second_sub', 'rune_set', 'rune_slot', 'second_sub_value_total'], how='outer')
-
+            df_per_slot['first_sub'].fillna(df_per_slot['second_sub'], inplace=True)
             df_per_slot = df_per_slot.merge(df_third, left_on=['first_sub', 'rune_set', 'rune_slot', 'first_sub_value_total'], right_on=['third_sub', 'rune_set', 'rune_slot', 'third_sub_value_total'], how='outer')
-
+            df_per_slot['first_sub'].fillna(df_per_slot['third_sub'], inplace=True)
             df_per_slot = df_per_slot.merge(df_fourth, left_on=['first_sub', 'rune_set', 'rune_slot', 'first_sub_value_total'], right_on=['fourth_sub', 'rune_set', 'rune_slot', 'fourth_sub_value_total'], how='outer')
-
+            df_per_slot['first_sub'].fillna(df_per_slot['fourth_sub'], inplace=True)
             df_per_slot = df_per_slot[df_per_slot['first_sub'] != 'Aucun']
             
 

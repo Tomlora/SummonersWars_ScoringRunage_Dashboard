@@ -46,4 +46,4 @@ else:
     switch_page('Upload JSON')
     
     
-st.caption('Made by Tomlora')
+st.caption('Made by Tomlora :sunglasses:')

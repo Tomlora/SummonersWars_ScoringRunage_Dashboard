@@ -68,6 +68,57 @@ dict_arte_effect = {
     411: {'name' : 'PREMIER HIT CRIT DMG', 'max': 6},
 }
 
+dict_arte_effect_english = {
+    'ATK EN FONCTION HP PERDUS': 'ATK+ Proportional to lost HP', #ancien
+    'DEF EN FONCTION HP PERDUS' : 'DEF+ Proportional to lost HP', # ancien
+    'SPD EN FONCTION HP PERDUS' : 'SPD+ Proportional to lost HP', # ancien
+    "SPD EN CAS D'INCAPACITE" : 'SPD Under Inability',
+    'RENFORCEMENT ATK' : 'ATK Increased', #ancien
+    'RENFORCEMENT DEF' : 'DEF Increased', # ancien
+    'RENFORCEMENT SPD' : 'SPD Increased',
+    'RENFORCEMENT CRITRATE' : 'CRITRATE Increased',
+    'REVENGE' : 'REVENGE',
+    'COOP DMG' : 'COOP DMG',
+    'BOMBE DMG': 'BOMB DMG',
+    'DMG RENVOYE' : 'REFLECTED DMG',
+    'CRUSHING DMG' : 'CRUSHING DMG',
+    "DMG RECU EN CAS D'INCAPACITE" : 'DMG Received under Inability decreased',
+    'CRIT DMG RECU' : 'CRIT DMG Received decreased',
+    'VOL DE VIE' : 'Life Drain',
+    'HP REVIVE' : 'HP REVIVE',
+    'ATB REVIVE' : 'ATB REVIVE',
+    'DMG SUPP EN FONCTION DES HP' : 'DMG INCREASED by % HP',
+    "DMG SUPP EN FONCTION DE L'ATQ": 'DMG INCREASED by % ATK',
+    'DMG SUPP EN FONCTION DE LA DEF': 'DMG INCREASED by % DEF',
+    'DMG SUPP EN FONCTION DE LA SPD': 'DMG INC by % SPD',
+    'CRIT DMG EN FONCTION DES HP ELEVES': "CRIT DMG+ up as the enemy's HP condition is good",
+    'CRIT DMG EN FONCTION DES HP FAIBLES': "CRIT DMG+ up as the enemy's HP condition is bad",
+    'CRIT DMG SUR CIBLE UNIQUE': "Single-target skill CRIT DMG",
+    'REVENGE ET COOP': 'REVENGE AND COOP',
+    'RENFORCEMENT ATK/DEF': 'ATK/DEF Increased',
+    'DMG SUR FEU': 'DMG TO FIRE',
+    'DMG SUR EAU': 'DMG TO WATER',
+    'DMG SUR VENT': 'DMG TO WIND',
+    'DMG SUR LUMIERE': 'DMG TO LIGHT',
+    'DMG SUR DARK': 'DMG TO DARK',
+    'REDUCTION SUR FEU': 'REDUCTION DMG FROM FIRE',
+    'REDUCTION SUR EAU': 'REDUCTION DMG FROM WATER',
+    'REDUCTION SUR VENT': 'REDUCTION DMG FROM WIND',
+    'REDUCTION SUR LUMIERE': 'REDUCTION DMG FROM LIGHT',
+    'REDUCTION SUR DARK': 'REDUCTION DMG FROM DARK',
+    'CRIT DMG S1': 'CRIT DMG S1',
+    'CRIT DMG S2': 'CRIT DMG S2',
+    'CRIT DMG S3' : 'CRIT DMG S3', # ancien
+    'CRIT DMG S4' : 'CRIT DMG S4', # ancien
+    'SOIN S1' : 'HEAL S1',
+    'SOIN S2' : 'HEAL S2',
+    'SOIN S3' : 'HEAL S3',
+    'PRECISION S1' : 'ACC S1',
+    'PRECISION S2' : 'ACC S2',
+    'PRECISION S3' : 'ACC S3',
+    'CRIT DMG S3/S4' : 'CRIT DMG S3/S4',
+    'PREMIER HIT CRIT DMG' : 'FIRST HIT CRIT DMG' }
+
 dict_arte_archetype = {
     0: 'NONE',
     1: 'ATTACK',
@@ -228,7 +279,7 @@ class Artefact():
         
         self.data_a[['arte_type', 'arte_attribut']] = self.data_a[['arte_type', 'arte_attribut']].astype('category')
         
-        self.data_a['arte_equiped'] = self.data_a['arte_equiped'].replace({0 : 'Inventaire'})
+        self.data_a['arte_equiped'] = self.data_a['arte_equiped'].replace({0 : st.session_state.langue['Inventaire']})
         self.data_a['arte_equiped'] = self.data_a['arte_equiped'].replace(monsters)
         self.data_a['arte_equiped'] = self.data_a['arte_equiped'].astype('category')
         
@@ -310,14 +361,35 @@ class Artefact():
         
                
         def prepare_data(data_max, aggfunc):        
-            df_first = pd.pivot_table(data_max, index=['first_sub', 'arte_type', 'arte_attribut'], values='first_sub_value', aggfunc=aggfunc).reset_index()
-            df_second = pd.pivot_table(data_max, index=['second_sub', 'arte_type', 'arte_attribut'], values='second_sub_value', aggfunc=aggfunc).reset_index()
-            df_third = pd.pivot_table(data_max, index=['third_sub', 'arte_type', 'arte_attribut'], values='third_sub_value', aggfunc=aggfunc).reset_index()
-            df_fourth = pd.pivot_table(data_max, index=['fourth_sub', 'arte_type', 'arte_attribut'], values='fourth_sub_value', aggfunc=aggfunc).reset_index()
+            df_first = pd.pivot_table(data_max,
+                                      index=['first_sub', 'arte_type', 'arte_attribut'],
+                                      values='first_sub_value',
+                                      aggfunc=aggfunc).reset_index()
+            df_second = pd.pivot_table(data_max,
+                                       index=['second_sub', 'arte_type', 'arte_attribut'],
+                                       values='second_sub_value',
+                                       aggfunc=aggfunc).reset_index()
+            df_third = pd.pivot_table(data_max,
+                                      index=['third_sub', 'arte_type', 'arte_attribut'],
+                                      values='third_sub_value',
+                                      aggfunc=aggfunc).reset_index()
+            df_fourth = pd.pivot_table(data_max,
+                                       index=['fourth_sub', 'arte_type', 'arte_attribut'],
+                                       values='fourth_sub_value',
+                                       aggfunc=aggfunc).reset_index()
 
-            df_max = df_first.merge(df_second, how='outer', left_on=['first_sub', 'arte_type', 'arte_attribut'], right_on=['second_sub', 'arte_type', 'arte_attribut'])
-            df_max = df_max.merge(df_third, how='outer', left_on=['first_sub', 'arte_type', 'arte_attribut'], right_on=['third_sub', 'arte_type', 'arte_attribut'])
-            df_max = df_max.merge(df_fourth, how='outer', left_on=['first_sub', 'arte_type', 'arte_attribut'], right_on=['fourth_sub', 'arte_type', 'arte_attribut'])
+            df_max = df_first.merge(df_second,
+                                    how='outer',
+                                    left_on=['first_sub', 'arte_type', 'arte_attribut'],
+                                    right_on=['second_sub', 'arte_type', 'arte_attribut'])
+            df_max = df_max.merge(df_third,
+                                  how='outer',
+                                  left_on=['first_sub', 'arte_type', 'arte_attribut'],
+                                  right_on=['third_sub', 'arte_type', 'arte_attribut'])
+            df_max = df_max.merge(df_fourth,
+                                  how='outer',
+                                  left_on=['first_sub', 'arte_type', 'arte_attribut'],
+                                  right_on=['fourth_sub', 'arte_type', 'arte_attribut'])
             
             df_max = df_max[df_max['first_sub'] != 'Aucun']
             
@@ -331,8 +403,6 @@ class Artefact():
 
         self.df_max = prepare_data(self.data_max, 'max')
         
-
-
         # En regroupant, il y a des positions où il n'y a pas la substat qu'on cherche.
         self.df_max['third_sub'] = self.df_max['third_sub'].fillna(self.df_max['fourth_sub'])
         self.df_max['second_sub'] = self.df_max['second_sub'].fillna(self.df_max['third_sub'])
@@ -377,8 +447,11 @@ class Artefact():
             df_fourth = pd.pivot_table(data_max, index=['fourth_sub', 'arte_attribut', 'main_type'], values='fourth_sub_value', aggfunc=aggfunc).reset_index()
 
             df_max = df_first.merge(df_second, how='outer', left_on=['first_sub', 'arte_attribut', 'main_type'], right_on=['second_sub', 'arte_attribut', 'main_type'])
+            df_max['first_sub'].fillna(df_max['second_sub'], inplace=True)
             df_max = df_max.merge(df_third, how='outer', left_on=['first_sub', 'arte_attribut', 'main_type'], right_on=['third_sub', 'arte_attribut', 'main_type'])
+            df_max['first_sub'].fillna(df_max['third_sub'], inplace=True)
             df_max = df_max.merge(df_fourth, how='outer', left_on=['first_sub', 'arte_attribut', 'main_type'], right_on=['fourth_sub', 'arte_attribut', 'main_type'])
+            df_max['first_sub'].fillna(df_max['fourth_sub'], inplace=True)
             
             df_max = df_max[df_max['first_sub'] != 'Aucun']
             
@@ -391,6 +464,7 @@ class Artefact():
             
 
             return df_max
+        
         
         def fill_avg(x):
             long = len(x)
@@ -411,8 +485,6 @@ class Artefact():
             return df_avg
 
         self.df_top = calcul_avg(self.data_max, 5)
-        
-
          
         self.df_top[['5', '4', '3', '2', '1']] = self.df_top['top5'].apply(lambda x: pd.Series(list(x))) 
         
@@ -424,7 +496,6 @@ class Artefact():
    
         
         self.df_top.reset_index(inplace=True, drop=True)
-        
         
 
 
@@ -454,7 +525,7 @@ support = return_style('#FFFFFF', '#6E2C00')
 
 atk_lv1 = return_style('#FFFFFF', '#77B5FE')
 def_lv1 = return_style('#FFFFFF', '#FB335B')
-supp_lv1 = return_style('#000000', '#B0F2B6')
+supp_lv1 = return_style('#FFFFFF', '#008000')
 
 dict_color = {'EAU' : water,
               'FEU' : feu,
@@ -470,26 +541,10 @@ dict_color_lv1 = {'ATK' : atk_lv1,
               'DEF' : def_lv1,
               'HP' : supp_lv1}
 
-                                                     
-# styles = [
-#         dict(selector="thead tr th.col_heading.level0.col0.css-3d58hu.e1q9reml1", props=water),
-#         dict(selector="thead tr th.col_heading.level0.col1.css-3d58hu.e1q9reml1", props=water),
-#         dict(selector="thead tr th.col_heading.level0.col2.css-3d58hu.e1q9reml1", props=water),
-#         dict(selector="thead tr th.col_heading.level0.col3.css-3d58hu.e1q9reml1", props=feu),
-#         dict(selector="thead tr th.col_heading.level0.col4.css-3d58hu.e1q9reml1", props=feu),
-#         dict(selector="thead tr th.col_heading.level0.col5.css-3d58hu.e1q9reml1", props=feu),
-#         dict(selector="thead tr th.col_heading.level0.col7.css-3d58hu.e1q9reml1", props=vent),
-#         dict(selector="thead tr th.col_heading.level0.col8.css-3d58hu.e1q9reml1", props=vent),
-#         dict(selector="thead tr th.col_heading.level0.col9.css-3d58hu.e1q9reml1", props=vent),
-#         dict(selector="thead tr th.col_heading.level0.col9.css-3d58hu.e1q9reml1", props=vent),
-#         dict(selector="thead tr th.col_heading.level0.col9.css-3d58hu.e1q9reml1", props=vent),
-#         dict(selector="thead tr th.col_heading.level0.col10.css-3d58hu.e1q9reml1", props=vent),
-#         dict(selector="thead tr th.col_heading.level0.col11.css-3d58hu.e1q9reml1", props=vent),
-#         dict(selector="thead tr th.col_heading.level0.col12.css-3d58hu.e1q9reml1", props=vent),
-#         ]   
+
         
 
-def visualisation_top_arte(df, column, use_container_width0=True, order=None):
+def visualisation_top_arte(df, column, use_container_width=True, order=None):
         
     df_filter = df[df['substat'] == column]
         
@@ -504,8 +559,17 @@ def visualisation_top_arte(df, column, use_container_width0=True, order=None):
             existing_cols = [col for col in order if col in tcd.columns]
             tcd = tcd.loc[:, existing_cols]
         
-        style_table = [dict(selector=f"thead tr th.col_heading.level0.col{i}.css-3d58hu.e1q9reml1", props=dict_color[column[0].upper()]) for i, column in enumerate(tcd.columns)] + [dict(selector=f"thead tr th.col_heading.level1.col{i}.css-3d58hu.e1q9reml1", props=dict_color_lv1[column[1].upper()]) for i, column in enumerate(tcd.columns)]
+        # style_table = [dict(selector=f"thead tr th.col_heading.level0.col{i}.css-3d58hu.e1q9reml1", props=dict_color[column[0].upper()]) for i, column in enumerate(tcd.columns)] + [dict(selector=f"thead tr th.col_heading.level1.col{i}.css-3d58hu.e1q9reml1", props=dict_color_lv1[column[1].upper()]) for i, column in enumerate(tcd.columns)]
+        style_table = [dict(selector=f"thead tr th.col_heading.level0.col{i}.st-emotion-cache-3d58hu.e1q9reml1", props=dict_color[column[0].upper()]) for i, column in enumerate(tcd.columns)] + [dict(selector=f"thead tr th.col_heading.level1.col{i}.st-emotion-cache-3d58hu.e1q9reml1", props=dict_color_lv1[column[1].upper()]) for i, column in enumerate(tcd.columns)]
         # table
-        df2=tcd.astype('int', errors='ignore').astype('str').style.set_properties(**{'text-align': 'center'}).set_table_styles(style_table)
+        if column.capitalize() == 'Dmg supp en fonction des hp':
+            df2=tcd.astype('float', errors='ignore')
+            df2 = np.round(df2,1)
+            df2 = df2.astype('str').style.set_properties(**{'text-align': 'center'}).set_table_styles(style_table)
+        else:
+            df2=tcd.astype('int', errors='ignore').astype('str').style.set_properties(**{'text-align': 'center'}).set_table_styles(style_table)
+        # df2=tcd.astype(type_data, errors='ignore').astype('str').style.set_properties(**{'text-align': 'center'}).set_table_styles(style_table)
         st.table(df2)    
         # st.dataframe(tcd, use_container_width=use_container_width)
+        
+        return df2

@@ -83,4 +83,4 @@ else:
     st.warning('Mot de passe incorrect')
     
     
-st.caption('Made by Tomlora')
+st.caption('Made by Tomlora :sunglasses:')

@@ -45,7 +45,8 @@ def main_page():
                         Page('pages_streamlit/grind_runes.py', 'Optimisation', icon=':mag:'),
                         Page('pages_streamlit/stats_runes.py', 'Statistiques', icon=':bar_chart:'),
                         Page('pages_streamlit/upgrade_runes.py', 'Upgrade', icon=':arrow_up:'),
-                        Page('pages_streamlit/build.py', 'Créer un build', icon=':clipboard:'),
+                        Page('pages_streamlit/todolist.py', 'ToDoList', icon=':clipboard:'),
+                        Page('pages_streamlit/build.py', 'Créer un build', icon=':hammer:'),
                         Page('pages_streamlit/calculator.py', 'Calculateur efficience', icon=':1234:'),
                         Section(name='Artefacts', icon=':gem:'),
                         Page('pages_streamlit/inventaire_artefact.py', 'Inventaire', icon=':open_file_folder:'),
@@ -57,11 +58,12 @@ def main_page():
                         Section(name='Monstres', icon=':japanese_ogre:'),
                         Page('pages_streamlit/donjons.py', 'Donjons', icon=':japanese_castle:'),
                         Page('pages_streamlit/raid.py', 'Raid', icon=':dragon_face:'),
+                        Page('pages_streamlit/dmg.py', 'Calculateur dmg', icon=':1234:'),
                         Section(name='Paramètres', icon=':gear:'),
                         Page('pages_streamlit/visibility.py', 'Ma visibilité', icon=':eyes:'),
                         Page('pages_streamlit/options.py', 'Mes données', icon=':iphone:'),
                         Section(name='Mise à jour', icon=':loudspeaker:'),
-                        Page('pages_streamlit/update.py', 'Version 20/08/23', icon=':speaker:')
+                        Page('pages_streamlit/update.py', 'Version 20/10/23', icon=':speaker:')
 
                         # Section(name='Administration', icon=':star:'),
                         # Page('pages_streamlit/visualisation_joueur.py', 'Visualisation', icon=':mag:'),

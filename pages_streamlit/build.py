@@ -22,6 +22,8 @@ st.title('Création de build')
 
 
 def build():
+    
+    st.info('Note : Seuls les identifiants uniques des runes sont sauvegardés pour pouvoir les identifier. Les substats ou la qualité restent vos données personnelles', icon="⚠️")
 
         # # swarfarm
     @st.cache_data(ttl='1h', show_spinner=st.session_state.langue['loading_rune'])
@@ -55,7 +57,7 @@ def build():
         st.session_state.data_rune.data_build['Equipé'] = st.session_state.data_rune.data_build['Equipé'].astype(
             'str')
         st.session_state.data_rune.data_build['Equipé'].replace(
-            {'0': 'Inventaire'}, inplace=True)
+            {'0': st.session_state.langue['Inventaire']}, inplace=True)
         
         st.session_state.data_rune.data_build[['Set rune', 'Stat principal', 'innate_type']] = st.session_state.data_rune.data_build[['Set rune', 'Stat principal', 'innate_type']].astype('category')
         
@@ -506,4 +508,4 @@ if 'submitted' in st.session_state:
 else:
     switch_page('Upload JSON')
 
-st.caption('Made by Tomlora')
+st.caption('Made by Tomlora :sunglasses:')

@@ -46,7 +46,7 @@ def input_stats(key, format_hp=None, value=0, max_hp=None, max_atk=None, max_def
     hp = st.number_input('HP', min_value=min_value_hp, max_value=max_hp, value=value_hp, key=f'{key}_hp', format=format_hp, step=step_hp)
     atk = st.number_input('ATK', min_value=0, value=value, max_value=max_atk, key=f'{key}_atk')
     defense = st.number_input('DEF', min_value=0, value=value, max_value=max_def, key=f'{key}_def')
-    vit = st.number_input('VIT', min_value=0, value=value_spd, max_value=max_vit, key=f'{key}_vit')
+    vit = st.number_input('SPD', min_value=0, value=value_spd, max_value=max_vit, key=f'{key}_vit')
     
     return hp, atk, defense, vit
 
@@ -141,4 +141,4 @@ with col4:
     st.subheader('Arte 4')
     arte(hp_bonus, atk_bonus, def_bonus, vit_bonus, 4)
 
-st.caption('Made by Tomlora')
+st.caption('Made by Tomlora :sunglasses:')

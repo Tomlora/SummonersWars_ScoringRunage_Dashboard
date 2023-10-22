@@ -26,7 +26,7 @@ def comparaison_entre_joueurs():
 
     col1, col2 = st.columns(2)
     with col1:
-        st.subheader('Rune')
+        st.subheader(f'Rune ({st.session_state["score"]} pts)')
     with col2:
         img = load_lottieurl(
                         'https://assets9.lottiefiles.com/packages/lf20_ksrabxwb.json')
@@ -108,7 +108,7 @@ def comparaison_entre_joueurs():
             
     col1, col2 = st.columns(2)
     with col1:
-        st.subheader('Artefact')
+        st.subheader(f'Artefact ({st.session_state["score_arte"]} pts)')
     with col2:
         img = load_lottieurl(
                         'https://assets4.lottiefiles.com/temporary_files/jXGKLw.json')
@@ -182,3 +182,6 @@ if 'submitted' in st.session_state:
 
 else:
     switch_page('Upload JSON')
+    
+    
+st.caption('Made by Tomlora :sunglasses:')

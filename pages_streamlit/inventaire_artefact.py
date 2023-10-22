@@ -5,6 +5,7 @@ from fonctions.visualisation import filter_dataframe
 from streamlit_extras.colored_header import colored_header
 import pandas as pd
 from fonctions.export import export_excel
+from fonctions.artefact import dict_arte_effect_english
 from streamlit_extras.no_default_selectbox import selectbox
 from st_pages import add_indentation
 from fonctions.visuel import css
@@ -30,21 +31,36 @@ def inventaire_arte():
         'efficiency': 'efficience'
     }, inplace=True)
     
-    options={'DMG SUPP' : ['DMG SUPP EN FONCTION DES HP',
-                           "DMG SUPP EN FONCTION DE L'ATQ",
-                           'DMG SUPP EN FONCTION DE LA DEF',
-                           'DMG SUPP EN FONCTION DE LA SPD'],
-             'REDUCTION' : ['REDUCTION SUR FEU',
-                            'REDUCTION SUR EAU',
-                            'REDUCTION SUR VENT',
-                            'REDUCTION SUR LUMIERE',
-                            'REDUCTION SUR DARK'],
-             'DMG SUR' : ['DMG SUR FEU',
-                          'DMG SUR EAU',
-                          'DMG SUR VENT',
-                          'DMG SUR LUMIERE',
-                          'DMG SUR DARK'],
-             'HP PERDUS' : ['HP PERDUS'],
+    if st.session_state.translations_selected == 'English':
+        data_inventaire['Attribut'] = data_inventaire['Attribut'].replace({'EAU' : 'WATER',
+                                                               'FEU' : 'FIRE',
+                                                               'VENT' : 'WIND',
+                                                               'LUMIERE' : 'LIGHT',
+                                                               'TENEBRE' : 'DARK',
+                                                               'ATTACK' : 'ATTACK',
+                                                               'DEFENSE' : 'DEFENSE',
+                                                               'HP' : 'HP',
+                                                               'SUPPORT' : 'SUPPORT',
+                                                               'AUCUN' : 'NONE',
+                                                               'Tous' : 'ALL'})
+        for column in ['first_sub', 'second_sub', 'third_sub', 'fourth_sub']:
+            data_inventaire[column] = data_inventaire[column].replace(dict_arte_effect_english)
+        
+        options={'DMG INCREASED' : ['DMG INCREASED by % HP',
+                           "DMG INCREASED by % ATK",
+                           'DMG INCREASED by % DEF',
+                           'DMG INCREASED by % SPD'],
+             'REDUCTION' : ['REDUCTION DMG FROM FIRE',
+                            'REDUCTION DMG FROM WATER',
+                            'REDUCTION DMG FROM WIND',
+                            'REDUCTION DMG FROM LIGHT',
+                            'REDUCTION DMG FROM DARK'],
+             'DMG TO' : ['DMG TO FIRE',
+                          'DMG TO WATER',
+                          'DMG TO WIND',
+                          'DMG TO LIGHT',
+                          'DMG TO DARK'],
+             'HP LOST' : ['lost HP'],
              'CRIT DMG' : ['CRIT DMG RECU',
                            'CRIT DMG S1',
                            'CRIT DMG S2',
@@ -52,9 +68,37 @@ def inventaire_arte():
                            'CRIT DMG S4',
                            'CRIT DMG S3/S4',
                            'PREMIER HIT CRIT DMG'],
-             'PRECISION' : ['PRECISION S1',
-                            'PRECISION S2',
-                            'PRECISION S3']} 
+             'ACC' : ['ACC S1',
+                            'ACC S2',
+                            'ACC S3']} 
+        
+    else:
+    
+        options={'DMG SUPP' : ['DMG SUPP EN FONCTION DES HP',
+                            "DMG SUPP EN FONCTION DE L'ATQ",
+                            'DMG SUPP EN FONCTION DE LA DEF',
+                            'DMG SUPP EN FONCTION DE LA SPD'],
+                'REDUCTION' : ['REDUCTION SUR FEU',
+                                'REDUCTION SUR EAU',
+                                'REDUCTION SUR VENT',
+                                'REDUCTION SUR LUMIERE',
+                                'REDUCTION SUR DARK'],
+                'DMG SUR' : ['DMG SUR FEU',
+                            'DMG SUR EAU',
+                            'DMG SUR VENT',
+                            'DMG SUR LUMIERE',
+                            'DMG SUR DARK'],
+                'HP PERDUS' : ['HP PERDUS'],
+                'CRIT DMG' : ['CRIT DMG RECU',
+                            'CRIT DMG S1',
+                            'CRIT DMG S2',
+                            'CRIT DMG S3',
+                            'CRIT DMG S4',
+                            'CRIT DMG S3/S4',
+                            'PREMIER HIT CRIT DMG'],
+                'PRECISION' : ['PRECISION S1',
+                                'PRECISION S2',
+                                'PRECISION S3']} 
 
     data_inventaire.drop(['unit_style', 'main_value', 'first_sub_value_max', 'second_sub_value_max', 'third_sub_value_max', 'fourth_sub_value_max'], axis=1, inplace=True)
 
@@ -62,19 +106,28 @@ def inventaire_arte():
     check_v8 = st.checkbox(st.session_state.langue['fusion_substat_arte_v8'], help=st.session_state.langue['fusion_substat_arte_v8_help'])
     
     if check_v8:
-        data_inventaire[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']] = data_inventaire[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']].replace({'RENFORCEMENT ATK' : 'RENFORCEMENT ATK/DEF', 
+        if st.session_state.translations_selected == 'Français':
+            data_inventaire[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']] = data_inventaire[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']].replace({'RENFORCEMENT ATK' : 'RENFORCEMENT ATK/DEF', 
                                                                                                                                                 'RENFORCEMENT DEF' : 'RENFORCEMENT ATK/DEF',
                                                                                                                                                 'CRIT DMG S3' : 'CRIT DMG S3/S4',
                                                                                                                                                 'CRIT DMG S4' : 'CRIT DMG S3/S4',
                                                                                                                                                 'REVENGE' : 'REVENGE ET COOP',
                                                                                                                                                 'COOP DMG' : 'REVENGE ET COOP',})
+        
+        elif st.session_state.translations_selected == 'English':
+            data_inventaire[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']] = data_inventaire[['first_sub', 'second_sub', 'third_sub', 'fourth_sub']].replace({'ATK Increased' : 'ATK/DEF Increased', 
+                                                                                                                                                    'DEF Increased' : 'ATK/DEF Increased',
+                                                                                                                                                    'CRIT DMG S3' : 'CRIT DMG S3/S4',
+                                                                                                                                                    'CRIT DMG S4' : 'CRIT DMG S3/S4',
+                                                                                                                                                    'REVENGE' : 'REVENGE AND COOP',
+                                                                                                                                                    'COOP DMG' : 'REVENGE AND COOP',})
     rec_spec = selectbox(st.session_state.langue['recherche_spec'], options=list(options.keys()),
                  help=st.session_state.langue['recherche_spec_help_arte'],
                  index=0)
     
     if rec_spec != None:
         if rec_spec == 'DMG ELEMENTAIRE':
-            rec_spec = 'DMG SUR'
+            rec_spec = st.session_state.langue['dmg_sur']
             
             
         nb_spec = st.slider(st.session_state.langue['nb_substat_mini'], min_value=1, max_value=4, value=1, step=1)
@@ -95,7 +148,7 @@ def inventaire_arte():
         if filter_detail != None:
             data_inventaire = data_inventaire[(data_inventaire['first_sub'].str.contains(filter_detail)) | (data_inventaire['second_sub'].str.contains(filter_detail)) | (data_inventaire['third_sub'].str.contains(filter_detail)) | (data_inventaire['fourth_sub'].str.contains(filter_detail))]
         
-        st.text('Artefacts avec au moins {} substats {} : {}'.format(nb_spec, rec_spec, data_inventaire.shape[0]))
+        st.text(st.session_state.langue['artefact_substat_mini'].format(nb_spec, rec_spec, data_inventaire.shape[0]))
         
         data_inventaire.drop(['totalsub_x', 'totalsub_y'], axis=1, inplace=True)
         
@@ -174,4 +227,4 @@ else:
     switch_page('Upload JSON')
 
 
-st.caption('Made by Tomlora')
+st.caption('Made by Tomlora :sunglasses:')

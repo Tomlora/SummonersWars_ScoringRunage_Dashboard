@@ -64,7 +64,10 @@ def stats_runage():
         
         with col1:
         
-            fig = px.line(df_efficience, x=df_efficience.index, y='efficiency', hover_data=['rune_set', 'rune_equiped'])
+            fig = px.line(df_efficience,
+                          x=df_efficience.index,
+                          y='efficiency',
+                          hover_data=['rune_set', 'rune_equiped'])
             
             st.plotly_chart(fig)
             
@@ -90,7 +93,10 @@ def stats_runage():
                     11: 'RES',
                     12: 'ACC'})
                 
-            fig = px.pie(df_efficience.groupby(grp_by, as_index=False).count(), values='efficiency', names=grp_by, title='Répartition des runes par set')
+            fig = px.pie(df_efficience.groupby(grp_by, as_index=False).count(),
+                         values='efficiency',
+                         names=grp_by,
+                         title=st.session_state.langue['repartition'])
             st.plotly_chart(fig)
             
         fig = go.Figure()
@@ -116,6 +122,10 @@ def stats_runage():
         
         df_max : pd.DataFrame = st.session_state.df_max.copy()
         
+        # print(df_max)
+        df_max_slot = st.session_state.data_rune.df_max_slot.copy()
+        
+        
         df_max.reset_index(inplace=True)
         
         st.subheader('Total 10 stats')
@@ -131,6 +141,22 @@ def stats_runage():
         
         df_max_selected = df_max[df_max['rune_set'] == set_select]
         
+        try:
+            df_to_show = df_max_selected.pivot_table(values=value_tcd, index=['rune_set', 'substat'], aggfunc='max')[value_tcd].transpose()
+        except KeyError:
+            pass
+        slot_select = selectbox('Choisir un slot de rune', options=[1,2,3,4,5,6])
+        
+        if slot_select != None:
+            df_max_selected = df_max_slot[df_max_slot['rune_set'] == set_select]       
+            df_max_selected = df_max_selected[df_max_selected['rune_slot'] == slot_select]
+            
+
+            
+            try:
+                df_to_show = df_max_selected.pivot_table(values=value_tcd, index=['rune_set', 'substat'], aggfunc='max')[value_tcd].transpose()
+            except KeyError:
+                pass
 
         checkbox_filtre_guilde = st.checkbox(st.session_state.langue['filter_guilde'], value=False, key='filtre_guilde_stats')
 
@@ -161,7 +187,7 @@ def stats_runage():
             
             st.text(f'{st.session_state.langue["Classement"]} ({df_points_set.shape[0]} {st.session_state.langue["joueurs"]})')
             st.markdown(f'Points : :green[{df_points_set.loc[st.session_state["id_joueur"], "pts_rank"]}]     |    Efficience(Mediane) : :violet[{df_points_set.loc[st.session_state["id_joueur"], "mediane_rank"]}]     |    Efficience (Moyenne) : :orange[{df_points_set.loc[st.session_state["id_joueur"], "moyenne_rank"]}]')
-            st.table(df_max_selected.pivot_table(values=value_tcd, index=['rune_set', 'substat'], aggfunc='max')[value_tcd].transpose())
+            st.table(df_to_show)
         except KeyError:
             st.info(st.session_state.langue['no_data'])
         
@@ -305,4 +331,4 @@ else:
     switch_page('Upload JSON')
 
 
-st.caption('Made by Tomlora')
+st.caption('Made by Tomlora :sunglasses:')

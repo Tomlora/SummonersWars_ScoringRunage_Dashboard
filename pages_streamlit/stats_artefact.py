@@ -20,7 +20,20 @@ def grind_arte():
 
             
     # on récupère les données        
-    df_efficience : pd.DataFrame = st.session_state.data_arte.data_a
+    df_efficience : pd.DataFrame = st.session_state.data_arte.data_a.copy()
+    
+    if st.session_state.translations_selected == 'English':
+        df_efficience['arte_attribut'] = df_efficience['arte_attribut'].replace({'EAU' : 'WATER',
+                                                               'FEU' : 'FIRE',
+                                                               'VENT' : 'WIND',
+                                                               'LUMIERE' : 'LIGHT',
+                                                               'TENEBRE' : 'DARK',
+                                                               'ATTACK' : 'ATTACK',
+                                                               'DEFENSE' : 'DEFENSE',
+                                                               'HP' : 'HP',
+                                                               'SUPPORT' : 'SUPPORT',
+                                                               'AUCUN' : 'NONE',
+                                                               'Tous' : 'ALL'})
     list_type = df_efficience['arte_type'].unique().tolist()
     list_attribut = df_efficience['arte_attribut'].unique().tolist()
         
@@ -147,4 +160,4 @@ else:
     switch_page('Upload JSON')
 
 
-st.caption('Made by Tomlora')
+st.caption('Made by Tomlora :sunglasses:')

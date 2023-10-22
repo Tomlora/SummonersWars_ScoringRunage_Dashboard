@@ -36,7 +36,7 @@ def params():
 
     if validation_suppression:
         supprimer_data(st.session_state['id_joueur'], date_retenu)
-        st.text('Supprimé')
+        st.text(st.session_state.langue['supprimer'])
 
     with st.form('Supprimer toutes mes données'):
         st.subheader(st.session_state.langue['delete_all'])
@@ -62,4 +62,4 @@ else:
     switch_page('Upload JSON')
     
     
-st.caption('Made by Tomlora')
+st.caption('Made by Tomlora :sunglasses:')
