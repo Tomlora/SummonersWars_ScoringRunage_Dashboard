@@ -25,7 +25,7 @@ add_vertical_space(1)
 def charger_data_artefact():
     df = lire_bdd('sw_where2use', index='index').T
     
-    swarfarm = pd.read_excel('swarfarm.xlsx').drop('id', axis=1)
+    swarfarm = lire_bdd('sw_ref_monsters').T.drop('index', axis=1)
     
     swarfarm['url'] = swarfarm.apply(
                         lambda x:  f'https://swarfarm.com/static/herders/images/monsters/{x["image_filename"]}', axis=1)

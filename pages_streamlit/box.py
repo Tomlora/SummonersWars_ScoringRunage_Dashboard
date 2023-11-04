@@ -1,6 +1,6 @@
 
 import streamlit as st
-from fonctions.gestion_bdd import lire_bdd_perso
+from fonctions.gestion_bdd import lire_bdd_perso, lire_bdd
 import os
 from st_pages import add_indentation
 from datetime import timedelta
@@ -30,8 +30,7 @@ def box():
     try:
         df_box = df_box_complet[df_box_complet['guilde_id'] == id_guilde]
         
-        swarfarm = pd.read_excel('swarfarm.xlsx')
-        swarfarm.drop('id', axis=1, inplace=True)
+        swarfarm = lire_bdd('sw_ref_monsters').T.drop('index', axis=1)
         
         storage_bool = st.checkbox('Inclure autel de scellement', value=True)
 

@@ -8,7 +8,7 @@ from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
 from params.coef import coef_set, coef_set_spd, liste_substat_arte
 from streamlit_extras.switch_page_button import switch_page
-from fonctions.gestion_bdd import sauvegarde_bdd, update_info_compte, get_user, requete_perso_bdd, cancel, lire_bdd_perso
+from fonctions.gestion_bdd import sauvegarde_bdd, update_info_compte, get_user, requete_perso_bdd, cancel, lire_bdd_perso, lire_bdd
 from fonctions.runes import Rune
 from fonctions.artefact import Artefact
 from st_pages import add_indentation
@@ -69,7 +69,7 @@ def date_du_jour():
 # on charge swarfarm
 @st.cache_data(show_spinner=False)
 def load_swarfarm():
-    swarfarm = pd.read_excel('swarfarm.xlsx')
+    swarfarm = lire_bdd('sw_ref_monsters').T.drop('index', axis=1)
     swarfarm[['element', 'archetype']] = swarfarm[['element', 'archetype']].astype('category')
     return swarfarm
 
