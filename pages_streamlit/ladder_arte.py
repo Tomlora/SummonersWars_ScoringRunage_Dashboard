@@ -4,7 +4,7 @@ from streamlit_extras.switch_page_button import switch_page
 from datetime import timedelta
 from st_pages import add_indentation
 from fonctions.visuel import css
-from fonctions.artefact import dict_arte_effect_english
+from fonctions.artefact import dict_arte_effect_english, dataframe_replace_to_english
 css()
 
 add_indentation()
@@ -82,18 +82,10 @@ def classement_arte():
         liste_filtre = ['Tous', 'ELEMENT', 'ARCHETYPE', 'AUCUN']
     elif st.session_state.translations_selected == 'English':
         liste_attribut = ['All', 'WATER', 'FIRE', 'WIND', 'LIGHT', 'DARK', 'ATTACK', 'DEFENSE', 'HP', 'SUPPORT', 'NONE']
-        data['arte_attribut'] = data['arte_attribut'].replace({'EAU' : 'WATER',
-                                                               'FEU' : 'FIRE',
-                                                               'VENT' : 'WIND',
-                                                               'LUMIERE' : 'LIGHT',
-                                                               'TENEBRE' : 'DARK',
-                                                               'ATTACK' : 'ATTACK',
-                                                               'DEFENSE' : 'DEFENSE',
-                                                               'HP' : 'HP',
-                                                               'SUPPORT' : 'SUPPORT',
-                                                               'AUCUN' : 'NONE',
-                                                               'Tous' : 'ALL'})
+        
+        data['arte_attribut'] = data['arte_attribut'].replace(dataframe_replace_to_english)
         data['substat'] = data['substat'].replace(dict_arte_effect_english)
+        
         liste_filtre = ['ALL', 'ELEMENT', 'ARCHETYPE', 'NONE']
     
             

@@ -5,7 +5,7 @@ from fonctions.visualisation import filter_dataframe
 from streamlit_extras.colored_header import colored_header
 import pandas as pd
 from fonctions.export import export_excel
-from fonctions.artefact import dict_arte_effect_english
+from fonctions.artefact import dict_arte_effect_english, dataframe_replace_to_english
 from streamlit_extras.no_default_selectbox import selectbox
 from st_pages import add_indentation
 from fonctions.visuel import css
@@ -32,17 +32,8 @@ def inventaire_arte():
     }, inplace=True)
     
     if st.session_state.translations_selected == 'English':
-        data_inventaire['Attribut'] = data_inventaire['Attribut'].replace({'EAU' : 'WATER',
-                                                               'FEU' : 'FIRE',
-                                                               'VENT' : 'WIND',
-                                                               'LUMIERE' : 'LIGHT',
-                                                               'TENEBRE' : 'DARK',
-                                                               'ATTACK' : 'ATTACK',
-                                                               'DEFENSE' : 'DEFENSE',
-                                                               'HP' : 'HP',
-                                                               'SUPPORT' : 'SUPPORT',
-                                                               'AUCUN' : 'NONE',
-                                                               'Tous' : 'ALL'})
+        data_inventaire['Attribut'] = data_inventaire['Attribut'].replace(dataframe_replace_to_english)
+        
         for column in ['first_sub', 'second_sub', 'third_sub', 'fourth_sub']:
             data_inventaire[column] = data_inventaire[column].replace(dict_arte_effect_english)
         

@@ -5,7 +5,7 @@ import plotly_express as px
 import pandas as pd
 from datetime import timedelta
 
-from fonctions.gestion_bdd import lire_bdd_perso, get_user
+from fonctions.gestion_bdd import lire_bdd_perso, get_user, lire_bdd
 from fonctions.visualisation import transformation_stats_visu, plotline_evol_rune_visu, table_with_images
 from fonctions.artefact import visualisation_top_arte
 from params.coef import order
@@ -428,8 +428,7 @@ def visu_page():
             
             if not df.empty:
             
-                swarfarm = pd.read_excel('swarfarm.xlsx')
-                swarfarm.drop('id', axis=1, inplace=True) # inutile ici
+                swarfarm = lire_bdd('sw_ref_monsters').T.drop('index', axis=1)
                 
                 df_mob = pd.merge(df, swarfarm, left_on='id_monstre', right_on='com2us_id')
                 

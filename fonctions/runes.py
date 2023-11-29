@@ -32,6 +32,23 @@ COM2US_QUALITY_MAP = {
             15: 'ANTIQUE_LGD',
         }
 
+@st.cache_data
+def max_sub_by_proc(proc):
+    "1 à 4"
+
+    proc += 1  # le proc à +0
+    sub_max = {'HP': (375 * proc) * 2,  # PV flat
+               'HP%': 8 * proc,  # PV%
+               'ATQ': (20 * proc) * 2,  # ATQ FLAT
+               'ATQ%': 8 * proc,  # ATQ%
+               'DEF': (20 * proc) * 2,  # DEF FLAT
+               'DEF%': 8 * proc,  # DEF %
+               'SPD': 6 * proc,  # SPD
+               'CRIT': 6 * proc,  # CRIT
+               'DCC': 7 * proc,  # DCC
+               'RES': 8 * proc,  # RES
+               'ACC': 8 * proc}  # ACC
+    return sub_max
 
 class Rune():
 

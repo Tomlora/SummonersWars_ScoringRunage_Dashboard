@@ -2,8 +2,9 @@ import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 import pandas as pd
 from st_pages import add_indentation
-from fonctions.artefact import dict_arte_effect_english
+from fonctions.artefact import dict_arte_effect_english, dataframe_replace_to_english, max_sub_by_proc
 from streamlit_extras.no_default_selectbox import selectbox
+
 
 from fonctions.visuel import css
 css()
@@ -12,69 +13,7 @@ add_indentation()
 
 
 
-@st.cache_data
-def max_sub_by_proc(proc):
-    "1 à 4"
 
-    proc += 1  # le proc à +0
-
-    
-    sub_max = {
-        'ATK EN FONCTION HP PERDUS' : 14 * proc, #ancien
-        'DEF EN FONCTION HP PERDUS' : 14 * proc, # ancien
-        'SPD EN FONCTION HP PERDUS' : 14 * proc, # ancien
-        "SPD EN CAS D'INCAPACITE" : 6 * proc,
-        'RENFORCEMENT ATK' : 5 * proc, #ancien
-        'RENFORCEMENT DEF' : 4 * proc, # ancien
-        'RENFORCEMENT SPD' : 6 * proc,
-        'RENFORCEMENT CRITRATE' : 6 * proc,
-        'REVENGE' : 4 * proc,
-        'COOP DMG' : 4 * proc,
-        'BOMBE DMG' : 4 * proc,
-        'DMG RENVOYE' : 3 * proc,
-        'CRUSHING DMG' : 4 * proc,
-        "DMG RECU EN CAS D'INCAPACITE" : 3 * proc,
-        'CRIT DMG RECU' : 4 * proc,
-        'VOL DE VIE' : 8 * proc,
-        'HP REVIVE' : 6 * proc,
-        'ATB REVIVE' : 6 * proc,
-        'DMG SUPP EN FONCTION DES HP' : 0.3 * proc,
-        "DMG SUPP EN FONCTION DE L'ATQ" : 4 * proc,
-        'DMG SUPP EN FONCTION DE LA DEF' : 4 * proc,
-        'DMG SUPP EN FONCTION DE LA SPD' : 40 * proc,
-        'CRIT DMG EN FONCTION DES HP ELEVES' : 6 * proc,
-        'CRIT DMG EN FONCTION DES HP FAIBLES' : 12 * proc,
-        'CRIT DMG SUR CIBLE UNIQUE' : 4 * proc,
-        'REVENGE ET COOP' : 4 * proc,
-        'RENFORCEMENT ATK/DEF' : 5 * proc,
-        'DMG SUR FEU' : 5 * proc,
-        'DMG SUR EAU' : 5 * proc,
-        'DMG SUR VENT' : 5 * proc,
-        'DMG SUR LUMIERE' : 5 * proc,
-        'DMG SUR DARK' : 5 * proc,
-        'REDUCTION SUR FEU' : 6 * proc,
-        'REDUCTION SUR EAU' : 6 * proc,
-        'REDUCTION SUR VENT' : 6 * proc,
-        'REDUCTION SUR LUMIERE' : 6 * proc,
-        'REDUCTION SUR DARK' : 6 * proc,
-        'CRIT DMG S1' : 6 * proc,
-        'CRIT DMG S2' : 6 * proc,
-        'CRIT DMG S3' : 6 * proc, # ancien
-        'CRIT DMG S4' : 6 * proc, # ancien
-        'SOIN S1' : 6 * proc,
-        'SOIN S2' : 6 * proc,
-        'SOIN S3' : 6 * proc,
-        'PRECISION S1' : 6 * proc,
-        'PRECISION S2' : 6 * proc,
-        'PRECISION S3' : 6 * proc,
-        'CRIT DMG S3/S4'  : 6 * proc,
-        'PREMIER HIT CRIT DMG' : 6 * proc
-    }
-    
-    if st.session_state.translations_selected == 'English':
-        sub_max = {dict_arte_effect_english[key] : value for key, value in sub_max.items()}
-        
-    return sub_max
 
 
 def stats(df, n):
@@ -129,17 +68,7 @@ def upgrade_a():
     # on fusionne anciennes/nouvelles stats
     
     if st.session_state.translations_selected == 'English':
-        df_arte['arte_attribut'] = df_arte['arte_attribut'].replace({'EAU' : 'WATER',
-                                                                'FEU' : 'FIRE',
-                                                                'VENT' : 'WIND',
-                                                                'LUMIERE' : 'LIGHT',
-                                                                'TENEBRE' : 'DARK',
-                                                                'ATTACK' : 'ATTACK',
-                                                                'DEFENSE' : 'DEFENSE',
-                                                                'HP' : 'HP',
-                                                                'SUPPORT' : 'SUPPORT',
-                                                                'AUCUN' : 'NONE',
-                                                                'Tous' : 'ALL'})
+        df_arte['arte_attribut'] = df_arte['arte_attribut'].replace(dataframe_replace_to_english)
         
         for column in ['first_sub', 'second_sub', 'third_sub', 'fourth_sub']:
             df_arte[column] = df_arte[column].replace(dict_arte_effect_english)

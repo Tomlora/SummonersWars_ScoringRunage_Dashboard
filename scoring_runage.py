@@ -52,6 +52,7 @@ def main_page():
                         Page('pages_streamlit/inventaire_artefact.py', 'Inventaire', icon=':open_file_folder:'),
                         Page('pages_streamlit/stats_artefact.py', 'Statistiques', icon=':bar_chart:'),
                         Page('pages_streamlit/upgrade_artefact.py', 'Upgrade', icon=':arrow_up:'),
+                        Page('pages_streamlit/objectif_arte.py', 'Objectif', icon='💪'),
                         Page('pages_streamlit/dmg_add.py', 'Calculateur dmg', icon=':1234:'),
                         Page('pages_streamlit/use_arte.py', 'Where2Use', icon=':brain:'),
                         Page('pages_streamlit/calculator_arte.py', 'Calculateur efficience', icon=':1234:'),
@@ -63,7 +64,7 @@ def main_page():
                         Page('pages_streamlit/visibility.py', 'Ma visibilité', icon=':eyes:'),
                         Page('pages_streamlit/options.py', 'Mes données', icon=':iphone:'),
                         Section(name='Mise à jour', icon=':loudspeaker:'),
-                        Page('pages_streamlit/update.py', 'Version 20/10/23', icon=':speaker:')
+                        Page('pages_streamlit/update.py', 'Version 29/11/23', icon=':speaker:')
 
                         # Section(name='Administration', icon=':star:'),
                         # Page('pages_streamlit/visualisation_joueur.py', 'Visualisation', icon=':mag:'),

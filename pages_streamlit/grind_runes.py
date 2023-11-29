@@ -6,7 +6,6 @@ import ast
 import streamlit as st
 from io import BytesIO
 from fonctions.visualisation import filter_dataframe
-import plotly.graph_objects as go
 from fonctions.runes import Rune, CRAFT_TYPE_MAP, COM2US_QUALITY_MAP
 from streamlit_extras.switch_page_button import switch_page
 # fix plotly express et Visual Studio Code

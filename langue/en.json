@@ -143,5 +143,8 @@
 "reap_tag" : "Add a Reap tag",
 "obligatoire" : "Required",
 "taille_image" : "Size images",
-"download_data_arte" : "Displays a button at the bottom to download data"
+"download_data_arte" : "Displays a button at the bottom to download data",
+"objectif" : "Target",
+"precision" : "ACC",
+"soin" : "HEAL"
 }

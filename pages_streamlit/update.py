@@ -20,6 +20,8 @@ with col2:
     img = load_lottieurl('https://assets7.lottiefiles.com/private_files/lf30_rzhdjuoe.json')
     st_lottie(img, height=200, width=200)
 
+with st.expander('Version 29/11/2023', expanded=True):
+    st.info("- Ajout d'une page Objectifs dans les Artefacts\n\n")   
 
 with st.expander('Version 20/10/2023', expanded=True):
     st.info("- Possibilité de télécharger les tableaux Artefacts dans General\n\n"+

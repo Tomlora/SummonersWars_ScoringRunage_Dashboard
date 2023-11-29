@@ -2,6 +2,7 @@
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 from fonctions.visualisation import filter_dataframe
+from fonctions.artefact import dataframe_replace_to_english
 import pandas as pd
 from streamlit_extras.colored_header import colored_header
 from st_pages import add_indentation
@@ -17,23 +18,11 @@ style_metric_cards(background_color='#03152A', border_color='#0083B9', border_le
 
 def grind_arte():
     
-
-            
     # on récupère les données        
     df_efficience : pd.DataFrame = st.session_state.data_arte.data_a.copy()
     
     if st.session_state.translations_selected == 'English':
-        df_efficience['arte_attribut'] = df_efficience['arte_attribut'].replace({'EAU' : 'WATER',
-                                                               'FEU' : 'FIRE',
-                                                               'VENT' : 'WIND',
-                                                               'LUMIERE' : 'LIGHT',
-                                                               'TENEBRE' : 'DARK',
-                                                               'ATTACK' : 'ATTACK',
-                                                               'DEFENSE' : 'DEFENSE',
-                                                               'HP' : 'HP',
-                                                               'SUPPORT' : 'SUPPORT',
-                                                               'AUCUN' : 'NONE',
-                                                               'Tous' : 'ALL'})
+        df_efficience['arte_attribut'] = df_efficience['arte_attribut'].replace(dataframe_replace_to_english)
     list_type = df_efficience['arte_type'].unique().tolist()
     list_attribut = df_efficience['arte_attribut'].unique().tolist()
         

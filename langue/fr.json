@@ -143,5 +143,8 @@
     "reap_tag" : "Ajouter un tag Reap",
     "obligatoire" : "Obligatoire",
     "taille_image" : "Taille des images",
-    "download_data_arte" : "Affiche un bouton en bas pour télécharger les données"
+    "download_data_arte" : "Affiche un bouton en bas pour télécharger les données",
+    "objectif" : "Objectif",
+    "precision" : "PRECISION",
+    "soin" : "SOIN"
 }
