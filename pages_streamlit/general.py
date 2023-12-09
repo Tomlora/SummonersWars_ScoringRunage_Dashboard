@@ -401,8 +401,9 @@ def general_page():
                     liste_substat = st.session_state.data_arte.df_top['substat'].unique()
                     df_arte = st.session_state.data_arte.df_top.copy()
                     
-                    liste_elementaire = ['FEU', 'EAU', 'VENT', 'LUMIERE', 'TENEBRE']
+                    liste_elementaire = ['FEU', 'EAU', 'VENT', 'LUMIERE', 'TENEBRE', 'INTANGIBLE']
                     liste_attribut = ['ATTACK', 'DEFENSE', 'HP', 'SUPPORT']
+                    
                     
                     col_elem, col_att = st.columns(2)
                     

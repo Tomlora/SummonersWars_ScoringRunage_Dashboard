@@ -297,6 +297,12 @@ def upload_sw():
                     try:
                         st.session_state.id_joueur, st.session_state.visibility, guilde_id, st.session_state.rank = get_user(
                                 st.session_state['compteid'], type='id')
+                        
+                        requete_perso_bdd('''INSERT INTO sw_guilde(guilde, guilde_id) VALUES (:guilde, :guilde_id)
+                                                ON CONFLICT (guilde_id)
+                                                DO NOTHING;''',
+                                                {'guilde': st.session_state['guilde'],
+                                                'guilde_id': st.session_state['guildeid']})
                     except IndexError:
                         try:
                             st.session_state.id_joueur, st.session_state.visibility, guilde_id, st.session_state.rank  = get_user(

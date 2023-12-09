@@ -13,7 +13,8 @@ dict_arte_element = {
     2 : 'FEU',
     3 : 'VENT',
     4 : 'LUMIERE',
-    5 : 'TENEBRE'
+    5 : 'TENEBRE',
+    98 : 'INTANGIBLE',
 }
 
 dict_arte_effect = {
@@ -73,6 +74,7 @@ dataframe_replace_to_english = {'EAU' : 'WATER',
                                 'VENT' : 'WIND',
                                 'LUMIERE' : 'LIGHT',
                                 'TENEBRE' : 'DARK',
+                                'INTANGIBLE' : 'INTANGIBLE',
                                 'ATTACK' : 'ATTACK',
                                 'DEFENSE' : 'DEFENSE',
                                 'HP' : 'HP',
@@ -594,6 +596,7 @@ feu = return_style('#FFFFFF', '#FF0000')
 vent = return_style('#FFFFFF', '#FF7F00')
 light = return_style('#000000', '#FFFFFF')
 dark = return_style('#FFFFFF', '#6F2DA8')
+intangible = return_style('#FFFFFF', '#3CB371')
 attack = return_style('#FFFFFF', '#2E86C1')
 defense = return_style('#FFFFFF', '#C0392B')
 hp = return_style('#FFFFFF', '#45B39D')
@@ -608,6 +611,7 @@ dict_color = {'EAU' : water,
               'VENT' : vent,
               'LUMIERE' : light,
               'TENEBRE' : dark,
+              'INTANGIBLE' : intangible,
               'ATTACK' : attack,
               'DEFENSE' : defense,
               'HP' : hp,
@@ -625,6 +629,8 @@ def visualisation_top_arte(df, column, use_container_width=True, order=None):
     df_filter = df[df['substat'] == column]
         
     tcd = pd.pivot_table(values=['5','4','3','2','1'], columns=['arte_attribut', 'main_type'], data=df_filter, aggfunc='max')
+    
+    print(tcd)
     
     if not tcd.empty:
         

@@ -78,10 +78,10 @@ def classement_arte():
     data = load_data_arte()
     
     if st.session_state.translations_selected == 'Français':
-        liste_attribut = ['Tous', 'EAU', 'FEU', 'VENT', 'LUMIERE', 'TENEBRE', 'ATTACK', 'DEFENSE', 'HP', 'SUPPORT', 'AUCUN']
+        liste_attribut = ['Tous', 'EAU', 'FEU', 'VENT', 'LUMIERE', 'TENEBRE', 'INTANGIBLE', 'ATTACK', 'DEFENSE', 'HP', 'SUPPORT', 'AUCUN']
         liste_filtre = ['Tous', 'ELEMENT', 'ARCHETYPE', 'AUCUN']
     elif st.session_state.translations_selected == 'English':
-        liste_attribut = ['All', 'WATER', 'FIRE', 'WIND', 'LIGHT', 'DARK', 'ATTACK', 'DEFENSE', 'HP', 'SUPPORT', 'NONE']
+        liste_attribut = ['All', 'WATER', 'FIRE', 'WIND', 'LIGHT', 'DARK', 'INTANGIBLE', 'ATTACK', 'DEFENSE', 'HP', 'SUPPORT', 'NONE']
         
         data['arte_attribut'] = data['arte_attribut'].replace(dataframe_replace_to_english)
         data['substat'] = data['substat'].replace(dict_arte_effect_english)
@@ -96,6 +96,7 @@ def classement_arte():
     filtre_type = st.selectbox(st.session_state.langue['filter_one_type'], liste_filtre, len(liste_filtre)-1)
     filtre_substat = st.selectbox(st.session_state.langue['filter_one_substat'], liste_substat)
     
+    print(data['arte_attribut'].unique())
         
     if not filtre_attribut in ['Tous', 'ALL'] and not filtre_attribut in ['AUCUN', 'NONE']:
         data = data[data['arte_attribut'] == filtre_attribut]
