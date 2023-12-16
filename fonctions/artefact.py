@@ -630,8 +630,6 @@ def visualisation_top_arte(df, column, use_container_width=True, order=None):
         
     tcd = pd.pivot_table(values=['5','4','3','2','1'], columns=['arte_attribut', 'main_type'], data=df_filter, aggfunc='max')
     
-    print(tcd)
-    
     if not tcd.empty:
         
         st.write(f'Top 5 {column.capitalize()}')

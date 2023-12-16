@@ -150,7 +150,7 @@ def inventaire_arte():
     
     data_xlsx = export_excel(df_filter.sort_values('efficience', ascending=False), 'Id_Artefacts', 'Artefacts')
 
-    st.download_button(st.session_state.langue['download_excel'], data_xlsx, file_name='artefacts.xlsx',
+    st.download_button(st.session_state.langue['download_excel'], data_xlsx, file_name=f'artefacts {st.session_state["pseudo"]}.xlsx',
                            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     
     
@@ -165,7 +165,7 @@ def inventaire_arte():
     if check_detail_arte:
         
         @st.cache_data(ttl=timedelta(minutes=30), show_spinner=st.session_state.langue['calcul_inventaire_arte'])
-        def chargement_detail_inventaire(joueur_id, data_inventaire):
+        def chargement_detail_inventaire(joueur_id, data_inventaire : pd.DataFrame):
             data_inventaire.rename(columns={'first_sub' : 'Substat 1', 'second_sub' : 'Substat 2', 'third_sub' : 'Substat 3', 'fourth_sub' : 'Substat 4',
                                                 'first_sub_value' : 'Substat valeur 1', 'second_sub_value' : 'Substat valeur 2', 'third_sub_value' : 'Substat valeur 3', 'fourth_sub_value' : 'Substat valeur 4'},
                                     inplace=True)
@@ -176,6 +176,7 @@ def inventaire_arte():
             melt = data_inventaire.melt(id_vars=['Type', 'Attribut', 'Equipé', 'efficience', 'main_type', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'],
                                     value_vars=['Substat valeur 1', 'Substat valeur 2', 'Substat valeur 3', 'Substat valeur 4'])
 
+
             def changement_variable(x):
                 number = x.variable[-1]
                 type = x[f'Substat {number}']
@@ -183,16 +184,19 @@ def inventaire_arte():
                 return type
                 
             melt['variable'] = melt.apply(changement_variable, axis=1)
-                
-                            
+
+            # NOTE : Cette étape est très lente  sans "observed"             
             pivot = melt.pivot_table(index=['Type', 'Attribut', 'Equipé', 'efficience', 'main_type'],
                                                 columns='variable',
                                                 values='value',
                                                 aggfunc='first',
+                                                observed=True,
                                                 fill_value=0).reset_index()
                 
 
+
             data_inventaire_final = data_inventaire.merge(pivot, on=['Type', 'Attribut', 'Equipé', 'efficience', 'main_type']).drop(columns=['Substat 1', 'Substat 2', 'Substat 3', 'Substat 4', 'Substat valeur 1', 'Substat valeur 2', 'Substat valeur 3', 'Substat valeur 4'])
+
 
             return data_inventaire_final
                 
@@ -203,7 +207,7 @@ def inventaire_arte():
         st.dataframe(df_filter2.sort_values('efficience', ascending=False))
         data_xlsx2 = export_excel(df_filter2.sort_values('efficience', ascending=False), 'Id_Artefacts', 'Artefacts')
                 
-        st.download_button('Télécharger la data (Excel)', data_xlsx2, file_name='artefacts_details.xlsx',
+        st.download_button('Télécharger la data (Excel)', data_xlsx2, file_name=f'artefacts_details {st.session_state["pseudo"]}.xlsx',
                                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     
 if 'submitted' in st.session_state:

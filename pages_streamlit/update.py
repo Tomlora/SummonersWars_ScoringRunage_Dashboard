@@ -20,6 +20,12 @@ with col2:
     img = load_lottieurl('https://assets7.lottiefiles.com/private_files/lf30_rzhdjuoe.json')
     st_lottie(img, height=200, width=200)
 
+
+with st.expander('Version 16/12/2023', expanded=True):
+    st.info("- Ajout des Anges \n\n"+
+            "- Les pages Artefacts (Detail) et Optimisation Runes sont plus rapides") 
+    
+    
 with st.expander('Version 08/12/2023', expanded=True):
     st.info("- Ajout des Artefacts Intangible (sowwy !) \n\n")   
     

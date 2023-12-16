@@ -312,6 +312,7 @@ def optimisation_rune():
                                         columns='variable',
                                         values='value',
                                         aggfunc='first',
+                                        observed=True,
                                         fill_value=0).reset_index()
                 
                 if meule:

@@ -2,7 +2,7 @@
 import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
-from fonctions.visuel import load_lottieurl, css
+from fonctions.visuel import load_lottieurl, css, load_logo
 from streamlit_lottie import st_lottie
 from params.coef import coef_set, order
 from fonctions.visualisation import filter_dataframe, table_with_images
@@ -19,6 +19,8 @@ from st_pages import add_indentation
 
 css()
 add_indentation()
+
+
 
 new_index = ['Autre', 'Seal', 'Despair', 'Destroy', 'Violent', 'Will', 'Intangible', 'Total']
 new_index_spd = ['Autre', 'Seal', 'Despair', 'Destroy', 'Swift', 'Violent', 'Will', 'Intangible', 'Total']
@@ -51,6 +53,7 @@ def get_img_runes(df : pd.DataFrame):
     return df
 
 def general_page():
+    
     if 'submitted' in st.session_state:
         if st.session_state.submitted:
             

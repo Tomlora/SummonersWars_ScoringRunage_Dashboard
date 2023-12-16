@@ -24,6 +24,7 @@ def chargement_params():
     return category_selected,category_selected_spd, coef_set, coef_set_spd
 
 
+
 @st.cache_data
 def main_page():
     st.session_state.category_selected, st.session_state.category_selected_spd, st.session_state.coef_set, st.session_state.coef_set_spd = chargement_params()
@@ -35,6 +36,8 @@ def main_page():
                         Page('pages_streamlit/general.py', 'General', ':books:'),
                         Page('pages_streamlit/evolution.py', 'Evolution', ':chart_with_upwards_trend:'),
                         Page('pages_streamlit/comparaison.py', 'Comparaison', icon=':chart:'),
+                        Page('pages_streamlit/donjons.py', 'Donjons', icon=':japanese_castle:'),
+                        Page('pages_streamlit/raid.py', 'Raid', icon=':dragon_face:'),
                         # Page('pages_streamlit/timelapse.py', 'Timelapse', ':bookmark_tabs:'), 
                         Section(name='Classement', icon=':trophy:'),
                         Page('pages_streamlit/ladder.py', 'Scoring', icon='🥇'),
@@ -56,15 +59,12 @@ def main_page():
                         Page('pages_streamlit/dmg_add.py', 'Calculateur dmg', icon=':1234:'),
                         Page('pages_streamlit/use_arte.py', 'Where2Use', icon=':brain:'),
                         Page('pages_streamlit/calculator_arte.py', 'Calculateur efficience', icon=':1234:'),
-                        Section(name='Monstres', icon=':japanese_ogre:'),
-                        Page('pages_streamlit/donjons.py', 'Donjons', icon=':japanese_castle:'),
-                        Page('pages_streamlit/raid.py', 'Raid', icon=':dragon_face:'),
-                        Page('pages_streamlit/dmg.py', 'Calculateur dmg', icon=':1234:'),
+                        # Section(name='Monstres', icon=':japanese_ogre:'),
                         Section(name='Paramètres', icon=':gear:'),
                         Page('pages_streamlit/visibility.py', 'Ma visibilité', icon=':eyes:'),
                         Page('pages_streamlit/options.py', 'Mes données', icon=':iphone:'),
                         Section(name='Mise à jour', icon=':loudspeaker:'),
-                        Page('pages_streamlit/update.py', 'Version 29/11/23', icon=':speaker:')
+                        Page('pages_streamlit/update.py', 'Version 16/12/23', icon=':speaker:')
 
                         # Section(name='Administration', icon=':star:'),
                         # Page('pages_streamlit/visualisation_joueur.py', 'Visualisation', icon=':mag:'),

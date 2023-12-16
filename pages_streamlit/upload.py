@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 import json
 from datetime import datetime, timedelta
-from fonctions.visuel import load_lottieurl, css
+from fonctions.visuel import load_lottieurl, css, load_logo
 from streamlit_lottie import st_lottie
 from params.coef import coef_set, coef_set_spd, liste_substat_arte
 from streamlit_extras.switch_page_button import switch_page
@@ -126,7 +126,7 @@ def upload_sw():
     col1, col2, col3 = st.columns([0.25,0.50,0.25])
     with col2:
 
-        st.title('Scoring SW')
+        load_logo()
         
         st.session_state.translations_selected = st.radio('Langue', ['Français', 'English'], index=0, key='translations', horizontal=True, help='En cours... / Incoming...')
     
