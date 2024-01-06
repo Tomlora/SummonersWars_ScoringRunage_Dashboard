@@ -1,7 +1,8 @@
 from fonctions.gestion_bdd import lire_bdd, lire_bdd_perso
 import pandas as pd
 import plotly.express as px
-
+from fonctions.streamlit_filter_tree import condition_tree, config_from_dataframe
+from streamlit_extras.add_vertical_space import add_vertical_space
 
 from pandas.api.types import (
     is_categorical_dtype,
@@ -126,95 +127,105 @@ def plotline_evol_rune_visu(df, color='Set'):
     return fig
 
 
-def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='float', disabled=False) -> pd.DataFrame:
-    """
-    Adds a UI on top of a dataframe to let viewers filter columns
+# def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='float', disabled=False) -> pd.DataFrame:
+#     """
+#     Adds a UI on top of a dataframe to let viewers filter columns
 
-    Args:
-        df (pd.DataFrame): Original dataframe
-        disabled = Coché ou non par défault
+#     Args:
+#         df (pd.DataFrame): Original dataframe
+#         disabled = Coché ou non par défault
 
-    Returns:
-        pd.DataFrame: Filtered dataframe
-    """
-    modify = st.checkbox(st.session_state.langue['add_filters'], key=key, value=disabled)
+#     Returns:
+#         pd.DataFrame: Filtered dataframe
+#     """
+#     modify = st.checkbox(st.session_state.langue['add_filters'], key=key, value=disabled)
 
-    if not modify:
-        return df
+#     if not modify:
+#         return df
 
-    df = df.copy()
+#     df = df.copy()
     
 
-    # Try to convert datetimes into a standard format (datetime, no timezone)
-    for col in df.columns:
-        if is_object_dtype(df[col]) and key != 'df_count' and key != 'timelapse':
-            try:
-                df[col] = pd.to_datetime(df[col])
-            except Exception:
-                pass
+#     # Try to convert datetimes into a standard format (datetime, no timezone)
+#     for col in df.columns:
+#         if is_object_dtype(df[col]) and key != 'df_count' and key != 'timelapse':
+#             try:
+#                 df[col] = pd.to_datetime(df[col])
+#             except Exception:
+#                 pass
 
-        if is_datetime64_any_dtype(df[col]):
-            df[col] = df[col].dt.tz_localize(None)
+#         if is_datetime64_any_dtype(df[col]):
+#             df[col] = df[col].dt.tz_localize(None)
 
-    modification_container = st.container()
+#     modification_container = st.container()
 
-    with modification_container:
-        to_filter_columns = st.multiselect(st.session_state.langue['filters_data'], df.columns)
-        for column in to_filter_columns:
-            left, right = st.columns((1, 20))
-            # Treat columns with < 10 unique values as categorical
-            if is_categorical_dtype(df[column]) and df[column].nunique() < nunique:
-                left.write("↳")
-                user_cat_input = right.multiselect(
-                    f"{column} -> {st.session_state.langue['valeur_filter']}",
-                    df[column].unique(),
-                    default=list(df[column].unique()),
-                )
-                df = df[df[column].isin(user_cat_input)]
-            elif is_numeric_dtype(df[column]):
-                if type_number == 'float':
-                    left.write("↳")
-                    _min = float(df[column].min())
-                    _max = float(df[column].max())
-                    step = (_max - _min) / 100
-                elif type_number == 'int':
-                    left.write("↳")
-                    _min = int(df[column].min())
-                    _max = int(df[column].max())
-                    step = 1
-                user_num_input = right.slider(
-                    f"{column} -> {st.session_state.langue['valeur_filter']}",
-                    min_value=_min,
-                    max_value=_max,
-                    value=(_min, _max),
-                    step=step,
-                )
-                df = df[df[column].between(*user_num_input)]
-            elif is_datetime64_any_dtype(df[column]):
-                left.write("↳")
-                user_date_input = right.date_input(
-                    f"{column} -> {st.session_state.langue['valeur_filter']}",
-                    value=(
-                        df[column].min(),
-                        df[column].max(),
-                    ),
-                )
-                if len(user_date_input) == 2:
-                    user_date_input = tuple(
-                        map(pd.to_datetime, user_date_input))
-                    start_date, end_date = user_date_input
-                    df = df.loc[df[column].between(start_date, end_date)]
-            else:
-                left.write("↳")
-                user_text_input = right.text_input(
-                    f"{column} -> {st.session_state.langue['mot_ou_partie']}",
-                )
-                if user_text_input:
-                    df = df[df[column].astype(
-                        str).str.contains(user_text_input)]
+#     with modification_container:
+#         to_filter_columns = st.multiselect(st.session_state.langue['filters_data'], df.columns)
+#         for column in to_filter_columns:
+#             left, right = st.columns((1, 20))
+#             # Treat columns with < 10 unique values as categorical
+#             if is_categorical_dtype(df[column]) and df[column].nunique() < nunique:
+#                 left.write("↳")
+#                 user_cat_input = right.multiselect(
+#                     f"{column} -> {st.session_state.langue['valeur_filter']}",
+#                     df[column].unique(),
+#                     default=list(df[column].unique()),
+#                 )
+#                 df = df[df[column].isin(user_cat_input)]
+#             elif is_numeric_dtype(df[column]):
+#                 if type_number == 'float':
+#                     left.write("↳")
+#                     _min = float(df[column].min())
+#                     _max = float(df[column].max())
+#                     step = (_max - _min) / 100
+#                 elif type_number == 'int':
+#                     left.write("↳")
+#                     _min = int(df[column].min())
+#                     _max = int(df[column].max())
+#                     step = 1
+#                 user_num_input = right.slider(
+#                     f"{column} -> {st.session_state.langue['valeur_filter']}",
+#                     min_value=_min,
+#                     max_value=_max,
+#                     value=(_min, _max),
+#                     step=step,
+#                 )
+#                 df = df[df[column].between(*user_num_input)]
+#             elif is_datetime64_any_dtype(df[column]):
+#                 left.write("↳")
+#                 user_date_input = right.date_input(
+#                     f"{column} -> {st.session_state.langue['valeur_filter']}",
+#                     value=(
+#                         df[column].min(),
+#                         df[column].max(),
+#                     ),
+#                 )
+#                 if len(user_date_input) == 2:
+#                     user_date_input = tuple(
+#                         map(pd.to_datetime, user_date_input))
+#                     start_date, end_date = user_date_input
+#                     df = df.loc[df[column].between(start_date, end_date)]
+#             else:
+#                 left.write("↳")
+#                 user_text_input = right.text_input(
+#                     f"{column} -> {st.session_state.langue['mot_ou_partie']}",
+#                 )
+#                 if user_text_input:
+#                     df = df[df[column].astype(
+#                         str).str.contains(user_text_input)]
 
-    return df
+#     return df
 
+def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='float', disabled=False) -> pd.DataFrame:
+    config = config_from_dataframe(df)
+      
+    with st.container(border=True):
+        st.subheader(st.session_state.langue['filter'])
+        st.info(st.session_state.langue['filter_help'])
+        query_string = condition_tree(config, placeholder=st.session_state.langue['no_filter'], min_height=100, key=key)
+        
+    
+    return df.query(query_string)
 
 
 def table_with_images(df: pd.DataFrame, url_columns):

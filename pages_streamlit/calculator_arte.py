@@ -8,7 +8,7 @@ add_indentation()
 
 
 import json
-@st.cache_data
+
 def translation(langue):
     if langue == 'Français':
         return json.load(open('langue/fr.json', encoding='utf-8'))
@@ -19,6 +19,7 @@ def translation(langue):
     
 try:
     if not 'langue' in st.session_state:
+        st.session_state.translations_selected = 'Français'
         st.session_state.langue = translation("Français") 
 except:
     pass  
@@ -30,7 +31,7 @@ def stats(n):
 
     with column1:
         stats_selected = st.selectbox(
-            f'Substat {n}', options=max_sub_by_proc(4).keys(), key=f'substat_arte{n}')
+            f'Substat {n}', options=max_sub_by_proc(4, st.session_state.translations_selected).keys(), key=f'substat_arte{n}')
 
     with column2:
         proc = st.number_input(
@@ -44,14 +45,14 @@ def stats(n):
                 f'Valeur de base', format='%i', min_value=0, key=f'value_arte{n}')
 
     with column5:
-        max_stats = max_sub_by_proc(proc)[stats_selected]
+        max_stats = max_sub_by_proc(proc, st.session_state.translations_selected)[stats_selected]
         st.metric('Max possible', value=max_stats, delta=value-max_stats)
 
 
     return stats_selected, value
 
 
-sub_max = max_sub_by_proc(0)
+sub_max = max_sub_by_proc(0, st.session_state.translations_selected)
 
 
 def calculateur_efficiency():

@@ -45,6 +45,7 @@ def mise_en_forme_classement(df, variable='score'):
             lambda x: "***" if x['visibility'] == 1 and st.session_state['pseudo'] != x['joueur'] else x['joueur'], axis=1)
         df['joueur'] = df.apply(
             lambda x: "***" if x['visibility'] == 4 and st.session_state['pseudo'] != x['joueur'] and st.session_state['guilde'] != x['guilde'] else x['joueur'], axis=1)
+        
         # on filtre pour ceux qui veulent only guilde :
         df = df.apply(cleaning_only_guilde, axis=1)
         df = df[df['private'] == 0]
@@ -56,7 +57,7 @@ def mise_en_forme_classement(df, variable='score'):
         if filtre_guilde:
             df = df[df['guilde']
                     == st.session_state.guilde]
-
+            
         df.reset_index(inplace=True, drop=True)
         height_dataframe = 36 * df.shape[0]
 

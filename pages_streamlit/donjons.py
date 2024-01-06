@@ -6,11 +6,41 @@ from streamlit_extras.no_default_selectbox import selectbox
 from st_pages import add_indentation
 from fonctions.visuel import css
 import plotly_express as px
+import re
 
 css()
 
 add_indentation()
 
+
+def identifier_donjon(df):
+
+    if df['set'] != '0':
+            if 'Attribute' in df['set'] and df['dungeon'] == 'Abysses (Autres)':
+                return 'Forteresse Abyssal'
+            elif 'Archetype' in df['set'] and df['dungeon'] == 'Abysses (Autres)':
+                return 'Crypte'
+            elif df['set'] in ['Blade', 'Fatal', 'Despair', 'Swift', 'Energy'] and df['dungeon'] == 'Abysses (Autres)' : 
+                return 'GB Abyssal'
+            elif df['set'] in ['Guard', 'Endure', 'Violent', 'Revenge', 'Shield', 'Focus'] and df['dungeon'] == 'Abysses (Autres)':
+                return 'DB Abyssal'
+            elif df['set'] in ['Rage', 'Destroy', 'Will', 'Vampire', 'Nemesis'] and df['dungeon'] == 'Abysses (Autres)':
+                return 'Necro Abyssal'
+            elif df['set'] in ['Seal', 'Fight', 'Determination', 'Accuracy', 'Tolerance', 'Enhance'] and df['dungeon'] == 'Abysses (Autres)':
+                return 'Royaume spirituel'
+            else :
+                return df['dungeon']
+            
+    elif df['set'] == '0':
+            
+            if 'Harmony' in df['drop'] and df['dungeon'] == 'Abysses (Autres)':
+                return 'GB Abyssal'
+            elif 'Transcendence' in df['drop'] and df['dungeon'] == 'Abysses (Autres)':
+                return 'DB Abyssal'
+            elif 'Chaos' in df['drop'] and df['dungeon'] == 'Abysses (Autres)':
+                return 'Necro Abyssal'
+            else:
+                return df['dungeon']
 
 
 
@@ -30,20 +60,45 @@ def donjon():
         # date au bon format
         df_run['date'] = pd.to_datetime(df_run['date'])
         df_run['time'] = pd.to_datetime(df_run['time'], format='%M:%S').dt.time
+        df_run['set'] = df_run['set'].astype(str)
+        
+
 
         # Tant que les abysses ne sont pas séparés par RunLogger
-        df_run['dungeon'] = df_run['dungeon'].replace({'Unknown' : 'Abysses'})
+        df_run['dungeon'] = df_run['dungeon'].replace({'Unknown' : 'Abysses (Autres)'})
+        
+        df_run['dungeon'] = df_run.apply(lambda x : identifier_donjon(x), axis=1)
+        
+        df_stats = df_run.melt(id_vars=['dungeon', 'set'], value_vars=['sub1', 'sub2', 'sub3', 'sub4'])
+        
+        df_stats = df_stats[~df_stats['value'].isin([0, None])] # si pas de substat, on retire
+        
+        def retirer_pourcentage(x):
+            return re.sub(r'(\d+\s*%|\+|\+\(\d+\)|-|\b\d+\b)', '', x)
+
+        
+        df_stats['value'] = df_stats['value'].apply(retirer_pourcentage)
         
         # type de donjon
         
         list_donjon = df_run['dungeon'].unique()
+       
         
-        st.info("RunLogger ne différencie pas les abysses pour le moment")
         
         donjon_selected = selectbox('Donjon', list_donjon)
+
+
         
         if donjon_selected != None:
             df_run = df_run[df_run['dungeon'] == donjon_selected]
+            df_stats = df_stats[df_stats['dungeon'] == donjon_selected]
+        
+        list_set = df_run['set'].unique()
+        set_selected = selectbox('Set', list_set)   
+                  
+        if set_selected != None:
+            df_run = df_run[df_run['set'] == set_selected]
+            df_stats = df_stats[df_stats['set'] == set_selected]            
        
      
         col1, col2 = st.columns(2)    
@@ -53,7 +108,8 @@ def donjon():
             
             st.plotly_chart(fig)
         
-        with col2:    
+        with col2:  
+
             fig = px.pie(df_run, names='dungeon', title='Répartition des donjons')
             
             st.plotly_chart(fig)
@@ -100,8 +156,26 @@ def donjon():
                 
                 st.plotly_chart(fig)
             
+        col7, col8 = st.columns(2)
+        
+        with col7:
             
+            fig = px.pie(df_stats, names='value', title='Value')
             
+            st.plotly_chart(fig)
+        
+        
+        with col8:
+            
+            df_grp = df_stats.groupby(['dungeon', 'set', 'value'], as_index=False).count()
+                    
+            if df_grp.shape[0] > 0:
+                    
+                fig = px.sunburst(df_grp, path=['dungeon', 'set', 'value'], values='variable', title='Répartition des runes/artefacts')            
+                
+                fig.update_traces(textinfo='value+label')
+                
+                st.plotly_chart(fig)
         
 
 

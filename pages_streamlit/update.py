@@ -19,7 +19,13 @@ col1, col2, col3 = st.columns([0.4,0.2,0.4])
 with col2:
     img = load_lottieurl('https://assets7.lottiefiles.com/private_files/lf30_rzhdjuoe.json')
     st_lottie(img, height=200, width=200)
+    
+with st.expander('Version 06/01/2024', expanded=True):
+    st.info(" Bonne année :) ! \n\n"+
+            "- Amélioration de l'onglet Donjon avec plus de stats") 
 
+with st.expander('Version 28/12/2023', expanded=True):
+    st.info("- Meilleur process pour filtrer les données") 
 
 with st.expander('Version 16/12/2023', expanded=True):
     st.info("- Ajout des Anges \n\n"+
@@ -45,33 +51,33 @@ with st.expander('Version 30/09/2023', expanded=True):
             "- Correction de bugs")   
     
     
-with st.expander('Version 30/08/2023', expanded=True):
+with st.expander('Version 30/08/2023', expanded=False):
     st.info("- Ajout d'un tag Reap paramétrable dans Optimisation")   
     
-with st.expander('Version 29/08/2023', expanded=True):
+with st.expander('Version 29/08/2023', expanded=False):
     st.info("- Ajout d'un calculateur de DMG Lushen  \n\n"+
             "- Ajout d'une ToDoList téléchargeable ou sauvegardable sur ses runes") 
     
-with st.expander('Version 20/08/2023', expanded=True):
+with st.expander('Version 20/08/2023', expanded=False):
     st.info("- English Version ") 
 
-with st.expander('Version 09/08/2023', expanded=True):
+with st.expander('Version 09/08/2023', expanded=False):
     st.info("- Détail des stats artefacts dans l'onglet General ") 
     
-with st.expander('Version 27/07/2023', expanded=True):
+with st.expander('Version 27/07/2023', expanded=False):
     st.info("- Ajout du classement par rune dans Statistiques (Runes)")      
     
-with st.expander('Version 18/07/2023', expanded=True):
+with st.expander('Version 18/07/2023', expanded=False):
     st.info("- Ajout du scoring qualité\n\n"+
             "- Amélioration de la stabilité de l'app :+1:\n\n"+
             "- Amélioration de certains filtres \n\n"+
             "- Ajout de la qualité et qualité originelle des runes dans les différents onglets")   
     
-with st.expander('Version 14/07/2023', expanded=True):
+with st.expander('Version 14/07/2023', expanded=False):
     st.info("- Amélioration de l'onglet Evolution\n\n"+
             "- Amélioration de la lisibilité de l'onglet Creer un build")   
         
-with st.expander('Version 08/07/2023', expanded=True):
+with st.expander('Version 08/07/2023', expanded=False):
     st.info("- Amélioration de l'onglet Inventaire Artefact")   
     
 with st.expander('Version 01/07/2023', expanded=False):

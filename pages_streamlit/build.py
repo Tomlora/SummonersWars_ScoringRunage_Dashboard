@@ -258,8 +258,12 @@ def build():
             if num_rune != df_rune['Slot'].values[0]:
                 st.warning(
                     f'Slot : {df_rune["Slot"].values[0]}', icon="🚨")
-
-            return f'Rune {num_rune} : :blue[{df_rune["Set rune"].values[0]}] :orange[({st.session_state.langue["equiped_on"]} {df_rune["Equipé"].values[0]})]\
+            try:
+                img = f"https://swarfarm.com/static/herders/images/monsters/{swarfarm[swarfarm['name'] == df_rune['Equipé'].values[0]]['image_filename'].values[0]}"
+            except IndexError: # pas d'image
+                img = None
+            
+            txt = f'Rune {num_rune} : :blue[{df_rune["Set rune"].values[0]}] :orange[({st.session_state.langue["equiped_on"]} {df_rune["Equipé"].values[0]})]\
             <br><br>{st.session_state.langue["main_stat"]} : :blue[{df_rune["Stat principal"].values[0]}] :green[({df_rune["Valeur stat principal"].values[0]})]\
             <br>Innate : :blue[{df_rune["innate_type"].values[0]}] :green[({df_rune["innate_value"].values[0]})]\
             <br><br>Sub1 : :blue[{df_rune["Substat 1"].values[0]}] :green[({df_rune["Substat 1 total"].values[0]})]\
@@ -267,8 +271,10 @@ def build():
             <br>Sub3 : :blue[{df_rune["Substat 3"].values[0]}] :green[({df_rune["Substat 3 total"].values[0]})]\
             <br>Sub4 : :blue[{df_rune["Substat 4"].values[0]}] :green[({df_rune["Substat 4 total"].values[0]})]'
 
+            return txt, img
+
         else:
-            return ''
+            return '', ''
 
     with st.expander('Stats'):
         set = ''
@@ -437,8 +443,12 @@ def build():
         with st.container():
             for i in [1, 3, 5]:
                 try:
-                    st.write(show_rune(i, monster_selected,
-                             build_selected), unsafe_allow_html=True)
+                    txt, img = show_rune(i, monster_selected,
+                             build_selected)
+                    col1_1, col1_2 = st.columns(2)
+                    col1_1.write(txt, unsafe_allow_html=True)
+                    if img != None:
+                        col1_2.image(img)
                 except KeyError as e:
                     if e.args[0] == -1:
                         st.info(st.session_state.langue['no_rune_slot'], icon="🚨")
@@ -449,8 +459,12 @@ def build():
         with st.container():
             for i in [2, 4, 6]:
                 try:
-                    st.write(show_rune(i, monster_selected,
-                             build_selected), unsafe_allow_html=True)
+                    txt, img = show_rune(i, monster_selected,
+                             build_selected)
+                    col2_1, col2_2 = st.columns(2)
+                    col2_1.write(txt, unsafe_allow_html=True)
+                    if img != None:
+                        col2_2.image(img)
                 except KeyError as e:
                     if e.args[0] == -1:
                         st.info(st.session_state.langue['no_rune_slot'], icon="🚨")

@@ -139,7 +139,8 @@ dict_arte_archetype = {
     2: 'DEFENSE',
     3: 'HP',
     4: 'SUPPORT',
-    5: 'MATERIAL'
+    5: 'MATERIAL',
+    98: 'INTANGIBLE'
 }
 
 dict_arte_main_stat = {
@@ -150,7 +151,7 @@ dict_arte_main_stat = {
 
 
 @st.cache_data
-def max_sub_by_proc(proc):
+def max_sub_by_proc(proc, langue):
     "Calcule la sub max en fonction du nombre de proc"
 
     proc += 1  # le proc à +0
@@ -208,7 +209,7 @@ def max_sub_by_proc(proc):
         'PREMIER HIT CRIT DMG' : 6 * proc
     }
     
-    if st.session_state.translations_selected == 'English':
+    if langue == 'English':
         sub_max = {dict_arte_effect_english[key] : value for key, value in sub_max.items()}
         
     return sub_max

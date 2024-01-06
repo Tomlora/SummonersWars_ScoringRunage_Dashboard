@@ -1,6 +1,7 @@
 
 import streamlit as st
 import plotly.graph_objects as go
+import plotly_express as px
 import pandas as pd
 from fonctions.visuel import load_lottieurl, css, load_logo
 from streamlit_lottie import st_lottie
@@ -175,6 +176,15 @@ def general_page():
                                 barmode="overlay",
                                 bargap=0.1)
                             st.plotly_chart(fig)
+                            
+                        
+                        fig_count = px.pie(st.session_state.data_avg,
+                                           names=st.session_state.data_avg.index,
+                                           values='Nombre runes',
+                                           color=st.session_state.data_avg.index,
+                                           title='Count runes')
+                        
+                        st.plotly_chart(fig_count)
                             
 
 
@@ -405,7 +415,7 @@ def general_page():
                     df_arte = st.session_state.data_arte.df_top.copy()
                     
                     liste_elementaire = ['FEU', 'EAU', 'VENT', 'LUMIERE', 'TENEBRE', 'INTANGIBLE']
-                    liste_attribut = ['ATTACK', 'DEFENSE', 'HP', 'SUPPORT']
+                    liste_attribut = ['ATTACK', 'DEFENSE', 'HP', 'SUPPORT', 'INTANGIBLE']
                     
                     
                     col_elem, col_att = st.columns(2)

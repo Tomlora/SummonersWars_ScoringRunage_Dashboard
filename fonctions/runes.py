@@ -647,11 +647,7 @@ class Rune():
         
         return self.data_scoring_quality, self.score_qual
         
-        
-        
-        
-        
-    
+
     def map_stats(self, df : pd.DataFrame, columns : list):
         '''Transforme les substats numériques en string'''
 
@@ -1173,16 +1169,11 @@ class Rune():
     def calcul_efficiency_describe_top(self, top : int=25): # TODO : A tester
         self.data_avg_asc : pd.DataFrame = self.data.sort_values(by='efficiency', ascending=False)
         
-        a = time()
         data_avg_top = self.data_avg_asc.groupby('type_rune')['efficience'].nlargest(top).reset_index()
-        
-        print(data_avg_top)
-        
+    
         data_avg_top_avg = data_avg_top.groupby('type_rune')['efficience'].mean().reset_index()
         
-        print(data_avg_top_avg)
-        
-        print(time()-a)
+
         
         
 
