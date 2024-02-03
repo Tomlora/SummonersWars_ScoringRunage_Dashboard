@@ -39,6 +39,7 @@ def main_page():
                         Section(name='Live', icon=':japanese_ogre:'),
                         Page('pages_streamlit/donjons.py', 'Donjons', icon=':japanese_castle:'),
                         Page('pages_streamlit/raid.py', 'Raid', icon=':dragon_face:'),
+                        Page('pages_streamlit/spdtune.py', 'SpeedTune', icon=':sparkler:'),
                         # Page('pages_streamlit/timelapse.py', 'Timelapse', ':bookmark_tabs:'), 
                         Section(name='Classement', icon=':trophy:'),
                         Page('pages_streamlit/ladder.py', 'Scoring', icon='🥇'),
@@ -64,7 +65,8 @@ def main_page():
                         Page('pages_streamlit/visibility.py', 'Ma visibilité', icon=':eyes:'),
                         Page('pages_streamlit/options.py', 'Mes données', icon=':iphone:'),
                         Section(name='Mise à jour', icon=':loudspeaker:'),
-                        Page('pages_streamlit/update.py', 'Version 06/01/24', icon=':speaker:')
+                        Page('pages_streamlit/update.py', 'Version 03/02/24', icon=':speaker:'),
+                        Page('pages_streamlit/feedback.py', 'Feedback', icon=':mega:'),
 
                         # Section(name='Administration', icon=':star:'),
                         # Page('pages_streamlit/visualisation_joueur.py', 'Visualisation', icon=':mag:'),

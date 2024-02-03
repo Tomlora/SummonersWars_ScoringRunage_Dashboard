@@ -205,7 +205,7 @@ def upload_sw():
                         
                     data_mobs = pd.DataFrame.from_dict(
                             st.session_state['data_json'], orient="index").transpose()
-
+                    
                     data_mobs = data_mobs['unit_list']
 
                         # On va boucler et retenir ce qui nous intéresse..
@@ -221,8 +221,15 @@ def upload_sw():
                                         monstre['critical_rate'], monstre['critical_damage']])
                         
                         for i in range(6):  # itération sur les runes de 1 à 6
+                            
                             if len(monstre['runes']) > i:
+                                if isinstance(monstre['runes'], dict):
+                                    # transformer chaque item du dict en une liste:
+                                    monstre['runes'] = [monstre['runes'][k] for k in monstre['runes']]
+                                    
+
                                 list_mobs[-1].append(monstre['runes'][i]['rune_id'])
+
                             else:  # s'il n'a pas de rune dans le slot, on met 0
                                 list_mobs[-1].append(0)
 

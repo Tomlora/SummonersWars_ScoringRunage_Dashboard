@@ -119,12 +119,13 @@ def general_page():
                             st.dataframe(
                                 st.session_state.tcd_spd.reindex(new_index_spd).set_index('img').dropna(how='all'),
                                 use_container_width=True,
-                                column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
+                                column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')},
+                                height=330)
                             
 
 
                         with score_column_df_arte:
-                            st.dataframe(st.session_state.tcd_arte, use_container_width=True)
+                            st.dataframe(st.session_state.tcd_arte, use_container_width=True, height=298)
                             
 
                         st.metric(st.session_state.langue['Score_quality_rune'],st.session_state.score_qual)

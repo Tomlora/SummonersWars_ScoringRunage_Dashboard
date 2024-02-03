@@ -225,7 +225,8 @@ def objectif():
                     st.subheader(f'{main_stat} > {param_objectifs[key]}')
                     
                     st.dataframe(df_bool,
-                                use_container_width=True)
+                                use_container_width=True,
+                                height=225)
         
     df_final = pd.DataFrame.from_dict([dict_true, dict_true_max, dict_diff])
  
