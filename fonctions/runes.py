@@ -88,6 +88,14 @@ class Rune():
                             5: 30,
                             6: 10,
                             8: 5}
+
+        self.sub_max_lgd_antique = {1: 610,
+                            2: 12,
+                            3: 34,
+                            4: 12,
+                            5: 34,
+                            6: 12,
+                            8: 6}
         
         self.sub_max_heroique = {1: 450,
                                  2: 7,
@@ -96,6 +104,14 @@ class Rune():
                                  5: 22,
                                  6: 7,
                                  8: 4}
+
+        self.sub_max_heroique_antique = {1: 510,
+                                 2: 9,
+                                 3: 26,
+                                 4: 9,
+                                 5: 26,
+                                 6: 9,
+                                 8: 5}
         
         self.set = {1: "Energy",
                     2: "Guard",
@@ -167,6 +183,11 @@ class Rune():
                                 'DEF%': 13, 'SPD': 10, 'CRIT': 9, 'DCC': 10, 'RES': 11, 'ACC': 11}
         self.gemme_max_hero = {'HP': 420, 'HP%': 11, 'ATQ': 30, 'ATQ%': 11, 'DEF': 30,
                                 'DEF%': 11, 'SPD': 8, 'CRIT': 7, 'DCC': 8, 'RES': 9, 'ACC': 9}
+        
+        self.gemme_max_lgd_antique = {'HP': 640, 'HP%': 15, 'ATQ': 44, 'ATQ%': 15, 'DEF': 44,
+                                'DEF%': 15, 'SPD': 11, 'CRIT': 10, 'DCC': 12, 'RES': 13, 'ACC': 13}
+        self.gemme_max_hero_antique = {'HP': 480, 'HP%': 13, 'ATQ': 34, 'ATQ%': 13, 'DEF': 34,
+                                'DEF%': 13, 'SPD': 9, 'CRIT': 8, 'DCC': 10, 'RES': 11, 'ACC': 11}
         
         # Inventaire
         for rune in self.data_json['runes']:
@@ -880,17 +901,31 @@ class Rune():
         dict = {'first_grind_value_max': 'first_sub', 'second_grind_value_max': 'second_sub',
                 'third_grind_value_max': 'third_sub', 'fourth_grind_value_max': 'fourth_sub'}
         
+        mask_antique = self.data_grind['qualité'].str.contains('ANTIQUE')
+        mask_non_antique = ~self.data_grind['qualité'].str.contains('ANTIQUE')
+
         for key, value in dict.items():
 
-            self.data_grind[key + '_lgd'] = self.data_grind[value].replace(self.sub_max_lgd)
-            self.data_grind[key + '_hero'] = self.data_grind[value].replace(self.sub_max_heroique)
 
+            self.data_grind.loc[mask_antique, key + '_lgd'] = self.data_grind.loc[mask_antique, value].replace(self.sub_max_lgd_antique)
+            self.data_grind.loc[mask_antique, key + '_hero'] = self.data_grind.loc[mask_antique, value].replace(self.sub_max_heroique_antique)
+            
+            self.data_grind.loc[mask_non_antique, key + '_lgd'] = self.data_grind.loc[mask_non_antique, value].replace(self.sub_max_lgd)
+            self.data_grind.loc[mask_non_antique, key + '_hero'] = self.data_grind.loc[mask_non_antique, value].replace(self.sub_max_heroique)
+            
+            
+            
             # Certaines stats ne sont pas meulables. On remplace donc le potentiel de meule par 0
 
-            self.data_grind[key + "_lgd"] = np.where(self.data_grind[value]
-                                          > 8, 0,  self.data_grind[key + "_lgd"])
-            self.data_grind[key + "_hero"] = np.where(self.data_grind[value]
-                                           > 8, 0, self.data_grind[key + "_hero"])
+            self.data_grind.loc[mask_antique, key + "_lgd"] = np.where(self.data_grind.loc[mask_antique, value]
+                                          > 8, 0,  self.data_grind.loc[mask_antique, key + "_lgd"])
+            self.data_grind.loc[mask_antique, key + "_hero"] = np.where(self.data_grind.loc[mask_antique, value]
+                                           > 8, 0, self.data_grind.loc[mask_antique, key + "_hero"])
+
+            self.data_grind.loc[mask_non_antique, key + "_lgd"] = np.where(self.data_grind.loc[mask_non_antique, value]
+                                          > 8, 0,  self.data_grind.loc[mask_non_antique, key + "_lgd"])
+            self.data_grind.loc[mask_non_antique, key + "_hero"] = np.where(self.data_grind.loc[mask_non_antique, value]
+                                           > 8, 0, self.data_grind.loc[mask_non_antique, key + "_hero"])
             
             
         # Value stats de base + meule (max)
@@ -940,9 +975,9 @@ class Rune():
                                                     + self.data_grind['fourth_sub_value_total_max_hero'] / self.data_grind['fourth_sub_value_max'])
                                                     / 2.8)*100, 2))
 
-        self.data_grind['potentiel_max_lgd'] = self.data_grind['efficiency_max_lgd'] - self.data_grind['efficiency']
+        self.data_grind['potentiel_max_lgd'] = np.round(self.data_grind['efficiency_max_lgd'] - self.data_grind['efficiency'],2)
 
-        self.data_grind['potentiel_max_hero'] = self.data_grind['efficiency_max_hero'] - self.data_grind['efficiency']
+        self.data_grind['potentiel_max_hero'] = np.round(self.data_grind['efficiency_max_hero'] - self.data_grind['efficiency'],2)
         
 
 
@@ -980,6 +1015,7 @@ class Rune():
 
 
         for key, value in dict.items():
+            
                     # Améliorable ? (valeur)
             self.data_grind[key + '_lgd_value'] = self.data_grind[value[1] +
                                                     '_max_lgd'] - self.data_grind[value[0]]
@@ -993,6 +1029,7 @@ class Rune():
 
 
         # # Commentaires
+
 
    
                 # Level
@@ -1016,11 +1053,14 @@ class Rune():
         # meule
 
         for key, value in dict.items():
+            
             nom = key + "_lgd_value"
+            self.data_grind[nom] = self.data_grind[nom].astype(int)
             self.data_grind['Grind_lgd'] = np.where(self.data_grind[key + '_lgd_ameliorable?'] == 1, self.data_grind['Grind_lgd'] +
                                                 "Meule : " + self.data_grind[value] + "(" + self.data_grind[nom].astype('str') + ") \n", self.data_grind['Grind_lgd'])
 
             nom = key + "_hero_value"
+            self.data_grind[nom] = self.data_grind[nom].astype(int)
             self.data_grind['Grind_hero'] = np.where(self.data_grind[key + '_hero_ameliorable?'] == 1, self.data_grind['Grind_hero'] +
                                                 "Meule : " + self.data_grind[value] + "(" + self.data_grind[nom].astype('str') + ") \n", self.data_grind['Grind_hero'])
 
@@ -1032,15 +1072,33 @@ class Rune():
 
         # On les inclut au dataframe
 
-        self.data_grind['first_gemme_max_lgd'] = self.data_grind['first_sub'].map(self.gemme_max_lgd)
-        self.data_grind['second_gemme_max_lgd'] = self.data_grind['second_sub'].map(self.gemme_max_lgd)
-        self.data_grind['third_gemme_max_lgd'] = self.data_grind['third_sub'].map(self.gemme_max_lgd)
-        self.data_grind['fourth_gemme_max_lgd'] = self.data_grind['fourth_sub'].map(self.gemme_max_lgd)
+        # self.data_grind['first_gemme_max_lgd'] = self.data_grind['first_sub'].map(self.gemme_max_lgd)
+        # self.data_grind['second_gemme_max_lgd'] = self.data_grind['second_sub'].map(self.gemme_max_lgd)
+        # self.data_grind['third_gemme_max_lgd'] = self.data_grind['third_sub'].map(self.gemme_max_lgd)
+        # self.data_grind['fourth_gemme_max_lgd'] = self.data_grind['fourth_sub'].map(self.gemme_max_lgd)
+        
+        def mapping_gemme(loc, mapping_lgd, mapping_hero):
+        
+            # self.data_grind['qualité'] == 'ANTIQUE'
+            self.data_grind.loc[loc, 'first_gemme_max_lgd'] = self.data_grind.loc[loc, 'first_sub'].map(mapping_lgd)
+            self.data_grind.loc[loc, 'second_gemme_max_lgd'] = self.data_grind.loc[loc, 'second_sub'].map(mapping_lgd)
+            self.data_grind.loc[loc, 'third_gemme_max_lgd'] = self.data_grind.loc[loc, 'third_sub'].map(mapping_lgd)
+            self.data_grind.loc[loc, 'fourth_gemme_max_lgd'] = self.data_grind.loc[loc, 'fourth_sub'].map(mapping_lgd)
+            
+            self.data_grind.loc[loc, 'first_gemme_max_hero'] = self.data_grind.loc[loc, 'first_sub'].map(mapping_hero)
+            self.data_grind.loc[loc, 'second_gemme_max_hero'] = self.data_grind.loc[loc, 'second_sub'].map(mapping_hero)
+            self.data_grind.loc[loc, 'third_gemme_max_hero'] = self.data_grind.loc[loc, 'third_sub'].map(mapping_hero)
+            self.data_grind.loc[loc, 'fourth_gemme_max_hero'] = self.data_grind.loc[loc, 'fourth_sub'].map(mapping_hero)
+            
+            return self.data_grind
+        
+        self.data_grind = mapping_gemme(self.data_grind['qualité'].str.contains('ANTIQUE'), self.gemme_max_lgd_antique, self.gemme_max_hero_antique)
+        self.data_grind = mapping_gemme(~self.data_grind['qualité'].str.contains('ANTIQUE'), self.gemme_max_lgd, self.gemme_max_hero)
 
-        self.data_grind['first_gemme_max_hero'] = self.data_grind['first_sub'].map(self.gemme_max_hero)
-        self.data_grind['second_gemme_max_hero'] = self.data_grind['second_sub'].map(self.gemme_max_hero)
-        self.data_grind['third_gemme_max_hero'] = self.data_grind['third_sub'].map(self.gemme_max_hero)
-        self.data_grind['fourth_gemme_max_hero'] = self.data_grind['fourth_sub'].map(self.gemme_max_hero)
+        # self.data_grind['first_gemme_max_hero'] = self.data_grind['first_sub'].map(self.gemme_max_hero)
+        # self.data_grind['second_gemme_max_hero'] = self.data_grind['second_sub'].map(self.gemme_max_hero)
+        # self.data_grind['third_gemme_max_hero'] = self.data_grind['third_sub'].map(self.gemme_max_hero)
+        # self.data_grind['fourth_gemme_max_hero'] = self.data_grind['fourth_sub'].map(self.gemme_max_hero)
 
         dict2 = {'first_gemme': 'first_sub',
                         'second_gemme': 'second_sub',
@@ -1050,7 +1108,11 @@ class Rune():
                 # On fait le calcul :
 
         for key, sub in dict2.items():
-
+            
+            self.data_grind[key + '_max_lgd'] = self.data_grind[key + '_max_lgd'].astype(int)
+            self.data_grind[key + '_max_hero'] = self.data_grind[key + '_max_hero'].astype(int)
+            self.data_grind[sub + '_value'] = self.data_grind[sub + '_value'].astype(int)
+            
             condition = self.data_grind[key + '_bool'] == 1  # si 1 -> gemme utilisée
                 # différence entre le max et la gemme
             calcul_lgd = self.data_grind[key + '_max_lgd'] - self.data_grind[sub + '_value']
@@ -1058,6 +1120,7 @@ class Rune():
             calcul_hero = self.data_grind[key + '_max_hero'] - self.data_grind[sub + '_value']
             condition_lgd = calcul_lgd > 0  # s'il y a un écart, ce n'est pas la stat max
             condition_hero = calcul_hero > 0
+            
 
             self.data_grind['Grind_lgd'] = np.where(condition,
                                                 np.where(condition_lgd,
@@ -1082,6 +1145,10 @@ class Rune():
         self.data_short = optimisation_int(self.data_short, ['int64'])
         self.data_short[['efficiency', 'efficiency_max_hero', 'efficiency_max_lgd', 'potentiel_max_lgd', 'potentiel_max_hero']] = self.data_short[['efficiency', 'efficiency_max_hero', 'efficiency_max_lgd', 'potentiel_max_lgd', 'potentiel_max_hero']].astype('float16')
         
+        ## potentiel_max a 2 decimales max : 
+        
+        self.data_short['potentiel_max_lgd'] = np.round(self.data_short['potentiel_max_lgd'],2)
+        self.data_short['potentiel_max_hero'] = np.round(self.data_short['potentiel_max_hero'],2)
         
     def count_meules_manquantes(self):
         '''Calcule le nombre de meules manquantes'''

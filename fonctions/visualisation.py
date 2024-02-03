@@ -216,13 +216,16 @@ def plotline_evol_rune_visu(df, color='Set'):
 
 #     return df
 
-def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='float', disabled=False) -> pd.DataFrame:
+def filter_dataframe(df: pd.DataFrame, key='key', nunique:int=50, type_number='float', disabled=False, container=True) -> pd.DataFrame:
     config = config_from_dataframe(df)
       
-    with st.container(border=True):
+    if container:  
+        with st.container(border=True):
+            st.subheader(st.session_state.langue['filter'])
+            query_string = condition_tree(config, placeholder=st.session_state.langue['no_filter'], min_height=100, key=key)
+    else:
         st.subheader(st.session_state.langue['filter'])
-        st.info(st.session_state.langue['filter_help'])
-        query_string = condition_tree(config, placeholder=st.session_state.langue['no_filter'], min_height=100, key=key)
+        query_string = condition_tree(config, placeholder=st.session_state.langue['no_filter'], min_height=100, key=key)       
         
     
     return df.query(query_string)
