@@ -202,6 +202,7 @@ if 'submitted' in st.session_state:
 
         todo()
 
+
     else:
         switch_page('Upload JSON')
 

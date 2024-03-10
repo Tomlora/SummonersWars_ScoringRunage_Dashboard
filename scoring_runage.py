@@ -28,7 +28,7 @@ def chargement_params():
 @st.cache_data
 def main_page():
     st.session_state.category_selected, st.session_state.category_selected_spd, st.session_state.coef_set, st.session_state.coef_set_spd = chargement_params()
-
+    
     add_indentation()
     show_pages([
                         Page('pages_streamlit/upload.py', 'Upload JSON', icon=':file_folder:'),
@@ -39,7 +39,7 @@ def main_page():
                         Section(name='Live', icon=':japanese_ogre:'),
                         Page('pages_streamlit/donjons.py', 'Donjons', icon=':japanese_castle:'),
                         Page('pages_streamlit/raid.py', 'Raid', icon=':dragon_face:'),
-                        Page('pages_streamlit/spdtune.py', 'SpeedTune', icon=':sparkler:'),
+                        # Page('pages_streamlit/spdtune.py', 'SpeedTune', icon=':sparkler:'),
                         # Page('pages_streamlit/timelapse.py', 'Timelapse', ':bookmark_tabs:'), 
                         Section(name='Classement', icon=':trophy:'),
                         Page('pages_streamlit/ladder.py', 'Scoring', icon='🥇'),
@@ -55,6 +55,7 @@ def main_page():
                         Page('pages_streamlit/calculator.py', 'Calculateur efficience', icon=':1234:'),
                         Section(name='Artefacts', icon=':gem:'),
                         Page('pages_streamlit/inventaire_artefact.py', 'Inventaire', icon=':open_file_folder:'),
+                        Page('pages_streamlit/top_artefact.py', 'Best Artefacts', icon=':bomb:'),
                         Page('pages_streamlit/stats_artefact.py', 'Statistiques', icon=':bar_chart:'),
                         Page('pages_streamlit/upgrade_artefact.py', 'Upgrade', icon=':arrow_up:'),
                         Page('pages_streamlit/objectif_arte.py', 'Objectif', icon='💪'),
@@ -65,7 +66,7 @@ def main_page():
                         Page('pages_streamlit/visibility.py', 'Ma visibilité', icon=':eyes:'),
                         Page('pages_streamlit/options.py', 'Mes données', icon=':iphone:'),
                         Section(name='Mise à jour', icon=':loudspeaker:'),
-                        Page('pages_streamlit/update.py', 'Version 03/02/24', icon=':speaker:'),
+                        Page('pages_streamlit/update.py', 'Version 10/03/24', icon=':speaker:'),
                         Page('pages_streamlit/feedback.py', 'Feedback', icon=':mega:'),
 
                         # Section(name='Administration', icon=':star:'),
@@ -73,6 +74,8 @@ def main_page():
                         # Page('pages_streamlit/box.py', 'Box guilde', icon=':briefcase:' )
                         ])
 
+
+        
 
     # si submitted n'est pas initialisé, c'est que le joueur vient d'arriver et n'a pas upload de json. C'est donc false.
     if 'submitted' not in st.session_state:

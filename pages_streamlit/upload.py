@@ -14,8 +14,10 @@ from fonctions.artefact import Artefact
 from st_pages import add_indentation
 from sqlalchemy.exc import InternalError, OperationalError
 from dateutil import tz
-# import tracemalloc
 import gc
+# from memory_profiler import profile
+# from streamlit_profiler import Profiler
+
 
 try:
     st.set_page_config(layout='wide')
@@ -26,7 +28,7 @@ except:
 css()
 add_indentation()
 
-@st.cache_data
+# @st.cache_data
 def show_lottie(img, height=300 , width=300):
     st_lottie(img, height=height, width=width)
 
@@ -69,7 +71,7 @@ def date_du_jour():
 # on charge swarfarm
 @st.cache_data(show_spinner=False)
 def load_swarfarm():
-    swarfarm = lire_bdd('sw_ref_monsters').T.drop('index', axis=1)
+    swarfarm = lire_bdd('sw_ref_monsters').T
     swarfarm[['element', 'archetype']] = swarfarm[['element', 'archetype']].astype('category')
     return swarfarm
 
@@ -108,20 +110,10 @@ def translation(langue):
         return json.load(open('langue/fr.json', encoding='utf-8'))
     elif langue == 'English':
         return json.load(open('langue/en.json', encoding='utf-8'))
-                    
-def upload_sw():
-    
-    # tracemalloc.start()
-    
-    # current, peak = tracemalloc.get_traced_memory()
-    
-    # print(current / (1024*1024))
-    # print(peak / (1024 * 1024))
-    
 
-        
-    
-    
+                
+def upload_sw():
+   
 
     col1, col2, col3 = st.columns([0.25,0.50,0.25])
     with col2:
@@ -563,7 +555,8 @@ def upload_sw():
             
         telechargement_json()
         
-            
+# p = Profiler()
+# p.start()          
 upload_sw()    
- 
+# p.stop()
 st.caption('Made by Tomlora :sunglasses:')

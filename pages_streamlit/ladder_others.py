@@ -2,7 +2,6 @@ from fonctions.gestion_bdd import lire_bdd_perso, cleaning_only_guilde
 import pandas as pd
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
-from params.coef import coef_set, coef_set_spd
 from datetime import timedelta
 
 from st_pages import add_indentation

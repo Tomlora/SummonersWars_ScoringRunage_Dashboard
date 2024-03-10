@@ -12,9 +12,10 @@ add_indentation()
 
 @st.cache_data()
 def charger_data():
-    df = lire_bdd_perso('''SELECT sw_ref_monsters_stats.name, sw_ref_monsters_stats.speed,  sw_ref_monsters.image_filename,
-                        sw_ref_monsters.attribute_leader,  sw_ref_monsters.amount_leader from sw_ref_monsters_stats 
+    df = lire_bdd_perso('''SELECT sw_ref_monsters.name, sw_ref_monsters_stats.speed,  sw_ref_monsters.image_filename,
+                        sw_ref_leader.attribute_leader,  sw_ref_leader.amount_leader from sw_ref_monsters_stats 
                         INNER JOIN sw_ref_monsters ON sw_ref_monsters.id = sw_ref_monsters_stats.id
+                        INNER JOIN sw_ref_leader ON sw_ref_leader.id_leader = sw_ref_monsters.id_leader
                         WHERE sw_ref_monsters_stats.awaken_level >= 1''', index_col=None).T
     
     df['img_url'] = df['image_filename'].apply(lambda x: f'https://swarfarm.com/static/herders/images/monsters/{x}')

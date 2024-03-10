@@ -24,6 +24,12 @@ with col2:
 tab2024, tab2023 = st.tabs(['2024', '2023'])
 
 with tab2024:
+    
+    with st.expander('Version 10/03/2024', expanded=True):
+        st.info("- Amelioration générale des performances \n\n"+
+                "- Retrait de l'onglet SpeedTune : SWGT ayant apporté un outil disponible à tous et bien meilleur") 
+        
+        
     with st.expander('Version 03/02/2024', expanded=True):
         st.info("- Correction d'un bug d'upload sur MacOS") 
 

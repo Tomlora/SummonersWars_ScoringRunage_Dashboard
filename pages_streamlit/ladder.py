@@ -4,7 +4,6 @@ import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 from params.coef import coef_set, coef_set_spd
 from datetime import timedelta
-from streamlit_extras.no_default_selectbox import selectbox
 from st_pages import add_indentation
 from fonctions.visuel import css
 css()

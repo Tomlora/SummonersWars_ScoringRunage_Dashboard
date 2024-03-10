@@ -18,6 +18,8 @@ st.title("Feedback")
 add_vertical_space(1)
 st.markdown("Si vous avez des suggestions ou des bugs à signaler, veuillez les écrire ici :")
 
+st.info("Je ne suis pas developpeur web, l'application est réalisée avec mes faibles compétences dans le domaine :) ")
+
 
 type = st.selectbox("Type de feedback", ["Bug", "Suggestion", "Autre"])
 feedback = st.text_area("Écrivez votre feedback ici")

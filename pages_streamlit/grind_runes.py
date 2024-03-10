@@ -1,7 +1,6 @@
 from st_pages import add_indentation
 import pandas as pd
 import numpy as np
-import plotly.express as px
 import ast
 import streamlit as st
 from io import BytesIO
@@ -11,7 +10,6 @@ from streamlit_extras.switch_page_button import switch_page
 # fix plotly express et Visual Studio Code
 import plotly.io as pio
 pio.renderers.default = "notebook_connected"
-from scipy.optimize import minimize
 
 from fonctions.visuel import css
 css()

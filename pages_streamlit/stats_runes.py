@@ -186,7 +186,7 @@ def stats_runage():
             add_vertical_space(2)
             
             st.text(f'{st.session_state.langue["Classement"]} ({df_points_set.shape[0]} {st.session_state.langue["joueurs"]})')
-            st.markdown(f'Points : :green[{df_points_set.loc[st.session_state["id_joueur"], "pts_rank"]}]     |    Efficience(Mediane) : :violet[{df_points_set.loc[st.session_state["id_joueur"], "mediane_rank"]}]     |    Efficience (Moyenne) : :orange[{df_points_set.loc[st.session_state["id_joueur"], "moyenne_rank"]}]')
+            st.markdown(f'Classement Points : :green[{df_points_set.loc[st.session_state["id_joueur"], "pts_rank"]}]     |    Classement Efficience(Mediane) : :violet[{df_points_set.loc[st.session_state["id_joueur"], "mediane_rank"]}]     |    Classement Efficience (Moyenne) : :orange[{df_points_set.loc[st.session_state["id_joueur"], "moyenne_rank"]}]')
             st.table(df_to_show)
         except KeyError:
             st.info(st.session_state.langue['no_data'])

@@ -108,6 +108,14 @@ def supprimer_bdd(nom_table):
 
 
 def supprimer_data(joueur, date):
+    """
+    Supprime les données d'un joueur à une date spécifique dans plusieurs tables de la base de données.
+
+    :param joueur: L'identifiant du joueur.
+    :type joueur: int
+    :param date: La date des données à supprimer.
+    :type date: str
+    """
     # conn = engine.connect()
     params_sql = {'joueur': joueur, 'date': date}
     sql1 = text(f'''DELETE FROM sw WHERE "id" = :joueur AND date = :date;
@@ -127,6 +135,15 @@ def supprimer_data(joueur, date):
 
 
 def supprimer_data_all(joueur):
+    """
+    Supprime toutes les données associées à un joueur dans la base de données.
+
+    Args:
+        joueur (int): L'identifiant du joueur.
+
+    Returns:
+        None
+    """
     # conn = engine.connect()
     params_sql = {'joueur': joueur}
     sql1 = text(f'''DELETE FROM sw WHERE "id" = :joueur;
@@ -149,6 +166,17 @@ def supprimer_data_all(joueur):
 
 
 def update_info_compte(joueur, guildeid, compteid):
+    """
+    Met à jour les informations du compte d'un joueur dans la base de données.
+
+    Args:
+        joueur (str): Le nom du joueur.
+        guildeid (int): L'identifiant de la guilde.
+        compteid (int): L'identifiant du compte.
+
+    Returns:
+        None
+    """
     # conn = engine.connect()
     params_sql = {'joueur': joueur,
                   'guilde_id': guildeid, 'joueur_id': compteid}
@@ -211,7 +239,17 @@ def cancel():
 
 
 def optimisation_int(data, int_cols_before:list, int_cols_after:str='int16'): 
+    """
+    Optimize the integer columns of a DataFrame by changing their data type.
 
+    Parameters:
+    data (DataFrame): The input DataFrame.
+    int_cols_before (list): List of integer column data types before optimization.
+    int_cols_after (str, optional): The desired integer data type after optimization. Defaults to 'int16'.
+
+    Returns:
+    DataFrame: The optimized DataFrame.
+    """
     if 'rune_equiped' in data.columns:  # on la retire car elle pose pb pour l'identification des monstres
         int_cols = data.drop('rune_equiped', axis=1).select_dtypes(include=int_cols_before).columns
     else:
@@ -227,6 +265,15 @@ def optimisation_int(data, int_cols_before:list, int_cols_after:str='int16'):
 
 
 def cleaning_only_guilde(x):
+    """
+    Nettoie les données en ne gardant que celles liées à la guilde spécifiée.
+
+    Args:
+        x (dict): Un dictionnaire contenant les données à nettoyer.
+
+    Returns:
+        dict: Le dictionnaire nettoyé.
+    """
     x['private'] = 0
     if x['visibility'] == 2:
         if x['guilde'] != session_state.guilde:
@@ -235,6 +282,15 @@ def cleaning_only_guilde(x):
 
 
 def get_number_row(table):
+    """
+    Renvoie le nombre de lignes dans une table donnée.
+
+    Args:
+        table (str): Le nom de la table.
+
+    Returns:
+        int: Le nombre de lignes dans la table.
+    """
     sql = text(f'SELECT COUNT(*) FROM {table}')
     data = conn.execute(sql)
     data = data.mappings().all()
