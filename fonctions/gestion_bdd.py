@@ -9,7 +9,9 @@ DB = environ.get('API_SQL')
 
 @cache_resource
 def init_connection():
-    engine = create_engine(DB, echo=False)
+    engine = create_engine(DB,
+                           echo=False,
+                           connect_args={'options': '-csearch_path={}'.format('sw')})
     return engine.connect()
 
 conn = init_connection()

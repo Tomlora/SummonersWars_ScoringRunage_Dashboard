@@ -52,7 +52,7 @@ def nb_data():
     # nb_user = get_number_row("sw_user")
     # nb_guilde = get_number_row("sw_guilde")
     # nb_score = get_number_row("sw_score")
-    df_count = lire_bdd_perso('SELECT * from public.count_rows', index_col='table').T
+    df_count = lire_bdd_perso('SELECT * from sw.count_rows', index_col='table').T
     
     nb_user = df_count.loc['sw_user'].values[0]
     nb_guilde = df_count.loc['sw_guilde'].values[0]
@@ -376,7 +376,7 @@ def upload_sw():
                     despair_will = data_rune.optimisation_max_speed('Despair', 'Will')
 
                     
-                    requete_perso_bdd('''INSERT INTO public.sw_score(score_general, date, id_joueur, score_spd, score_arte, mana, score_qual,
+                    requete_perso_bdd('''INSERT INTO sw.sw_score(score_general, date, id_joueur, score_spd, score_arte, mana, score_qual,
                                       spd_vio_broken, spd_vio_will, spd_swift_will, spd_swift_broken, spd_despair_will, spd_despair_broken)
                     VALUES (:score_general, :date, :id_joueur, :score_spd, :score_arte, :mana, :score_qual,
                     :spd_vio_broken, :spd_vio_will, :spd_swift_will, :spd_swift_broken, :spd_despair_will, :spd_despair_broken);''',
@@ -553,9 +553,9 @@ def upload_sw():
                     
                     # PVP / World Boss
                     
-                    requete_perso_bdd('''INSERT INTO public.sw_pvp(id_joueur, win, lose, date)
+                    requete_perso_bdd('''INSERT INTO sw.sw_pvp(id_joueur, win, lose, date)
                     VALUES (:id_joueur, :win, :lose, :date);
-                    INSERT INTO public.sw_wb(id_joueur, rank, damage, date)
+                    INSERT INTO sw.sw_wb(id_joueur, rank, damage, date)
                     VALUES (:id_joueur, :rank, :damage, :date);''',
                     {'id_joueur' : int(st.session_state['id_joueur']),
                     'date' : date_du_jour(),

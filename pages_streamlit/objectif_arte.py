@@ -63,9 +63,9 @@ def objectif():
     
         if st.button(st.session_state.langue['sauvegarder']):
             requete_perso_bdd('''
-                              DELETE FROM public.sw_objectifs_arte
+                              DELETE FROM sw.sw_objectifs_arte
 	                          WHERE id = :id;
-                              INSERT INTO public.sw_objectifs_arte(
+                              INSERT INTO sw.sw_objectifs_arte(
                             id, reduction, dmg_elem, crit_dmg, "precision", soin, reduction_hp, reduction_atk, reduction_def, dmg_elem_hp, dmg_elem_atk,
                             dmg_elem_def, crit_dmg_hp, crit_dmg_atk, crit_dmg_def, precision_hp, precision_atk, precision_def,
                             soin_hp, soin_atk, soin_def, spd, spd_hp, spd_atk, spd_def)

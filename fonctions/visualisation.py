@@ -37,7 +37,7 @@ def transformation_stats_visu(nom_table, joueur, distinct: bool = False, score='
     """
     # Lire la bdd
     if nom_table == 'sw_score':
-        df_actuel : pd.DataFrame = lire_bdd_perso('''SELECT DISTINCT score_general, date, id_joueur, score_spd, score_arte, score_qual FROM public.sw_score;''', index_col='id_joueur')
+        df_actuel : pd.DataFrame = lire_bdd_perso('''SELECT DISTINCT score_general, date, id_joueur, score_spd, score_arte, score_qual FROM sw.sw_score;''', index_col='id_joueur')
     else:
         df_actuel : pd.DataFrame = lire_bdd(nom_table, distinct=distinct)
     df_actuel = df_actuel.transpose()
