@@ -4,6 +4,7 @@ import numpy as np
 from time import time
 from fonctions.gestion_bdd import optimisation_int
 import streamlit as st
+import itertools
 
 
         # id des crafts
@@ -646,6 +647,79 @@ class Rune():
         
         self.data_qual_per_slot = self.data.groupby(['rune_set', 'rune_slot', 'qualité_original']).agg(nombre=('efficiency','count'))
         
+        
+    def optimisation_max_speed(self, set_4, set_2=None, slot2_speed=True):
+        '''set_4 obligatoire'''
+
+        if set_2 != None:
+            self.df_process_optimisation = self.data_set[self.data_set['rune_set'].isin([set_4, set_2])].copy()
+        else:
+            self.df_process_optimisation = self.data_set.copy()
+            
+        self.df_process_optimisation.drop(columns=['rune_equiped', 'qualité', 'qualité_original'], inplace=True)
+        self.df_process_optimisation['rune_slot'] = self.df_process_optimisation['rune_slot'].astype(int)
+            
+        def detect_speed(df):
+            for sub in ['first_sub', 'second_sub', 'third_sub', 'fourth_sub']:
+                if df[sub] == 'SPD':  # stat speed = 8
+                    df['spd'] = df[f'{sub}_value_total']
+
+            return df
+        
+        self.df_process_optimisation = self.df_process_optimisation.apply(detect_speed, axis=1)
+        
+        if slot2_speed:
+            self.df_process_optimisation.loc[self.df_process_optimisation['rune_slot'] == 2, 'spd'] = 42
+        
+        self.df_result_optimisation = pd.DataFrame(self.df_process_optimisation.groupby(['rune_set', 'rune_slot'])['spd'].nlargest(1).reset_index()).drop(columns='level_2')
+              
+        
+
+        # Séparer les données par type
+        df_A = self.df_result_optimisation[self.df_result_optimisation['rune_set'] == set_4]
+        
+        if set_2 != None:
+            df_B = self.df_result_optimisation[self.df_result_optimisation['rune_set'] == set_2]
+        else:
+            df_B = self.df_result_optimisation[self.df_result_optimisation['rune_set'] != set_4]
+
+        # Créer toutes les combinaisons possibles de 4 lignes de type 'A' et 2 lignes de type 'B'
+        combinations_A = list(itertools.combinations(df_A.iterrows(), 4))
+        combinations_B = list(itertools.combinations(df_B.iterrows(), 2))
+
+        # Initialisation de la valeur maximale
+        max_value = 0
+        best_combination = None
+
+        # Parcourir chaque combinaison
+        for comb_A in combinations_A:
+            for comb_B in combinations_B:
+                # Extraire les lignes de chaque combinaison
+                selected_rows = [row[1] for row in comb_A] + [row[1] for row in comb_B]
+                
+                # Vérifier si chaque slot est unique
+                slots = set()
+                unique_slots = True
+                for row in selected_rows:
+                    if row['rune_slot'] in slots:
+                        unique_slots = False
+                        break
+                    slots.add(row['rune_slot'])
+                
+                # Si tous les slots sont uniques, calculer la somme des valeurs pour cette combinaison
+                if unique_slots:
+                    total_value = sum(row['spd'] for row in selected_rows)
+                    
+                    # Mettre à jour la valeur maximale et la meilleure combinaison
+                    if total_value > max_value:
+                        max_value = total_value
+                        best_combination = selected_rows
+
+        self.df_optimisation_speed = pd.DataFrame(best_combination)
+        self.df_optimisation_speed = self.df_optimisation_speed.sort_values('rune_slot').set_index('rune_slot', drop=True)
+        self.optimisation_speed = self.df_optimisation_speed['spd'].sum().astype(int)    
+        
+        return self.df_optimisation_speed, self.optimisation_speed    
         
         
     def score_quality(self, coef_set : dict):

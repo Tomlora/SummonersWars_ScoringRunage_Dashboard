@@ -359,7 +359,7 @@ def optimisation_rune():
         data_short['Commentaires'] = np.where(
                                ((data_short['Set rune'].isin(set_selected) & 
                                  ((data_short['Efficience_max_lgd'] < efficiency_max_potentiel)  | 
-                                  (data['SPD'] < spd_selected)))),
+                                  (data['SPD'] <= spd_selected)))),
                                data_short['Commentaires'] + "\n Reapp",
                                data_short['Commentaires'])
         

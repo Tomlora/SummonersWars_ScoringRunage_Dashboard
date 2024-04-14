@@ -96,11 +96,12 @@ def palier_page():
                 if len(options_date) > 30:
                             list_tail = st.slider(f'{st.session_state.langue["select_last_reporting"]}:', 5, len(options_date), 30, help=st.session_state.langue['select_last_reporting_help'])
                             options_date = options_date[:list_tail]
-
-                options_select = st.multiselect(
-                            f'{st.session_state.langue["select_date_to_show"]} :', options_date, options_date, key='evol_date1')
+                            
+                with st.popover(st.session_state.langue["select_date_to_show"]):
+                    st.session_state.options_select = st.multiselect(
+                                f'', options_date, options_date, key='evol_date1')
                 
-                data_detail_filter = filter_data(data_detail_filter, options_select)
+                data_detail_filter = filter_data(data_detail_filter, st.session_state.options_select)
             
 
             
@@ -151,8 +152,9 @@ def palier_page():
                             list_tail = st.slider(f'{st.session_state.langue["select_last_reporting"]}', 5, len(options_date), 30, help=st.session_state.langue['select_last_reporting_help'])
                             options_date = options_date[:list_tail]
 
-                options_select_qual = st.multiselect(
-                            f'{st.session_state.langue["select_date_to_show"]}:', options_date, options_date, key='evol_date2')
+                with st.popover(st.session_state.langue["select_date_to_show"]):
+                    options_select_qual = st.multiselect(
+                                f'', options_date, options_date, key='evol_date2')
                 
                 data_scoring_filter = filter_data(data_scoring_filter, options_select_qual)
             
@@ -174,7 +176,7 @@ def palier_page():
             fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
             fig.update_yaxes(showgrid=False)
                 
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
             
 
     else:
@@ -201,12 +203,17 @@ def palier_page():
                 if len(options_date) > 30:
                     list_tail = st.slider(f'{st.session_state.langue["select_last_reporting"]}:', 5, len(options_date), 30, help=st.session_state.langue['select_last_reporting_help'])
                     options_date = options_date[:list_tail]
+                    
+                @st.experimental_fragment  
+                def date():  
+                    with st.popover(st.session_state.langue["select_date_to_show"]):
+                        st.session_state.options_select = st.multiselect(
+                            f'', options_date, options_date, key='evol_date3')
+                        
+                date()        
 
-                options_select = st.multiselect(
-                    f'{st.session_state.langue["select_date_to_show"]} :', options_date, options_date, key='evol_date3')
-
-                data_detail = filter_data(data_detail, options_select)
-                data_scoring = filter_data(data_scoring, options_select)
+                data_detail = filter_data(data_detail, st.session_state.options_select)
+                data_scoring = filter_data(data_scoring, st.session_state.options_select)
 
             with col1:  # on met la col1 après, pour bien prendre en compte les modifs dans data_scoring
                 st.subheader('Evolution')
@@ -234,49 +241,55 @@ def palier_page():
                 st.text("")
                 st.text("")
                 
-                row_button = row([1,1,1,1], gap="small", vertical_align="center")
+            row_button = row([1,1,1,1], gap="small", vertical_align="center")
                 
-                button_general = row_button.button('General', key='general')
-                button_spd = row_button.button('Speed', key='speed')
-                button_arte = row_button.button('Artefact', key='arte')
-                button_qual = row_button.button('Qualité', key='qual')
+            button_col1, button_col2, button_col3, button_col4 = st.columns(4)
                 
 
-                if button_general:
-                    st.subheader(st.session_state.langue['score_general'])
+            button_general = row_button.button('General', key='general')
+            button_spd = row_button.button('Speed', key='speed')
+            button_arte = row_button.button('Artefact', key='arte')
+            button_qual = row_button.button('Qualité', key='qual')
+                
+
+            if button_general:
+                st.subheader(st.session_state.langue['score_general'])
                     
 
                     
-                    data_100 = data_detail[data_detail['Palier'] == '100']
-                    data_110 = data_detail[data_detail['Palier'] == '110']
-                    data_120 = data_detail[data_detail['Palier'] == '120']
+                data_100 = data_detail[data_detail['Palier'] == '100']
+                data_110 = data_detail[data_detail['Palier'] == '110']
+                data_120 = data_detail[data_detail['Palier'] == '120']
 
-                    tab1, tab2, tab3, tab4 = st.tabs(
+                tab1, tab2, tab3, tab4 = st.tabs(
                         ['General', 'Palier 100', 'Palier 110', 'Palier 120'])
 
-                    with tab1:
-                        st.plotly_chart(fig)
+                with tab1:
+                        st.plotly_chart(fig, use_container_width=True)
 
-                    with tab2:
+                with tab2:
                         fig_rune_100 = plotline_evol_rune_visu(data_100)
-                        st.plotly_chart(fig_rune_100)
+                        st.plotly_chart(fig_rune_100, use_container_width=True)
 
-                    with tab3:
+                with tab3:
                         fig_rune_110 = plotline_evol_rune_visu(data_110)
-                        st.plotly_chart(fig_rune_110)
+                        st.plotly_chart(fig_rune_110, use_container_width=True)
 
-                    with tab4:
+                with tab4:
                         fig_rune_120 = plotline_evol_rune_visu(data_120)
-                        st.plotly_chart(fig_rune_120)
+                        st.plotly_chart(fig_rune_120, use_container_width=True)
                 
 
-                if button_spd:
+            if button_spd:
                     st.subheader('Speed')
 
                     data_detail_spd = transformation_stats_visu(
                         'sw_spd', st.session_state['id_joueur'], distinct=True, ascending=True)
                     data_scoring_spd = transformation_stats_visu(
                         'sw_score', st.session_state['id_joueur'], distinct=True, score='score_spd', ascending=True)
+                    
+                    data_detail_spd = filter_data(data_detail_spd, st.session_state.options_select)
+                    data_scoring_spd = filter_data(data_scoring_spd, st.session_state.options_select)
 
                     fig2 = go.Figure()
                     fig2.add_trace(go.Scatter(
@@ -295,32 +308,35 @@ def palier_page():
                         ['General', '23-25', '26-28', '29-31', '32-35', '36+'])
 
                     with tab_spd_general:
-                        st.plotly_chart(fig2)
+                        st.plotly_chart(fig2, use_container_width=True)
 
                     with tab2325:
                         fig25 = plotline_evol_rune_visu(data_25)
-                        st.plotly_chart(fig25)
+                        st.plotly_chart(fig25, use_container_width=True)
 
                     with tab2628:
                         fig28 = plotline_evol_rune_visu(data_28)
-                        st.plotly_chart(fig28)
+                        st.plotly_chart(fig28, use_container_width=True)
                     with tab2931:
                         fig31 = plotline_evol_rune_visu(data_31)
-                        st.plotly_chart(fig31)
+                        st.plotly_chart(fig31, use_container_width=True)
                     with tab3235:
                         fig35 = plotline_evol_rune_visu(data_35)
-                        st.plotly_chart(fig35)
+                        st.plotly_chart(fig35, use_container_width=True)
                     with tab36:
                         fig36 = plotline_evol_rune_visu(data_36)
-                        st.plotly_chart(fig36)
+                        st.plotly_chart(fig36, use_container_width=True)
 
     
-                if button_arte:
+            if button_arte:
                     st.subheader('Artefact')
                     data_detail_arte = transformation_stats_visu(
                         'sw_arte', st.session_state['id_joueur'], distinct=True, ascending=True)
                     data_scoring_arte = transformation_stats_visu(
                         'sw_score', st.session_state['id_joueur'], distinct=True, score='score_arte', ascending=True)
+                    
+                    data_detail_arte = filter_data(data_detail_arte, st.session_state.options_select)
+                    data_scoring_arte = filter_data(data_scoring_arte, st.session_state.options_select)
 
                     fig3 = go.Figure()
                     fig3.add_trace(go.Scatter(
@@ -336,29 +352,29 @@ def palier_page():
                     data_100 = data_detail_arte[data_detail_arte['Palier'] == '100+']
 
                     with tab_arte_general:
-                        st.plotly_chart(fig3)
+                        st.plotly_chart(fig3, use_container_width=True)
                     with tab80:
                         fig80 = px.line(data_80, x="date", y="Nombre",
                                         color='arte_type', symbol='type')
-                        st.plotly_chart(fig80)
+                        st.plotly_chart(fig80, use_container_width=True)
                     with tab85:
                         fig85 = px.line(data_85, x="date", y="Nombre",
                                         color='arte_type', symbol='type')
-                        st.plotly_chart(fig85)
+                        st.plotly_chart(fig85, use_container_width=True)
                     with tab90:
                         fig90 = px.line(data_90, x="date", y="Nombre",
                                         color='arte_type', symbol='type')
-                        st.plotly_chart(fig90)
+                        st.plotly_chart(fig90, use_container_width=True)
                     with tab95:
                         fig95 = px.line(data_95, x="date", y="Nombre",
                                         color='arte_type', symbol='type')
-                        st.plotly_chart(fig95)
+                        st.plotly_chart(fig95, use_container_width=True)
                     with tab100:
                         fig100 = px.line(data_100, x="date", y="Nombre",
                                         color='arte_type', symbol='type')
-                        st.plotly_chart(fig100)
+                        st.plotly_chart(fig100, use_container_width=True)
                     
-                if button_qual:    
+            if button_qual:    
                     st.subheader(st.session_state.langue['Score_Qualite'])
                     
                     
@@ -369,7 +385,7 @@ def palier_page():
                     fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
                     fig.update_yaxes(showgrid=False)
                     
-                    st.plotly_chart(fig)
+                    st.plotly_chart(fig, use_container_width=True)
                 
                 
 

@@ -10,6 +10,8 @@ from fonctions.visuel import css
 from fonctions.gestion_bdd import lire_bdd_perso
 from streamlit_extras.no_default_selectbox import selectbox
 from streamlit_extras.add_vertical_space import add_vertical_space
+import numpy as np
+from streamlit_extras.row import row
 css()
 
 add_indentation()
@@ -63,7 +65,8 @@ def stats_runage():
         col1, col2 = st.columns(2)
         
         with col1:
-        
+            
+         
             fig = px.line(df_efficience,
                           x=df_efficience.index,
                           y='efficiency',
@@ -112,9 +115,54 @@ def stats_runage():
         fig.add_trace(go.Scatter(x=df_efficience_lgd.index, y=df_efficience_lgd['efficiency_max_lgd'],
                     mode='lines',
                     name='Efficience potentiel (lgd)'))
+        
+        
+        df_resume = pd.DataFrame.from_dict({'Moy Top50' : np.round(df_efficience['efficiency'].head(50).mean(),2),
+                                  'Moy Top400' : np.round(df_efficience['efficiency'].head(400).mean(),2),
+                                 '>=120' : df_efficience[df_efficience['efficiency'] >= 120].shape[0],
+                                 '>=115' : df_efficience[df_efficience['efficiency'] >= 115].shape[0],
+                                 '>=110' : df_efficience[df_efficience['efficiency'] >= 110].shape[0],
+                                 '>=105' : df_efficience[df_efficience['efficiency'] >= 105].shape[0],
+                                 '>=100' : df_efficience[df_efficience['efficiency'] >= 100].shape[0],
+                                 '>=120 Max Grind' : df_efficience[df_efficience['efficiency_max_lgd'] >= 120].shape[0],
+                                 '>=115 Max Grind' : df_efficience[df_efficience['efficiency_max_lgd'] >= 115].shape[0],
+                                 '>=110 Max Grind' : df_efficience[df_efficience['efficiency_max_lgd'] >= 110].shape[0],
+                                 '>=105 Max Grind' : df_efficience[df_efficience['efficiency_max_lgd'] >= 105].shape[0],
+                                 '>=100 Max Grind' : df_efficience[df_efficience['efficiency_max_lgd'] >= 100].shape[0]},
+                                           orient='index').T
+        
+        st.subheader('Détails')
+        
+        st.dataframe(df_resume, use_container_width=True)
+        
+        st.text('Voir les données : ')
+        
+        row_button = row([1,1,1,1], gap="small", vertical_align="center")
+                
+        button_top50 = row_button.button('Top 50', key='button_top50')
+        button_top400 = row_button.button('Top 400', key='button_top400')
+        button_efficience = row_button.button('Efficience', key='button_efficience')
+        button_max_grind = row_button.button('Max Grind', key='button_max_grind')
+        
+        colonnes_to_show = ['rune_set', 'rune_slot', 'rune_equiped', 'stars', 'qualité', 'level', 'efficiency', 'main_type', 'main_value', 'innate_type', 'innate_value',
+                                                 'first_sub', 'first_sub_value', 'first_sub_grinded_value', 'second_sub', 'second_sub_value', 'second_sub_grinded_value',
+                                                 'third_sub', 'third_sub_value', 'third_sub_grinded_value', 'fourth_sub', 'fourth_sub_value', 'fourth_sub_grinded_value',
+                                                 'efficiency_max_lgd', 'efficiency_max_hero', 'potentiel_max_lgd', 'potentiel_max_hero']
+        
+        if button_top50:
+            st.dataframe(df_efficience.head(50)[colonnes_to_show])
+        
+        if button_top400:
+            st.dataframe(df_efficience.head(400)[colonnes_to_show])
             
+        if button_efficience:
+            st.dataframe(df_efficience[df_efficience['efficiency'] >= 100][colonnes_to_show])
+            
+        if button_max_grind:
+            st.dataframe(df_efficience[df_efficience['efficiency_max_lgd'] >= 100][colonnes_to_show])
+                
         st.plotly_chart(fig, use_container_width=True)
-
+        
         
     with tab_pts:
     

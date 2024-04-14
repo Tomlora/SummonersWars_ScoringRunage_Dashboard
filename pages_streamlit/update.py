@@ -25,6 +25,13 @@ tab2024, tab2023 = st.tabs(['2024', '2023'])
 
 with tab2024:
     
+    with st.expander('Version 14/04/2024', expanded=True):
+        st.info("- Ajout d' une nouvelle fonctionnalité pour les runes : Best Speed") 
+    
+    with st.expander('Version 13/04/2024', expanded=True):
+        st.info("- Ajout d'un tableau Détail dans les Statistiques (Runages) \n\n"+
+                "- Amélioration des visuels de l'onglet Evolution") 
+    
     with st.expander('Version 10/03/2024', expanded=True):
         st.info("- Amelioration générale des performances \n\n"+
                 "- Retrait de l'onglet SpeedTune : SWGT ayant apporté un outil disponible à tous et bien meilleur") 
@@ -37,10 +44,10 @@ with tab2024:
         st.info("- Ajout des monstres Assassin Creed") 
         
         
-    with st.expander('Version 29/01/2024', expanded=True):
+    with st.expander('Version 29/01/2024', expanded=False):
         st.info("- Les filtres ne sont plus cachés") 
 
-    with st.expander('Version 12/01/2024', expanded=True):
+    with st.expander('Version 12/01/2024', expanded=False):
         st.info("- Correction des stats améliorables des runes antiques dans l'onglet Optimisation") 
 
     with st.expander('Version 07/01/2024', expanded=False):

@@ -23,8 +23,8 @@
     "Autres_scoring" : "Autres scorings",
     "Detail_scoring" : "Detail du scoring",
     "Efficience" : "Efficience",
-    "Efficience_avg_set" : "Efficience moyenne par set",
-    "Efficience_set" : "Efficience par set",
+    "Efficience_avg_set" : "Info par set",
+    "Efficience_set" : "Info par Set",
     "Efficience_avg" : "Eff moyenne",
     "Score_quality_rune" : "Score qualité rune",
     "Explication_scoring" : "Une rune 100 vaut 1 point \nUne rune 110 vaut 2 points\nUne Rune 120 vaut 3 points\n\n\nCoefficient : \n",
@@ -146,5 +146,8 @@
     "download_data_arte" : "Affiche un bouton en bas pour télécharger les données",
     "objectif" : "Objectif",
     "precision" : "PRECISION",
-    "soin" : "SOIN"
+    "soin" : "SOIN",
+    "filter" : "Filtre",
+    "filter_help" : "Placez votre souris sous ce message pour deverrouiller les options de filtre sur la droite",
+    "no_filter" : "Aucun filtre actif"
 }

@@ -23,8 +23,8 @@
 "Autres_scoring" : "Other scorings",
 "Detail_scoring" : "Detailed scoring",
 "Efficience" : "Efficiency",
-"Efficience_avg_set" : "Average efficiency per set",
-"Efficience_set" : "Efficiency per set",
+"Efficience_avg_set" : "Info per set",
+"Efficience_set" : "Info per set",
 "Efficience_avg" : "Average eff",
 "Score_quality_rune" : "Rune quality score",
 "Explication_scoring" : "Rune 100 is worth 1 point \nRune 110 is worth 2 points\nRune 120 is worth 3 points\n\n\nFactor : \n",
@@ -146,5 +146,8 @@
 "download_data_arte" : "Displays a button at the bottom to download data",
 "objectif" : "Target",
 "precision" : "ACC",
-"soin" : "HEAL"
+"soin" : "HEAL",
+"filter" : "Filter",
+"filter_help" : "Place your mouse under this msg to unlock the filter options on the right",
+"no_filter" : "No active filter"
 }

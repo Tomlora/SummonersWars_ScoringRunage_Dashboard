@@ -53,6 +53,7 @@ def main_page():
                         Page('pages_streamlit/todolist.py', 'ToDoList', icon=':clipboard:'),
                         Page('pages_streamlit/build.py', 'Créer un build', icon=':hammer:'),
                         Page('pages_streamlit/calculator.py', 'Calculateur efficience', icon=':1234:'),
+                        Page('pages_streamlit/optimisation_spd.py', 'Best Speed', icon=':computer:'),
                         Section(name='Artefacts', icon=':gem:'),
                         Page('pages_streamlit/inventaire_artefact.py', 'Inventaire', icon=':open_file_folder:'),
                         Page('pages_streamlit/top_artefact.py', 'Best Artefacts', icon=':bomb:'),
@@ -66,7 +67,7 @@ def main_page():
                         Page('pages_streamlit/visibility.py', 'Ma visibilité', icon=':eyes:'),
                         Page('pages_streamlit/options.py', 'Mes données', icon=':iphone:'),
                         Section(name='Mise à jour', icon=':loudspeaker:'),
-                        Page('pages_streamlit/update.py', 'Version 10/03/24', icon=':speaker:'),
+                        Page('pages_streamlit/update.py', 'Version 14/04/24', icon=':speaker:'),
                         Page('pages_streamlit/feedback.py', 'Feedback', icon=':mega:'),
 
                         # Section(name='Administration', icon=':star:'),

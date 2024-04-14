@@ -158,13 +158,15 @@ def upload_sw():
             st.session_state.swarfarm = load_swarfarm()
             
             
-            with st.spinner(st.session_state.langue['loading_json']):
+            with st.status(st.session_state.langue['loading_json']) as status:
                 try:
 
                     
                     st.session_state.data_json = json.load(st.session_state.file)
                     st.session_state.file.close()
                     st.session_state.pop('file')
+                    
+                    status.update(label='Fichier validé !', state='complete')
                     
 
                     
@@ -192,6 +194,8 @@ def upload_sw():
                     except TypeError: # pas de guilde
                         st.session_state.guildeid = 0
                         st.session_state.guilde = 'Aucune' 
+                        
+                    status.update(label='Chargement des informations principales terminé !', state='complete')
                         
                     # Base monsters
                         
@@ -243,7 +247,12 @@ def upload_sw():
 
                     df_identification = st.session_state.df_mobs[['id_unit', 'name_monstre']].set_index('id_unit')
                     
-                    st.session_state.identification_monsters = df_identification.to_dict(orient="dict")['name_monstre']         
+                    st.session_state.identification_monsters = df_identification.to_dict(orient="dict")['name_monstre']
+                    
+                    status.update(label='Les monstres sont chargés !', state='complete')      
+                    
+                    
+                    status.update(label="Les runes sont entrain d'être analysés..", state='running')     
                     
                     # On peut désormais s'occuper des runes
                     
@@ -255,12 +264,20 @@ def upload_sw():
                     st.session_state.set_rune = list(data_rune.set_to_show.values())
                     st.session_state.set_rune.sort()
                     
+                    status.update(label='Les runes sont terminés !', state='complete')  
+                    
+                    status.update(label="Les artefacts sont entrain d'être analysés...", state='running')  
+                    
                     # Artefact
             
                     st.session_state.data_arte = Artefact(st.session_state.data_json, st.session_state.identification_monsters)
                     
                     # st.session_state.data_grind = data_rune.data.copy()
                     st.session_state.data_avg = data_rune.calcul_efficiency_describe()
+                    
+                    status.update(label='Les artefacts sont terminés!', state='complete')  
+                    
+                    status.update(label='Calcul des scores...', state='running')  
 
                         # --------------------- calcul score rune
 
@@ -347,17 +364,37 @@ def upload_sw():
                     # Score qualité runes
                     
                     st.session_state.df_scoring_quality, st.session_state.score_qual = data_rune.score_quality(coef_set_spd)
+                    
+                    # Meilleures speeds
+                
+                    
+                    vio_broken = data_rune.optimisation_max_speed('Violent', None)
+                    vio_will = data_rune.optimisation_max_speed('Violent', 'Will')
+                    swift_broken = data_rune.optimisation_max_speed('Swift', None)
+                    swift_will = data_rune.optimisation_max_speed('Swift', 'Will')
+                    despair_broken = data_rune.optimisation_max_speed('Despair', None)
+                    despair_will = data_rune.optimisation_max_speed('Despair', 'Will')
 
                     
-                    requete_perso_bdd('''INSERT INTO public.sw_score(score_general, date, id_joueur, score_spd, score_arte, mana, score_qual)
-                    VALUES (:score_general, :date, :id_joueur, :score_spd, :score_arte, :mana, :score_qual);''',
+                    requete_perso_bdd('''INSERT INTO public.sw_score(score_general, date, id_joueur, score_spd, score_arte, mana, score_qual,
+                                      spd_vio_broken, spd_vio_will, spd_swift_will, spd_swift_broken, spd_despair_will, spd_despair_broken)
+                    VALUES (:score_general, :date, :id_joueur, :score_spd, :score_arte, :mana, :score_qual,
+                    :spd_vio_broken, :spd_vio_will, :spd_swift_will, :spd_swift_broken, :spd_despair_will, :spd_despair_broken);''',
                     {'id_joueur' : int(st.session_state['id_joueur']),
                     'date' : date_du_jour(),
                     'score_general' : int(st.session_state['score']),
                     'score_spd' : int(st.session_state['score_spd']),
                     'score_arte' : int(st.session_state['score_arte']),
                     'mana' : int(st.session_state['mana']),
-                    'score_qual' : int(st.session_state['score_qual'])})
+                    'score_qual' : int(st.session_state['score_qual']),
+                    'spd_vio_broken' : int(vio_broken[1]),
+                    'spd_vio_will' : int(vio_will[1]),
+                    'spd_swift_will' : int(swift_will[1]),
+                    'spd_swift_broken' : int(swift_broken[1]),
+                    'spd_despair_will' : int(despair_will[1]),
+                    'spd_despair_broken' : int(despair_broken[1])})
+                    
+                    del vio_broken, vio_will, swift_broken, swift_will, despair_broken, despair_will
                     
                     df_scoring_quality_to_save = st.session_state.df_scoring_quality.copy()
                     
@@ -416,6 +453,8 @@ def upload_sw():
                     tcd_arte_save : pd.DataFrame = st.session_state.tcd_arte.copy()
                     
                     tcd_arte_save = format_sql(tcd_arte_save)
+                    
+                    status.update(label='On y est presque ... :) ', state='running')  
                         
 
                         
@@ -527,10 +566,12 @@ def upload_sw():
                     
                     # Tout est bon, on peut passer à la suite !
 
-                    st.subheader(f'Validé pour le joueur {st.session_state["pseudo"]} !')
+                    status.update(label='Complet !', state='complete', expanded=False)  
                     st.write('Tu peux désormais aller sur les autres onglets disponibles')
 
                     st.session_state['submitted'] = True
+                    
+                    
                     
                     
                     gc.collect()
