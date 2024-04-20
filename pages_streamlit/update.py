@@ -25,6 +25,9 @@ tab2024, tab2023 = st.tabs(['2024', '2023'])
 
 with tab2024:
     
+    with st.expander('Version 15/04/2024', expanded=True):
+        st.info("- Ajout des Cyborg et Hackeurs") 
+    
     with st.expander('Version 14/04/2024', expanded=True):
         st.info("- Ajout d' une nouvelle fonctionnalité pour les runes : Best Speed") 
     

@@ -67,7 +67,7 @@ def main_page():
                         Page('pages_streamlit/visibility.py', 'Ma visibilité', icon=':eyes:'),
                         Page('pages_streamlit/options.py', 'Mes données', icon=':iphone:'),
                         Section(name='Mise à jour', icon=':loudspeaker:'),
-                        Page('pages_streamlit/update.py', 'Version 14/04/24', icon=':speaker:'),
+                        Page('pages_streamlit/update.py', 'Version 15/04/24', icon=':speaker:'),
                         Page('pages_streamlit/feedback.py', 'Feedback', icon=':mega:'),
 
                         # Section(name='Administration', icon=':star:'),
