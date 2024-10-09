@@ -1,7 +1,6 @@
 import streamlit as st
-from streamlit_extras.switch_page_button import switch_page
 import pandas as pd
-from st_pages import add_indentation
+
 from fonctions.artefact import dict_arte_effect_english, dataframe_replace_to_english, max_sub_by_proc
 from streamlit_extras.no_default_selectbox import selectbox
 
@@ -9,7 +8,7 @@ from streamlit_extras.no_default_selectbox import selectbox
 from fonctions.visuel import css
 css()
 
-add_indentation()
+
 
 
 
@@ -185,9 +184,9 @@ if 'submitted' in st.session_state:
         upgrade_a()
     
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
 
 st.caption('Made by Tomlora :sunglasses:')

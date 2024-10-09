@@ -1,10 +1,10 @@
 import streamlit as st
-from st_pages import add_indentation
+
 from fonctions.runes import max_sub_by_proc
 from fonctions.visuel import css
 css()
 
-add_indentation()
+
 
 
 sub_max_lgd = {'HP': 550, 'HP%': 10, 'ATQ': 30,

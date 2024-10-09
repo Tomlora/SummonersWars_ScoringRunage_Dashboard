@@ -1,15 +1,14 @@
 
 import streamlit as st
-from streamlit_extras.switch_page_button import switch_page
 import pandas as pd
 from streamlit_extras.no_default_selectbox import selectbox
-from st_pages import add_indentation
+
 from fonctions.visuel import css
 import plotly_express as px
 
 css()
 
-add_indentation()
+
 
 
 
@@ -106,10 +105,10 @@ if 'submitted' in st.session_state:
         donjon()
 
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
 
 
 st.caption('Made by Tomlora :sunglasses:')

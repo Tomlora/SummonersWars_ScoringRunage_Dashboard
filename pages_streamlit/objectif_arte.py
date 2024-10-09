@@ -2,17 +2,16 @@ import streamlit as st
 import pandas as pd
 from fonctions.visuel import load_lottieurl, css
 from fonctions.artefact import dataframe_replace_to_english, dict_arte_effect_english
-from streamlit_extras.switch_page_button import switch_page
 from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd
 import plotly.graph_objects as go
 from streamlit_extras.add_vertical_space import add_vertical_space
 import numpy as np
 
 
-from st_pages import add_indentation
+
 css()
 
-add_indentation()
+
 
 
 
@@ -227,6 +226,8 @@ def objectif():
                     st.dataframe(df_bool,
                                 use_container_width=True,
                                 height=225)
+                    
+
         
     df_final = pd.DataFrame.from_dict([dict_true, dict_true_max, dict_diff])
  
@@ -295,10 +296,10 @@ if 'submitted' in st.session_state:
         objectif()
     
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
     
     
 st.caption('Made by Tomlora :sunglasses:')

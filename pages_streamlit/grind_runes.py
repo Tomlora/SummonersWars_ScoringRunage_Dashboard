@@ -1,4 +1,4 @@
-from st_pages import add_indentation
+
 import pandas as pd
 import numpy as np
 import ast
@@ -6,7 +6,6 @@ import streamlit as st
 from io import BytesIO
 from fonctions.visualisation import filter_dataframe
 from fonctions.runes import Rune, CRAFT_TYPE_MAP, COM2US_QUALITY_MAP
-from streamlit_extras.switch_page_button import switch_page
 # fix plotly express et Visual Studio Code
 import plotly.io as pio
 pio.renderers.default = "notebook_connected"
@@ -20,7 +19,7 @@ css()
 pd.options.mode.chained_assignment = None  # default='warn'
 
 
-add_indentation()
+
 
 def extraire_variables_imbriquees(df, colonne):
     df[colonne] = [ast.literal_eval(str(item))
@@ -387,10 +386,10 @@ if 'submitted' in st.session_state:
         optimisation_rune()
 
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
 
 
 st.caption('Made by Tomlora :sunglasses:')

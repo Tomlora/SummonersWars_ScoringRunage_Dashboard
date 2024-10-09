@@ -3,7 +3,7 @@ import streamlit as st
 from streamlit_extras.add_vertical_space import add_vertical_space
 from fonctions.gestion_bdd import requete_perso_bdd
 from fonctions.visuel import css
-from st_pages import add_indentation
+
 
 try:
     st.set_page_config(layout='wide')
@@ -12,7 +12,7 @@ except:
 
 
 css()
-add_indentation()
+
 
 st.title("Feedback")
 add_vertical_space(1)

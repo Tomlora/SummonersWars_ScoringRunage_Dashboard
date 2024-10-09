@@ -1,10 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from streamlit_extras.switch_page_button import switch_page
 from streamlit_extras.add_vertical_space import add_vertical_space
 from streamlit_extras.no_default_selectbox import selectbox
-from st_pages import add_indentation
 from fonctions.visualisation import filter_dataframe
 from fonctions.gestion_bdd import lire_bdd
 
@@ -13,7 +11,7 @@ from fonctions.visuel import css
 
 css()
 
-add_indentation()
+
 
 
 st.title(st.session_state.langue['where_to_use'])

@@ -1,13 +1,11 @@
 
 import streamlit as st
 from fonctions.gestion_bdd import requete_perso_bdd
-from streamlit_extras.switch_page_button import switch_page
 
-from st_pages import add_indentation
 from fonctions.visuel import css
 css()
 
-add_indentation()
+
 
 
 def visibility():
@@ -40,10 +38,10 @@ if 'submitted' in st.session_state:
         visibility()
     
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
     
     
 st.caption('Made by Tomlora :sunglasses:')

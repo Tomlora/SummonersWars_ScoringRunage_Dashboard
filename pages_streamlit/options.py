@@ -1,13 +1,11 @@
 import pandas as pd
 import streamlit as st
-from streamlit_extras.switch_page_button import switch_page
 from fonctions.gestion_bdd import lire_bdd, supprimer_data, supprimer_data_all
 
-from st_pages import add_indentation
+
 from fonctions.visuel import css
 css()
 
-add_indentation()
 
 
 def params():
@@ -56,10 +54,10 @@ if 'submitted' in st.session_state:
         params()
     
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
     
     
 st.caption('Made by Tomlora :sunglasses:')

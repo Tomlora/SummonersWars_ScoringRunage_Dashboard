@@ -2,14 +2,12 @@
 import streamlit as st
 from fonctions.gestion_bdd import lire_bdd_perso, lire_bdd
 import os
-from st_pages import add_indentation
 from datetime import timedelta
 import pandas as pd
 
 from fonctions.visuel import css
 css()
 
-add_indentation()
 
 
 @st.cache_data(ttl=timedelta(hours=1))

@@ -7,13 +7,12 @@ from fonctions.export import export_excel
 from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd
 
 
-from streamlit_extras.switch_page_button import switch_page
-from st_pages import add_indentation
+
 
 from fonctions.visuel import css
 css()
 
-add_indentation()
+
 
 
 
@@ -517,9 +516,9 @@ if 'submitted' in st.session_state:
         build()
 
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
 
 st.caption('Made by Tomlora :sunglasses:')

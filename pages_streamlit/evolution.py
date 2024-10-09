@@ -6,8 +6,7 @@ from fonctions.visualisation import transformation_stats_visu, plotline_evol_run
 from fonctions.gestion_bdd import lire_bdd_perso
 from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
-from streamlit_extras.switch_page_button import switch_page
-from st_pages import add_indentation
+
 import pandas as pd
 from datetime import timedelta
 from streamlit_extras.row import row
@@ -15,7 +14,7 @@ from streamlit_extras.row import row
 
 
 css()
-add_indentation()
+
 
 @st.cache_data
 def filter_data(df, selected_options):
@@ -204,7 +203,7 @@ def palier_page():
                     list_tail = st.slider(f'{st.session_state.langue["select_last_reporting"]}:', 5, len(options_date), 30, help=st.session_state.langue['select_last_reporting_help'])
                     options_date = options_date[:list_tail]
                     
-                @st.experimental_fragment  
+                @st.fragment  
                 def date():  
                     with st.popover(st.session_state.langue["select_date_to_show"]):
                         st.session_state.options_select = st.multiselect(
@@ -401,10 +400,10 @@ if 'submitted' in st.session_state:
         palier_page()
     
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
     
     
     

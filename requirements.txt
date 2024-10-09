@@ -1,6 +1,6 @@
-streamlit==1.33.0
+streamlit==1.39.0
 pandas==1.4.3
-numpy
+numpy==1.26.4
 plotly_express
 python-dateutil==2.8.2
 json5==0.9.6

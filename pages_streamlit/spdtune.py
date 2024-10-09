@@ -4,11 +4,10 @@ from fonctions.gestion_bdd import lire_bdd_perso
 from streamlit_extras.metric_cards import style_metric_cards
 import numpy as np
 
-from st_pages import add_indentation
 from fonctions.visuel import css
 css()
 
-add_indentation()
+
 
 @st.cache_data()
 def charger_data():

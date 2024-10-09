@@ -1,13 +1,11 @@
 from fonctions.gestion_bdd import lire_bdd_perso, cleaning_only_guilde
 import streamlit as st
-from streamlit_extras.switch_page_button import switch_page
 from datetime import timedelta
-from st_pages import add_indentation
+
 from fonctions.visuel import css
 from fonctions.artefact import dict_arte_effect_english, dataframe_replace_to_english
 css()
 
-add_indentation()
 
 
 def mise_en_forme_classement(df, variable='score', columns='score'):
@@ -135,10 +133,10 @@ if 'submitted' in st.session_state:
         classement_arte()
     
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
     
     
 st.caption('Made by Tomlora :sunglasses:')

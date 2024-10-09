@@ -1,20 +1,19 @@
 
 import streamlit as st
-from streamlit_extras.switch_page_button import switch_page
 from fonctions.visualisation import filter_dataframe
 from streamlit_extras.colored_header import colored_header
 import pandas as pd
 from fonctions.export import export_excel
 from fonctions.artefact import dict_arte_effect_english, dataframe_replace_to_english
 from streamlit_extras.no_default_selectbox import selectbox
-from st_pages import add_indentation
+
 from fonctions.visuel import css
 from datetime import timedelta
 
 
 css()
 
-add_indentation()
+
 
 
 
@@ -216,10 +215,10 @@ if 'submitted' in st.session_state:
         inventaire_arte()
 
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
 
 
 st.caption('Made by Tomlora :sunglasses:')

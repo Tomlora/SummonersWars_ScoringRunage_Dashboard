@@ -3,15 +3,14 @@ import streamlit as st
 import pandas as pd
 from fonctions.visuel import css
 from params.coef import coef_set, order
-from streamlit_extras.switch_page_button import switch_page
 from fonctions.artefact import visualisation_top_arte
 from io import BytesIO
-from st_pages import add_indentation
+
 
 
 
 css()
-add_indentation()
+
 
 
 
@@ -159,10 +158,10 @@ if 'submitted' in st.session_state:
         top_arte()
     
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
     
     
 st.caption('Made by Tomlora :sunglasses:')

@@ -1,7 +1,7 @@
 import streamlit as st
 from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
-from st_pages import add_indentation
+
 
 try:
     st.set_page_config(layout='wide')
@@ -10,7 +10,8 @@ except:
 
 
 css()
-add_indentation()
+
+
 
 
 st.subheader('Mise à jour')
@@ -24,7 +25,16 @@ with col2:
 tab2024, tab2023 = st.tabs(['2024', '2023'])
 
 with tab2024:
+
+    with st.expander('Version 09/10/2024', expanded=True):
+        st.info("- Changements visuels pour apporter plus de flexibilité à l'avenir") 
+
+    with st.expander('Version 06/10/2024', expanded=True):
+        st.info("- Ajout des meules/gemmes légendaires manquantes dans Optimisation") 
     
+    with st.expander('Version 30/07/2024', expanded=True):
+        st.info("- Ajout colab JJK") 
+
     with st.expander('Version 15/04/2024', expanded=True):
         st.info("- Ajout des Cyborg et Hackeurs") 
     

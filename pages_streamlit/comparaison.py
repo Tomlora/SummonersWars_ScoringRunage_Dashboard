@@ -3,14 +3,11 @@ import pandas as pd
 from fonctions.gestion_bdd import lire_bdd_perso
 from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
-from streamlit_extras.switch_page_button import switch_page
 from fonctions.compare import comparaison, comparaison_rune_graph
 from streamlit_extras.add_vertical_space import add_vertical_space
 
-from st_pages import add_indentation
-css()
 
-add_indentation()
+css()
 
 
 
@@ -178,10 +175,10 @@ if 'submitted' in st.session_state:
         comparaison_entre_joueurs()
     
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
     
     
 st.caption('Made by Tomlora :sunglasses:')

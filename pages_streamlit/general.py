@@ -7,16 +7,15 @@ from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
 from params.coef import coef_set
 from fonctions.visualisation import filter_dataframe, table_with_images
-from streamlit_extras.switch_page_button import switch_page
 from fonctions.gestion_bdd import requete_perso_bdd, sauvegarde_bdd
 import traceback
 from streamlit_extras.metric_cards import style_metric_cards
 
 
-from st_pages import add_indentation
+
 
 css()
-add_indentation()
+
 
 
 
@@ -416,10 +415,10 @@ def general_page():
                 st.write('Pas de JSON chargé')
 
         else:
-            switch_page('Upload JSON')
+            st.switch_page("pages_streamlit/upload.py")
 
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
         
        
 general_page()

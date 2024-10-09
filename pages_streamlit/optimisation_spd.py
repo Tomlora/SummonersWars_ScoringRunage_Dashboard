@@ -1,7 +1,5 @@
 import pandas as pd
 import streamlit as st
-from streamlit_extras.switch_page_button import switch_page
-from st_pages import add_indentation
 from fonctions.visuel import css
 from fonctions.gestion_bdd import lire_bdd_perso
 from streamlit_extras.no_default_selectbox import selectbox
@@ -10,8 +8,6 @@ from streamlit_extras.metric_cards import style_metric_cards
 from math import floor
 css()
 style_metric_cards(background_color='#03152A', border_color='#0083B9', border_left_color='#0083B9', border_size_px=0, box_shadow=False)
-
-add_indentation()
 
 
 @st.cache_data()
@@ -106,10 +102,10 @@ if 'submitted' in st.session_state:
         opti_speed()
     
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
     
     
 st.caption('Made by Tomlora :sunglasses:')

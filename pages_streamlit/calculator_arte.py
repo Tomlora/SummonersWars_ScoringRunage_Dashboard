@@ -1,10 +1,9 @@
 import streamlit as st
-from st_pages import add_indentation
+
 from fonctions.artefact import max_sub_by_proc
 from fonctions.visuel import css
 css()
 
-add_indentation()
 
 
 import json

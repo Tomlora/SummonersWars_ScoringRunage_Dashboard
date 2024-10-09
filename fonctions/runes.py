@@ -1257,21 +1257,27 @@ class Rune():
         dict_rune = {}
         list_type = []
         list_count = []
+        liste_count_lgd = []
         list_propriete = []
         list_propriete_gemmes = []
         list_count_gemmes = []
+        list_count_gemmes_lgd = []
+
+        print(self.data_grind.columns)
 
         for type_rune in self.set.values():
             for propriete in self.property_grind.values():
                 data_type_rune = self.data_grind[self.data_grind['rune_set'] == type_rune]
                 nb_rune = self.data_grind[self.data_grind['rune_set'] == type_rune].count().max()
                 count = data_type_rune['Grind_hero'].str.count(propriete).sum()
+                count_lgd = data_type_rune['Grind_lgd'].str.count(propriete).sum()
                 
 
                 dict_rune[type_rune] = nb_rune
 
                 list_type.append(type_rune)
                 list_count.append(count)
+                liste_count_lgd.append(count_lgd)
                 list_propriete.append(propriete)
 
                 self.df_rune = pd.DataFrame.from_dict(
@@ -1281,15 +1287,17 @@ class Rune():
                 data_type_rune = self.data_grind[self.data_grind['rune_set'] == type_rune]
                 nb_rune = self.data_grind[self.data_grind['rune_set'] == type_rune].count().max()
                 count = data_type_rune['Grind_hero'].str.count(propriete).sum()
+                count_lgd = data_type_rune['Grind_lgd'].str.count(propriete).sum()
 
                 # list_type.append(type_rune)
                 list_count_gemmes.append(count)
+                list_count_gemmes_lgd.append(count_lgd)
                 list_propriete_gemmes.append(propriete)
 
-        self.df_count = pd.DataFrame([list_type, list_propriete, list_count,
-                                list_propriete_gemmes, list_count_gemmes]).transpose()
+        self.df_count = pd.DataFrame([list_type, list_propriete, list_count, liste_count_lgd,
+                                list_propriete_gemmes, list_count_gemmes, list_count_gemmes_lgd]).transpose()
         self.df_count = self.df_count.rename(columns={0: 'Set', 1: 'Propriété Meules',
-                                   2: 'Meules (hero) manquantes pour la stat max', 3: 'Propriété Gemmes', 4: 'Gemmes (hero) manquantes'})
+                                   2: 'Meules (hero) manquantes pour la stat max', 3: 'Meules (lgd) manquantes pour la stat max',  4: 'Propriété Gemmes', 5: 'Gemmes (hero) manquantes', 6: 'Gemmes (lgd) manquantes'})
         
         
         self.df_count = optimisation_int(self.df_count, ['int64'])

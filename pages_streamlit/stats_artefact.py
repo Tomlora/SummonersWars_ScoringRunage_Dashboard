@@ -1,18 +1,17 @@
 
 import streamlit as st
-from streamlit_extras.switch_page_button import switch_page
 from fonctions.visualisation import filter_dataframe
 from fonctions.artefact import dataframe_replace_to_english
 import pandas as pd
 from streamlit_extras.colored_header import colored_header
-from st_pages import add_indentation
+
 from fonctions.visuel import css
 from streamlit_extras.no_default_selectbox import selectbox
 from streamlit_extras.metric_cards import style_metric_cards
 import plotly_express as px
 
 css()
-add_indentation()
+
 
 style_metric_cards(background_color='#03152A', border_color='#0083B9', border_left_color='#0083B9', border_size_px=0, box_shadow=False)
 
@@ -143,10 +142,10 @@ if 'submitted' in st.session_state:
         grind_arte()
     
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
 
 
 st.caption('Made by Tomlora :sunglasses:')

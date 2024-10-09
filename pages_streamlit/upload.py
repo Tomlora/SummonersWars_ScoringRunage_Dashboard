@@ -7,16 +7,16 @@ from datetime import datetime, timedelta
 from fonctions.visuel import load_lottieurl, css, load_logo
 from streamlit_lottie import st_lottie
 from params.coef import coef_set, coef_set_spd, liste_substat_arte
-from streamlit_extras.switch_page_button import switch_page
 from fonctions.gestion_bdd import sauvegarde_bdd, update_info_compte, get_user, requete_perso_bdd, cancel, lire_bdd_perso, lire_bdd
 from fonctions.runes import Rune
 from fonctions.artefact import Artefact
-from st_pages import add_indentation
+
 from sqlalchemy.exc import InternalError, OperationalError
 from dateutil import tz
 import gc
 # from memory_profiler import profile
 # from streamlit_profiler import Profiler
+
 
 
 try:
@@ -26,7 +26,7 @@ except:
 
 
 css()
-add_indentation()
+
 
 # @st.cache_data
 def show_lottie(img, height=300 , width=300):
@@ -577,7 +577,7 @@ def upload_sw():
                     gc.collect()
                         
                     # On passe à la page suivante    
-                    switch_page('General')
+                    st.switch_page("pages_streamlit/general.py")
 
 
                 

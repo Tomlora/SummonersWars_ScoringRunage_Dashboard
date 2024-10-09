@@ -3,13 +3,13 @@ from streamlit_extras.add_vertical_space import add_vertical_space
 from math import ceil
 from streamlit_extras.metric_cards import style_metric_cards
 import json
-from st_pages import add_indentation
+
 
 from fonctions.visuel import css
 
 css()
 
-add_indentation()
+
 
 @st.cache_data
 def translation(langue):

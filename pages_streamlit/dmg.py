@@ -1,12 +1,11 @@
 import pandas as pd
 import streamlit as st
-from streamlit_extras.switch_page_button import switch_page
-from st_pages import add_indentation
+
 import numpy as np
 from fonctions.visuel import css
 css()
 
-add_indentation()
+
 
 
 

@@ -1,11 +1,10 @@
 
 import streamlit as st
-from streamlit_extras.switch_page_button import switch_page
 from fonctions.visualisation import filter_dataframe
 import pandas as pd
 import plotly_express as px
 import plotly.graph_objects as go
-from st_pages import add_indentation
+
 from fonctions.visuel import css
 from fonctions.gestion_bdd import lire_bdd_perso
 from streamlit_extras.no_default_selectbox import selectbox
@@ -14,7 +13,7 @@ import numpy as np
 from streamlit_extras.row import row
 css()
 
-add_indentation()
+
 
 
 
@@ -373,10 +372,10 @@ if 'submitted' in st.session_state:
         stats_runage()
     
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
 
 
 st.caption('Made by Tomlora :sunglasses:')

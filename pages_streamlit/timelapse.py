@@ -5,14 +5,13 @@ import plotly.graph_objects as go
 import plotly_express as px
 from datetime import datetime, timedelta
 from fonctions.visualisation import filter_dataframe
-from streamlit_extras.switch_page_button import switch_page
-from st_pages import add_indentation
+
 from fonctions.visuel import css
 
 
 css()
 
-add_indentation()
+
 
 def cleaning_only_guilde(x):
     x['private'] = 0
@@ -220,10 +219,10 @@ if 'submitted' in st.session_state:
         timelapse_joueur()
     
     else:
-        switch_page('Upload JSON')
+        st.switch_page("pages_streamlit/upload.py")
 
 else:
-    switch_page('Upload JSON')
+    st.switch_page("pages_streamlit/upload.py")
     
     
 st.caption('Made by Tomlora :sunglasses:')

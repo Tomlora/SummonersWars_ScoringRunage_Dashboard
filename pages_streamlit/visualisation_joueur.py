@@ -12,12 +12,11 @@ from params.coef import order
 
 from fonctions.compare import comparaison
 from streamlit_extras.metric_cards import style_metric_cards
-from st_pages import add_indentation
 from streamlit_extras.add_vertical_space import add_vertical_space
 from fonctions.visuel import css
 
 css()
-add_indentation()
+
 style_metric_cards(background_color='#03152A', border_color='#0083B9', border_left_color='#0083B9', border_size_px=0, box_shadow=False)
 
 @st.cache_data

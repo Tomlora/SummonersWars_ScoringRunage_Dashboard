@@ -393,8 +393,7 @@ class Artefact():
             self.data_eff['factor'] = np.where(
                 self.data_eff['eff_binned'] == key, value, self.data_eff['factor'])
 
-        self.data_eff['points'] = self.data_eff['efficiency'] * \
-            self.data_eff['factor']
+        self.data_eff['points'] = self.data_eff['efficiency'] * self.data_eff['factor']
 
         self.data_eff.drop(['factor'], axis=1, inplace=True)
 
