@@ -79,7 +79,8 @@ def main_page():
 
 
                         pages = {'Accueil' : [
-                        st.Page('pages_streamlit/upload.py', title='Upload JSON', icon='📁')],
+                        st.Page('pages_streamlit/upload.py', title='Upload JSON', icon='📁'),
+                        st.Page('pages_streamlit/update.py', title='Version 11/10/24', icon='🔈')],
                         # Section(name='Scoring', icon=':bar_chart:'),
                         "Scoring" : [
                         st.Page('pages_streamlit/general.py', title='General', icon='📚'),
@@ -101,6 +102,7 @@ def main_page():
                         "Runages" : [
                         st.Page('pages_streamlit/grind_runes.py', title='Optimisation', icon='🔍'),
                         st.Page('pages_streamlit/stats_runes.py', title='Statistiques', icon='📊'),
+                        st.Page('pages_streamlit/objectif_rune.py', title='Objectif Efficience', icon='💪'),
                         st.Page('pages_streamlit/upgrade_runes.py', title='Upgrade', icon='⬆️'),
                         st.Page('pages_streamlit/todolist.py', title='ToDoList', icon='📋'),
                         st.Page('pages_streamlit/build.py', title='Créer un build', icon='🔨'),
@@ -119,11 +121,8 @@ def main_page():
                         # Section(name='Paramètres', icon=':gear:'),
                         "Paramètres" : [
                         st.Page('pages_streamlit/visibility.py', title='Ma visibilité', icon='👀'),
-                        st.Page('pages_streamlit/options.py', title='Mes données', icon='📱')],
-                        # Section(name='Mise à jour', icon=':loudspeaker:'),
-                        "Mise à jour" : [
-                        st.Page('pages_streamlit/update.py', title='Version 09/10/24', icon='🔈'),
-                        st.Page('pages_streamlit/feedback.py', title='Feedback', icon='📣')]}
+                        st.Page('pages_streamlit/options.py', title='Mes données', icon='📱')]}
+                        # st.Page('pages_streamlit/feedback.py', title='Feedback', icon='📣')]}
 
         
 
