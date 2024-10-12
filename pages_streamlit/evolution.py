@@ -6,6 +6,7 @@ from fonctions.visualisation import transformation_stats_visu, plotline_evol_run
 from fonctions.gestion_bdd import lire_bdd_perso
 from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
+from streamlit_extras.button_selector import button_selector
 
 import pandas as pd
 from datetime import timedelta
@@ -241,17 +242,15 @@ def palier_page():
                 st.text("")
                 
             row_button = row([1,1,1,1], gap="small", vertical_align="center")
-                
-            button_col1, button_col2, button_col3, button_col4 = st.columns(4)
+                    
+
+            liste_options = ['General', 'Speed', 'Artefact', 'Qualité']
+
+
+            button_select = button_selector(liste_options)
                 
 
-            button_general = row_button.button('General', key='general')
-            button_spd = row_button.button('Speed', key='speed')
-            button_arte = row_button.button('Artefact', key='arte')
-            button_qual = row_button.button('Qualité', key='qual')
-                
-
-            if button_general:
+            if button_select == 0:
                 st.subheader(st.session_state.langue['score_general'])
                     
 
@@ -279,7 +278,7 @@ def palier_page():
                         st.plotly_chart(fig_rune_120, use_container_width=True)
                 
 
-            if button_spd:
+            elif button_select == 1:
                     st.subheader('Speed')
 
                     data_detail_spd = transformation_stats_visu(
@@ -327,7 +326,7 @@ def palier_page():
                         st.plotly_chart(fig36, use_container_width=True)
 
     
-            if button_arte:
+            elif button_select == 2:
                     st.subheader('Artefact')
                     data_detail_arte = transformation_stats_visu(
                         'sw_arte', st.session_state['id_joueur'], distinct=True, ascending=True)
@@ -373,7 +372,7 @@ def palier_page():
                                         color='arte_type', symbol='type')
                         st.plotly_chart(fig100, use_container_width=True)
                     
-            if button_qual:    
+            elif button_select == 3:    
                     st.subheader(st.session_state.langue['Score_Qualite'])
                     
                     

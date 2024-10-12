@@ -90,9 +90,11 @@ def general_page():
 
 
 
-                tab1, tab2, tab3, tab4 = st.tabs(
-                    [st.session_state.langue['Autres_scoring'], st.session_state.langue['Detail_scoring'], st.session_state.langue['Efficience_avg_set'], st.session_state.langue['monstres']])
-
+                tab1, tab2, tab3, tab4, tab5 = st.tabs(
+                    [st.session_state.langue['Autres_scoring'], st.session_state.langue['Detail_scoring'], st.session_state.langue['Efficience_avg_set'], st.session_state.langue['monstres'], 'Timeline Summon'])
+                
+                
+                
                 with tab1:
                     with st.expander(st.session_state.langue['Autres_scoring'], expanded=True):
 
@@ -221,10 +223,12 @@ def general_page():
                         # on merge
                         df_mobs_complet = pd.merge(
                             st.session_state.df_mobs, st.session_state.swarfarm, left_on='id_monstre', right_on='com2us_id')
+                        
+                        
 
                         # on retient ce dont on a besoin
                         df_mobs_name = df_mobs_complet[[
-                            'name', '*', 'level', 'image_filename', 'element', 'natural_stars', 'awaken_level']]
+                            'name', '*', 'level', 'image_filename', 'element', 'natural_stars', 'awaken_level', 'Date_invocation']]
 
                         def _key_element(x):
                             '''Transforme les valeurs catégoriques en valeurs numériques'''
@@ -251,12 +255,16 @@ def general_page():
 
                         df_mobs_name['url'] = df_mobs_name.apply(
                             lambda x:  f'https://swarfarm.com/static/herders/images/monsters/{x["image_filename"]}', axis=1)
+                        
+
+                        st.session_state.df_mobs_name_all = df_mobs_name
 
                         taille_image = st.slider(
                             st.session_state.langue['taille_image'], 30, 200, 70, step=5)
+                        
 
-                        menu1, menu2, menu3, menu4 = st.tabs(
-                            ['Box', '2A', 'LD', 'Autel de scellement'])
+                        menu1, menu2, menu3, menu4, menu5 = st.tabs(
+                            ['Box', '2A', 'LD', 'Autel de scellement', 'Timeline Invocation'])
 
                         with menu1:
                             tab1, tab2, tab3, tab4, tab5 = st.tabs(
@@ -331,6 +339,7 @@ def general_page():
                                 show_img_monsters(
                                     st.session_state.compteid, df_mobs_ld_only, 2, 'natural_stars', width=taille_image)
 
+
                         with menu4:
 
                             # autel de scellement
@@ -375,6 +384,9 @@ def general_page():
                             except KeyError:
                                 st.error(
                                     st.session_state.langue['no_storage'])
+                                
+
+
 
                 # Stockage monstres
 
@@ -406,6 +418,7 @@ def general_page():
                 except:
                     pass
                 
+
 
 
 

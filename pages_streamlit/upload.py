@@ -212,9 +212,11 @@ def upload_sw():
                         master_id = monstre['unit_master_id']
                         stars = monstre['class']
                         level = monstre['unit_level']
+                        date = str(monstre['create_time'])
+
                         list_mobs.append([unit, master_id, stars, level,
                                           monstre['atk'], monstre['def'], monstre['spd'], monstre['resist'], monstre['accuracy'],
-                                        monstre['critical_rate'], monstre['critical_damage']])
+                                        monstre['critical_rate'], monstre['critical_damage'], date])
                         
                         for i in range(6):  # itération sur les runes de 1 à 6
                             
@@ -232,8 +234,9 @@ def upload_sw():
                             # On met ça en dataframe
                     st.session_state.df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre', '*', 'level',
                                                                                 'atk', 'def', 'spd',
-                                                                                'resist', 'accuracy', 'CRIT', 'DCC',
+                                                                                'resist', 'accuracy', 'CRIT', 'DCC', 'Date_invocation',
                                                                                 'Rune1', 'Rune2', 'Rune3', 'Rune4', 'Rune5', 'Rune6'])
+                    
                         
                     # swarfarm
 

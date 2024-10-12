@@ -26,6 +26,9 @@ tab2024, tab2023 = st.tabs(['2024', '2023'])
 
 with tab2024:
 
+    with st.expander('Version 12/10/2024', expanded=True):
+        st.info("- Ajout de la page Invocation") 
+
     with st.expander('Version 11/10/2024', expanded=True):
         st.info("- Ajout de la page Objectif Efficience (Runages)") 
 

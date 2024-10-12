@@ -4,6 +4,9 @@ import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 from params.coef import coef_set, coef_set_spd
 from datetime import timedelta
+from streamlit_extras.button_selector import button_selector
+
+
 
 from fonctions.visuel import css
 css()
@@ -16,6 +19,9 @@ dict_type = {st.session_state.langue['Score_Rune'] : 'score_general',
                  f'{st.session_state.langue["Score_Speed"]} (Set)' : 'score spd sur un set',
                  st.session_state.langue['Score_Arte'] : 'score_arte',
                  st.session_state.langue['Score_Qualite'] : 'score_qual'}
+
+dict_list = list(dict_type.keys())
+
     
 set_to_show = ['Violent', 'Will', 'Destroy', 'Despair', 'Swift',
                 'Blade', 'Endure', 'Energy', 'Fatal', 'Focus', 'Guard', 'Nemesis',
@@ -92,10 +98,14 @@ def classement():
 
     data = load_data_ladder()
 
-    choice_radio = st.radio(st.session_state.langue['Classement'], options=dict_type.keys(), index=0, horizontal=True)
+    # choice_radio = st.radio(st.session_state.langue['Classement'], options=dict_type.keys(), index=0, horizontal=True)
+
+    choice_radio = button_selector(dict_type.keys())
+
+
     
-    
-    classement = dict_type[choice_radio]
+    classement = dict_type[dict_list[choice_radio]]
+
 
     if classement == 'score sur un set':
         # set = st.radio('Quel set ?', options=coef_set.keys(), horizontal=True)

@@ -2,6 +2,7 @@ from fonctions.gestion_bdd import lire_bdd_perso, cleaning_only_guilde
 import pandas as pd
 import streamlit as st
 from datetime import timedelta
+from streamlit_extras.button_selector import button_selector
 
 
 from fonctions.visuel import css
@@ -12,6 +13,8 @@ css()
 dict_type = {st.session_state.langue["arene"] : 'arene',
              'World Boss' : 'WB'}
     
+
+dict_list = list(dict_type.keys())
 
 
 
@@ -91,10 +94,10 @@ def classement():
 
     data = load_data_ladder()
 
-    choice_radio = st.radio(st.session_state.langue['Classement'], options=dict_type.keys(), index=0, horizontal=True)
-    
-    
-    classement = dict_type[choice_radio]
+    choice_radio = button_selector(dict_type.keys())
+
+
+    classement = dict_type[dict_list[choice_radio]]
 
     if classement == 'arene':
         data['date'] = pd.to_datetime(data['date'], format="%d/%m/%Y")

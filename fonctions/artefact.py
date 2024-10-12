@@ -650,6 +650,5 @@ def visualisation_top_arte(df, column, use_container_width=True, order=None):
             df2=tcd.astype('int', errors='ignore').astype('str').style.set_properties(**{'text-align': 'center'}).set_table_styles(style_table)
         # df2=tcd.astype(type_data, errors='ignore').astype('str').style.set_properties(**{'text-align': 'center'}).set_table_styles(style_table)
         st.table(df2)    
-        # st.dataframe(tcd, use_container_width=use_container_width)
-        
+
         return df2

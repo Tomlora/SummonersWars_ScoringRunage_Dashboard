@@ -13,6 +13,8 @@ import numpy as np
 from streamlit_extras.row import row
 css()
 
+from streamlit_extras.button_selector import button_selector
+
 
 
 
@@ -136,28 +138,30 @@ def stats_runage():
         
         st.text('Voir les données : ')
         
-        row_button = row([1,1,1,1], gap="small", vertical_align="center")
+        # row_button = row([1,1,1,1], gap="small", vertical_align="center")
+
+        button_select = button_selector(['Top 50', 'Top 400', 'Efficience', 'Max Grind'])
                 
-        button_top50 = row_button.button('Top 50', key='button_top50')
-        button_top400 = row_button.button('Top 400', key='button_top400')
-        button_efficience = row_button.button('Efficience', key='button_efficience')
-        button_max_grind = row_button.button('Max Grind', key='button_max_grind')
+        # button_top50 = row_button.button('Top 50', key='button_top50')
+        # button_top400 = row_button.button('Top 400', key='button_top400')
+        # button_efficience = row_button.button('Efficience', key='button_efficience')
+        # button_max_grind = row_button.button('Max Grind', key='button_max_grind')
         
         colonnes_to_show = ['rune_set', 'rune_slot', 'rune_equiped', 'stars', 'qualité', 'level', 'efficiency', 'main_type', 'main_value', 'innate_type', 'innate_value',
                                                  'first_sub', 'first_sub_value', 'first_sub_grinded_value', 'second_sub', 'second_sub_value', 'second_sub_grinded_value',
                                                  'third_sub', 'third_sub_value', 'third_sub_grinded_value', 'fourth_sub', 'fourth_sub_value', 'fourth_sub_grinded_value',
                                                  'efficiency_max_lgd', 'efficiency_max_hero', 'potentiel_max_lgd', 'potentiel_max_hero']
         
-        if button_top50:
+        if button_select == 0:
             st.dataframe(df_efficience.head(50)[colonnes_to_show])
         
-        if button_top400:
+        if button_select == 1:
             st.dataframe(df_efficience.head(400)[colonnes_to_show])
             
-        if button_efficience:
+        if button_select == 2:
             st.dataframe(df_efficience[df_efficience['efficiency'] >= 100][colonnes_to_show])
             
-        if button_max_grind:
+        if button_select == 3:
             st.dataframe(df_efficience[df_efficience['efficiency_max_lgd'] >= 100][colonnes_to_show])
                 
         st.plotly_chart(fig, use_container_width=True)

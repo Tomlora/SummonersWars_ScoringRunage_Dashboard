@@ -5,6 +5,7 @@ from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
 from fonctions.compare import comparaison, comparaison_rune_graph
 from streamlit_extras.add_vertical_space import add_vertical_space
+from streamlit_extras.button_selector import button_selector
 
 
 css()
@@ -24,15 +25,18 @@ def comparaison_entre_joueurs():
     col1, col2 = st.columns(2)
     with col1:
         st.subheader(f'Rune ({st.session_state["score"]} pts)')
-    with col2:
-        img = load_lottieurl(
-                        'https://assets9.lottiefiles.com/packages/lf20_ksrabxwb.json')
-        st_lottie(img, width=70, height=70)
 
 
-    tab_general, tab_guilde = st.tabs(['General', st.session_state['guilde']])
+
+    # tab_general, tab_guilde = st.tabs(['General', st.session_state['guilde']])
+
+    liste_options = ['General', st.session_state['guilde']]
                 # Par rapport à tous les joueurs
-    with tab_general:
+
+    button_select = button_selector(liste_options)
+    # with tab_general:
+
+    if button_select == 0:
 
         comparaison1_1, comparaison1_2, comparaison1_3 , comparaison1_4 = st.columns(4)
 
@@ -67,7 +71,8 @@ def comparaison_entre_joueurs():
             st.info(st.session_state.langue['explain_graph'])
 
                     # Par rapport à sa guilde
-    with tab_guilde:
+    # with tab_guilde:
+    elif button_select == 1:
 
         comparaison2_1, comparaison2_2, comparaison2_3, comparaison2_4 = st.columns(4)
 
@@ -111,9 +116,13 @@ def comparaison_entre_joueurs():
                         'https://assets4.lottiefiles.com/temporary_files/jXGKLw.json')
         st_lottie(img, width=60, height=60)
 
-    tab_general, tab_guilde = st.tabs(['General', st.session_state['guilde']])
+    # tab_general, tab_guilde = st.tabs(['General', st.session_state['guilde']])
+
+    button_select_arte = button_selector(liste_options, key='button_selector_arte')
         # Par rapport à tous les joueurs
-    with tab_general:
+    # with tab_general:
+
+    if button_select_arte == 0:
 
         comparaison1_1, comparaison1_2, comparaison1_3 , comparaison1_4 = st.columns(4)
 
@@ -141,7 +150,9 @@ def comparaison_entre_joueurs():
         st.plotly_chart(fig_general)
 
                     # Par rapport à sa guilde
-    with tab_guilde:
+    # with tab_guilde:
+
+    if button_select_arte == 1:
 
         comparaison2_1, comparaison2_2, comparaison2_3, comparaison2_4 = st.columns(4)
 

@@ -80,7 +80,8 @@ def main_page():
 
                         pages = {'Accueil' : [
                         st.Page('pages_streamlit/upload.py', title='Upload JSON', icon='📁'),
-                        st.Page('pages_streamlit/update.py', title='Version 11/10/24', icon='🔈')],
+                        st.Page('pages_streamlit/update.py', title='Version 12/10/24', icon='🔈'),
+                        st.Page('pages_streamlit/timeline_summon.py', title='Invocation', icon='👻')],
                         # Section(name='Scoring', icon=':bar_chart:'),
                         "Scoring" : [
                         st.Page('pages_streamlit/general.py', title='General', icon='📚'),
