@@ -65,6 +65,10 @@ def general_page():
                                 'https://assets4.lottiefiles.com/packages/lf20_yMpiqXia1k.json')
                 show_lottie(img, width=60, height=60)
 
+            
+
+            # self.data_set = map_stats(self.data_set, ['innate_type', 'first_sub', 'second_sub', 'third_sub', 'fourth_sub', 'main_type'])
+
             # -------------- Scoring du compte
             try:
                 tcd_column, _, score_column = st.columns([0.4,0.2,0.4])
@@ -90,8 +94,8 @@ def general_page():
 
 
 
-                tab1, tab2, tab3, tab4, tab5 = st.tabs(
-                    [st.session_state.langue['Autres_scoring'], st.session_state.langue['Detail_scoring'], st.session_state.langue['Efficience_avg_set'], st.session_state.langue['monstres'], 'Timeline Summon'])
+                tab1, tab2, tab3, tab4= st.tabs(
+                    [st.session_state.langue['Autres_scoring'], st.session_state.langue['Detail_scoring'], st.session_state.langue['Efficience_avg_set'], st.session_state.langue['monstres']])
                 
                 
                 
@@ -106,7 +110,8 @@ def general_page():
                             st.metric(st.session_state.langue['Score_Speed'], st.session_state['score_spd'])
 
                         with score_column_arte:
-                            st.metric(F'{st.session_state.langue["Score_Arte"]} ({st.session_state.langue["Efficience_avg"]} : {round(st.session_state.data_arte.data_a["efficiency"].mean(),2)})', st.session_state['score_arte'])
+                            st.metric(F'{st.session_state.langue["Score_Arte"]} ({st.session_state.langue["Efficience_avg"]} : {round(st.session_state.data_arte.data_a["efficiency"].mean(),2)})', st.session_state['score_arte'],
+                                      help=st.session_state.langue['explication_scoring_artefact'])
 
                             # ---------------- Df arte + speed
 
@@ -124,9 +129,18 @@ def general_page():
 
                         with score_column_df_arte:
                             st.dataframe(st.session_state.tcd_arte, use_container_width=True, height=298)
+
+                        st.metric('Score com2us', int(st.session_state.df_scoring_com2us_summary['mean_SCORE'].mean()), help=st.session_state.langue["scoring_com2us_artefact"])
+
+                        st.session_state.df_scoring_com2us_summary = get_img_runes(st.session_state.df_scoring_com2us_summary)
+
+                        st.dataframe(st.session_state.df_scoring_com2us_summary.set_index('img').dropna(how='all').drop(columns=['id', 'date']),
+                                     use_container_width=True,
+                                     column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
                             
 
-                        st.metric(st.session_state.langue['Score_quality_rune'],st.session_state.score_qual)
+                        st.metric(st.session_state.langue['Score_quality_rune'],st.session_state.score_qual,
+                                  help=st.session_state.langue['explication_scoring_qualite'])
                         st.session_state.df_scoring_quality = get_img_runes(st.session_state.df_scoring_quality)
                         st.dataframe(st.session_state.df_scoring_quality.set_index('img').dropna(how='all'),
                                      use_container_width=True,
@@ -263,8 +277,8 @@ def general_page():
                             st.session_state.langue['taille_image'], 30, 200, 70, step=5)
                         
 
-                        menu1, menu2, menu3, menu4, menu5 = st.tabs(
-                            ['Box', '2A', 'LD', 'Autel de scellement', 'Timeline Invocation'])
+                        menu1, menu2, menu3, menu4 = st.tabs(
+                            ['Box', '2A', 'LD', 'Autel de scellement'])
 
                         with menu1:
                             tab1, tab2, tab3, tab4, tab5 = st.tabs(

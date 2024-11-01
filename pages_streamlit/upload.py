@@ -288,6 +288,11 @@ def upload_sw():
                             st.session_state.category_selected, coef_set)
                         
                     st.session_state.tcd_detail_score = data_rune.tcd_df_efficiency
+
+
+                        # ---------------------- calcul score rune com2us
+                    
+                    st.session_state.df_scoring_com2us_summary = data_rune.scoring_com2us()
                         
 
                         # -------------------------- calcul score spd rune
@@ -354,8 +359,14 @@ def upload_sw():
                     st.session_state.tcd = tcd_value.copy()
 
                     sauvegarde_bdd(tcd_value, 'sw', 'append')
+
+                    # Scoring scoring com2us
+
+                    tcd_value_com2us = format_sql(st.session_state.df_scoring_com2us_summary)
+
+                    sauvegarde_bdd(tcd_value_com2us, 'sw_scoring_com2us', 'append')
                     
-                    del tcd_value
+                    del tcd_value, tcd_value_com2us
                     
                     # Qualité des runes
                     
@@ -568,6 +579,8 @@ def upload_sw():
                     'damage' : int(st.session_state['dmg_wb'])})
                     
                     # Tout est bon, on peut passer à la suite !
+
+
 
                     status.update(label='Complet !', state='complete', expanded=False)  
                     st.write('Tu peux désormais aller sur les autres onglets disponibles')

@@ -34,7 +34,7 @@ def params():
 
     if validation_suppression:
         supprimer_data(st.session_state['id_joueur'], date_retenu)
-        st.text(st.session_state.langue['supprimer'])
+        st.success(':v:')
 
     with st.form('Supprimer toutes mes données'):
         st.subheader(st.session_state.langue['delete_all'])
@@ -44,7 +44,7 @@ def params():
     if validation_suppression_definitive:
 
         supprimer_data_all(st.session_state['id_joueur'])
-        st.text(st.session_state.langue['supprimer'])
+        st.success(':v:')
 
 
 

@@ -4,7 +4,7 @@
 "loading_rune" : "Loading runes...",
 "loading_data" : "Loadinf data...",
 "telechargement_wait": "You will be redirected automatically at the end of the download.",
-"mode_appli" : "By default, the app is in extended mode. The display can be changed in the menu at top right.",
+"mode_appli" : "By default, the app is in extended mode. The display can be changed in the menu at top right. \n\nI'm not a web developer. Please be understanding of the website's potential limitations :)",
 "calcul_upload" : "Calculate my score",
 "add_filters" : "Add filters",
 "filters_data" : "Filter the data on",
@@ -149,5 +149,8 @@
 "soin" : "HEAL",
 "filter" : "Filter",
 "filter_help" : "Place your mouse under this msg to unlock the filter options on the right",
-"no_filter" : "No active filter"
+"no_filter" : "No active filter",
+"scoring_com2us_artefact" : "Note: There is no com2us scoring for artifacts, as this would be equivalent to efficiency x2: which contributes nothing to the current scoring. \n\n The maximal score for a rune (no antique) is 285",
+"explication_scoring_qualite" : "LGD = 1 points | Antique = 2 points. Same coefficient as the general scoring",
+"explication_scoring_artefact" : "Formule : (count 80) * 1 + (count 85) * 2 + (count 90) * 3 + (count 95) * 4 + (count 100) * 5"
 }

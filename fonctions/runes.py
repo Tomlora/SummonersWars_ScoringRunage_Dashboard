@@ -640,6 +640,45 @@ class Rune():
         
         return self.tcd_value_spd, self.score_spd
     
+    def scoring_com2us(self):
+
+        self.df_com2us = self.data_set[['rune_set', 'innate_type', 'first_sub', 'second_sub', 'third_sub', 'fourth_sub', 'main_type', 'innate_value', 'first_sub_value_total', 'second_sub_value_total', 'third_sub_value_total', 'fourth_sub_value_total']]
+
+        def get_stat_value(row, stat_name):
+            stat_value = 0
+            # Vérifier chaque sous-stat pour voir si elle correspond au nom de stat
+            if row['innate_type'] == stat_name:
+                stat_value += row['innate_value']
+            elif row['first_sub'] == stat_name:
+                stat_value += row['first_sub_value_total']
+            elif row['second_sub'] == stat_name:
+                stat_value += row['second_sub_value_total']
+            elif row['third_sub'] == stat_name:
+                stat_value += row['third_sub_value_total']
+            elif row['fourth_sub'] == stat_name:
+                stat_value += row['fourth_sub_value_total']
+            return stat_value
+        
+        # Calcul de la colonne score sans changer les noms des colonnes
+        self.df_com2us['score'] = self.df_com2us.apply(lambda x : round(
+            (
+                (get_stat_value(x, 'HP%') + get_stat_value(x, 'ATQ%') + get_stat_value(x, 'DEF%') + get_stat_value(x, 'ACC') + get_stat_value(x, 'RES')) / 40 +
+                (get_stat_value(x, 'SPD') + get_stat_value(x, 'CRIT')) / 30 +
+                get_stat_value(x, 'DCC') / 35 +
+                get_stat_value(x, 'HP') / 1875 * 0.35 +
+                (get_stat_value(x, 'ATQ') + get_stat_value(x, 'DEF')) / 100 * 0.35
+            ) * 100
+        ), axis=1
+        )
+
+
+        self.tcd_com2us_summary= self.df_com2us.pivot_table('score', 'rune_set', aggfunc=['mean', 'sum', 'max'])
+        self.tcd_com2us_summary.columns = pd.Index([e[0] + "_" + e[1].upper() for e in self.tcd_com2us_summary.columns.tolist()])
+
+        self.tcd_com2us_summary['mean_SCORE'] = self.tcd_com2us_summary['mean_SCORE'].astype(int)
+        
+        return self.tcd_com2us_summary
+    
     
     def count_quality(self):
 
@@ -1394,5 +1433,6 @@ class Rune():
         
         
         return self.eff_per_slot[['rune_set', 'rune_slot', 'efficiency']]
+    
         
         

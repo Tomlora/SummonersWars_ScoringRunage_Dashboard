@@ -26,8 +26,18 @@ tab2024, tab2023 = st.tabs(['2024', '2023'])
 
 with tab2024:
 
+    with st.expander('Version 01/11/2024', expanded=True):
+        st.info("- Ajout des classements scoring Com2us") 
+
+    with st.expander('Version 30/10/2024', expanded=True):
+        st.info("- Ajout des scoring Com2us") 
+
+    with st.expander('Version 16/10/2024', expanded=True):
+        st.info("- Ajout des guerriers Drakan et des Harpies 2A") 
+
     with st.expander('Version 12/10/2024', expanded=True):
-        st.info("- Ajout de la page Invocation") 
+        st.info("- Ajout de la page Invocation \n\n"+
+                "- Menu dynamique") 
 
     with st.expander('Version 11/10/2024', expanded=True):
         st.info("- Ajout de la page Objectif Efficience (Runages)") 

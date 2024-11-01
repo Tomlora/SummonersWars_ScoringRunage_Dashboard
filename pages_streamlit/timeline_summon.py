@@ -25,7 +25,7 @@ def timeline_page():
 
     if button_select == 0:
         df_filter = df_mobs[df_mobs['element_number'].isin([3, 4])]
-        df_filter = df_filter[df_filter['natural_stars'] == 5]
+        df_filter : pd.DataFrame = df_filter[df_filter['natural_stars'] == 5]
         height = 1000
 
     elif button_select == 1:
@@ -74,6 +74,19 @@ def timeline_page():
     timeline_json = json.dumps(timeline_dict, indent=2)
 
     timeline(timeline_json, height=height)
+
+    st.subheader('Tableau')
+
+    col1, col2 = st.columns(2)
+
+    df_filter['element'] = df_filter['element'].astype(str)
+    df_filter['element_number'] = df_filter['element_number'].astype(str)
+
+    with col1:
+        st.dataframe(df_filter.pivot_table(index=['Année'], columns=['element'], values=['name'], aggfunc='count', fill_value=0), use_container_width=True)
+    
+    with col2:
+        st.dataframe(df_filter.pivot_table(index=['Année', 'Mois'], columns=['element'], values=['name'], aggfunc='count', fill_value=0), use_container_width=True)
     
 
 

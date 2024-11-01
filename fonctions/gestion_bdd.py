@@ -155,6 +155,8 @@ def supprimer_data_all(joueur):
                     DELETE FROM sw_max WHERE "id" = :joueur;
                     DELETE from sw_monsters WHERE "id" = :joueur;
                     DELETE from sw_detail WHERE "id" = :joueur;
+                    DELETE from sw_objectifs_arte WHERE "id" = :joueur;
+                    DELETE from sw_objectifs_rune WHERE "id" = :joueur;
                     DELETE from sw_arte_max WHERE "id" = :joueur;
                     DELETE FROM sw_wb WHERE "id_joueur" =:joueur;
                     DELETE FROM sw_pvp WHERE "id_joueur" =:joueur;

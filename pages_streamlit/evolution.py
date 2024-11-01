@@ -17,6 +17,7 @@ from streamlit_extras.row import row
 css()
 
 
+
 @st.cache_data
 def filter_data(df, selected_options):
     """Filtre la data en fonction des dates sélectionnés
@@ -100,6 +101,8 @@ def palier_page():
                 with st.popover(st.session_state.langue["select_date_to_show"]):
                     st.session_state.options_select = st.multiselect(
                                 f'', options_date, options_date, key='evol_date1')
+
+
                 
                 data_detail_filter = filter_data(data_detail_filter, st.session_state.options_select)
             
@@ -155,6 +158,7 @@ def palier_page():
                 with st.popover(st.session_state.langue["select_date_to_show"]):
                     options_select_qual = st.multiselect(
                                 f'', options_date, options_date, key='evol_date2')
+
                 
                 data_scoring_filter = filter_data(data_scoring_filter, options_select_qual)
             
@@ -209,6 +213,7 @@ def palier_page():
                     with st.popover(st.session_state.langue["select_date_to_show"]):
                         st.session_state.options_select = st.multiselect(
                             f'', options_date, options_date, key='evol_date3')
+
                         
                 date()        
 

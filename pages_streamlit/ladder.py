@@ -18,7 +18,9 @@ dict_type = {st.session_state.langue['Score_Rune'] : 'score_general',
                  f'{st.session_state.langue["Score_Rune"]} (Set)' : 'score sur un set',
                  f'{st.session_state.langue["Score_Speed"]} (Set)' : 'score spd sur un set',
                  st.session_state.langue['Score_Arte'] : 'score_arte',
-                 st.session_state.langue['Score_Qualite'] : 'score_qual'}
+                 st.session_state.langue['Score_Qualite'] : 'score_qual',
+                 'Score Rune Com2us' : 'score_com2us',
+                 'Score Rune Com2us (Set)' : 'score_com2us_set'}
 
 dict_list = list(dict_type.keys())
 
@@ -28,7 +30,7 @@ set_to_show = ['Violent', 'Will', 'Destroy', 'Despair', 'Swift',
                 'Rage', 'Revenge', 'Shield', 'Tolerance', 'Vampire']
 
 
-def mise_en_forme_classement(df, variable='score'):
+def mise_en_forme_classement(df, variable='score', size=36):
     """Met en forme le classement final :  
     
     - Reset l'index
@@ -64,7 +66,7 @@ def mise_en_forme_classement(df, variable='score'):
                     == st.session_state.guilde]
             
         df.reset_index(inplace=True, drop=True)
-        height_dataframe = 36 * df.shape[0]
+        height_dataframe = size * df.shape[0]
 
         
         st.dataframe(df.rename(columns={'score_general' : 'General',
@@ -165,6 +167,32 @@ def classement():
         
        
         mise_en_forme_classement(data_spd_grp)
+
+    elif classement == 'score_com2us':
+        
+        data_set = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, MAX(sw_scoring_com2us.date) as "date", MAX(sw_scoring_com2us."mean_SCORE") as "moyenne", MAX(sw_scoring_com2us."max_SCORE") as "max", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
+                            FROM sw_user
+                            INNER JOIN sw_scoring_com2us ON sw_user.id = sw_scoring_com2us.id
+                            where sw_user.visibility != 0
+                            Group by sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, guilde  ''').transpose().reset_index()
+        
+        option = st.radio('Option :', options=['max', 'moyenne'], index=0, horizontal=True)
+        
+        mise_en_forme_classement(data_set, option, size=50)
+    
+    elif classement == 'score_com2us_set':
+        set = st.radio('Set ?', options=st.session_state.set_rune, horizontal=True)
+        data_set = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_scoring_com2us.rune_set, MAX(sw_scoring_com2us.date) as "date", MAX(sw_scoring_com2us."mean_SCORE") as "moyenne", MAX(sw_scoring_com2us."max_SCORE") as "max", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
+                            FROM sw_user
+                            INNER JOIN sw_scoring_com2us ON sw_user.id = sw_scoring_com2us.id
+                            where sw_user.visibility != 0
+                            and sw_scoring_com2us.rune_set = '{set}'
+                            Group by sw_user.id, sw_user.joueur, sw_scoring_com2us.rune_set, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, guilde  ''').transpose().reset_index()
+        
+        option = st.radio('Option :', options=['max', 'moyenne'], index=0, horizontal=True)
+
+        
+        mise_en_forme_classement(data_set, option, size=50)
 
     else:
 
