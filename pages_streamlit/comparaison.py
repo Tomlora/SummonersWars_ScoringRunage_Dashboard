@@ -58,9 +58,13 @@ def comparaison_entre_joueurs():
         rank2_1, rank2_2 = st.columns(2)
 
         with comparaison1_4:
-            rank_general = int(
-                            df_max.loc[st.session_state['pseudo']]['rank'])
-            st.metric(st.session_state.langue['Classement'], rank_general)
+            try:
+                rank_general = int(
+                                df_max.loc[st.session_state['pseudo']]['rank'])
+                st.metric(st.session_state.langue['Classement'], rank_general)
+            except KeyError:
+                rank_general = 'Non-noté'
+                st.metric(st.session_state.langue['Classement'], rank_general)
 
         with rank2_1:
             fig_general = comparaison_rune_graph(df_max, 'General')
@@ -89,10 +93,13 @@ def comparaison_entre_joueurs():
             st.metric(st.session_state.langue['Best_score'], max_guilde, delta2_3)
 
         with comparaison2_4:
-
-            rank_guilde = int(
-                            df_guilde.loc[st.session_state['pseudo']]['rank'])
-            st.metric(st.session_state.langue['Classement'], rank_guilde)
+            try:
+                rank_guilde = int(
+                                df_guilde.loc[st.session_state['pseudo']]['rank'])
+                st.metric(st.session_state.langue['Classement'], rank_guilde)
+            except KeyError:
+                rank_guilde = 'Non-noté'
+                st.metric(st.session_state.langue['Classement'], rank_guilde)
                         
         rank3_1, rank3_2 = st.columns(2)
 

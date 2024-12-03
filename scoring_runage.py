@@ -34,7 +34,7 @@ def main_page():
    
                         pages = {'Accueil' : [
                         st.Page('pages_streamlit/upload.py', title='Upload JSON', icon='📁'),
-                        st.Page('pages_streamlit/update.py', title='Version 01/11/24', icon='🔈'),
+                        st.Page('pages_streamlit/update.py', title='Version 02/12/24', icon='🔈'),
                         st.Page('pages_streamlit/timeline_summon.py', title='Invocation', icon='👻')],
                         # Section(name='Scoring', icon=':bar_chart:'),
                         "Scoring" : [

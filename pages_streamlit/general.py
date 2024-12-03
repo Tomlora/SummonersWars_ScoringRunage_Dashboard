@@ -45,7 +45,10 @@ def show_img_monsters(user_id, data, stars, variable='*', width=70, ):
 def get_img_runes(df : pd.DataFrame):
     if not "set" in df.columns:
         df.insert(0, 'set', df.index)
-        df['img'] = df['set'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
+        try:
+            df['img'] = df['set'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
+        except AttributeError:
+            pass
     
     return df
 
@@ -155,10 +158,12 @@ def general_page():
 
                         with column_detail_scoring1:
                             st.session_state.tcd_detail_score = get_img_runes(st.session_state.tcd_detail_score)
-                            st.dataframe(st.session_state.tcd_detail_score.set_index('img'),
-                                        use_container_width=True,
-                                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
-
+                            try:
+                                st.dataframe(st.session_state.tcd_detail_score.set_index('img'),
+                                            use_container_width=True,
+                                            column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
+                            except KeyError:
+                                st.dataframe(st.session_state.tcd_detail_score)
 
                         with column_detail_scoring2:
                             txt = st.session_state.langue['Explication_scoring']

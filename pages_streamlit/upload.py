@@ -358,7 +358,12 @@ def upload_sw():
                         
                     st.session_state.tcd = tcd_value.copy()
 
-                    sauvegarde_bdd(tcd_value, 'sw', 'append')
+                    if not 80 in tcd_value.columns :
+
+                        sauvegarde_bdd(tcd_value, 'sw', 'append')
+                    
+                    else:
+                        sauvegarde_bdd(tcd_value.drop(columns=[80, 90]), 'sw', 'append')
 
                     # Scoring scoring com2us
 
@@ -445,8 +450,16 @@ def upload_sw():
                     tcd_detail_score_save.loc['Total', 'moyenne'] = st.session_state.data_avg['moyenne'].mean()  
                     tcd_detail_score_save.loc['Total', 'max'] = st.session_state.data_avg['max'].mean() 
                     tcd_detail_score_save.loc['Total', 'mediane'] = st.session_state.data_avg['mediane'].mean() 
-                    tcd_detail_score_save.loc['Total', 'nb'] = st.session_state.data_avg['Nombre runes'].sum()   
-                    sauvegarde_bdd(tcd_detail_score_save, 'sw_detail', 'append')
+                    tcd_detail_score_save.loc['Total', 'nb'] = st.session_state.data_avg['Nombre runes'].sum()
+                    
+
+                    if not 80 in tcd_detail_score_save.columns:
+                        sauvegarde_bdd(tcd_detail_score_save, 'sw_detail', 'append')
+                    else:
+                        sauvegarde_bdd(tcd_detail_score_save.drop(columns=[80, 90]), 'sw_detail', 'append')
+
+
+
                     
                     
                     del tcd_detail_score_save
@@ -457,10 +470,17 @@ def upload_sw():
                     
                     tcd_spd_save = format_sql(tcd_spd_save)
 
-                        
-                    sauvegarde_bdd(tcd_spd_save, 'sw_spd', 'append')
+                    if not '12-24' in tcd_spd_save.columns:
+
+                        sauvegarde_bdd(tcd_spd_save, 'sw_spd', 'append')
                     
+                    else:
+                        sauvegarde_bdd(tcd_spd_save.drop(columns=['12-24']), 'sw_spd', 'append')
+           
+                    
+
                     del tcd_spd_save
+
                     
                         # Scoring arte
                         

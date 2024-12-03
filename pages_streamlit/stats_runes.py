@@ -238,7 +238,10 @@ def stats_runage():
             
             st.text(f'{st.session_state.langue["Classement"]} ({df_points_set.shape[0]} {st.session_state.langue["joueurs"]})')
             st.markdown(f'Classement Points : :green[{df_points_set.loc[st.session_state["id_joueur"], "pts_rank"]}]     |    Classement Efficience(Mediane) : :violet[{df_points_set.loc[st.session_state["id_joueur"], "mediane_rank"]}]     |    Classement Efficience (Moyenne) : :orange[{df_points_set.loc[st.session_state["id_joueur"], "moyenne_rank"]}]')
-            st.table(df_to_show)
+            try:
+                st.table(df_to_show)
+            except UnboundLocalError:
+                pass
         except KeyError:
             st.info(st.session_state.langue['no_data'])
         

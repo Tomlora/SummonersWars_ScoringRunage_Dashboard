@@ -384,6 +384,8 @@ class Rune():
         self.data['rune_equiped'] = self.data['rune_equiped'].replace(monsters)
         self.data['rune_equiped'] = self.data['rune_equiped'].replace({0 : st.session_state.langue['Inventaire']})
         self.data['rune_equiped'] = self.data['rune_equiped'].astype('category')
+
+        # self.data = self.data[self.data['efficiency'] < 95]
         
         self.set_rune = self.data['rune_set'].unique().tolist()
         self.set_rune.sort()
@@ -426,6 +428,8 @@ class Rune():
         """
         self.data_r = self.data[['rune_set', 'efficiency']]
 
+        # self.data_r = self.data_r[self.data_r['efficiency'] < 95]
+
         self.data_r['efficiency_binned'] = pd.cut(
             self.data_r['efficiency'], bins=(100, 110, 119.99, 139.99), right=False)
 
@@ -437,95 +441,238 @@ class Rune():
         # pas besoin d'un multiindex
         result.reset_index(inplace=True)
 
+
+        if not self.data_r.empty:
         # palier
-        palier_1 = result['efficiency_binned'].unique()[0]  # '[100.0, 110.0)'
-        palier_2 = result['efficiency_binned'].unique()[1]  # '[110.0, 120.0)'
-        palier_3 = result['efficiency_binned'].unique()[2]  # '[120.0, 130.0)'
 
-        # poids des paliers
+            palier_1 = result['efficiency_binned'].unique()[0]  # '[100.0, 110.0)'
+            palier_2 = result['efficiency_binned'].unique()[1]  # '[110.0, 120.0)'
+            palier_3 = result['efficiency_binned'].unique()[2]  # '[120.0, 130.0)'
 
-        palier = {palier_1: 1,
-                  palier_2: 2,
-                  palier_3: 3}
 
-        result['factor'] = 0
 
-        for key, value in palier.items():
-            result['factor'] = np.where(
-                result['efficiency_binned'] == key, value, result['factor'])
+            # poids des paliers
 
-        result['points'] = result['efficiency'] * result['factor']
+            palier = {palier_1: 1,
+                    palier_2: 2,
+                    palier_3: 3}
+
+            result['factor'] = 0
+
+            for key, value in palier.items():
+                result['factor'] = np.where(
+                    result['efficiency_binned'] == key, value, result['factor'])
+
+            result['points'] = result['efficiency'] * result['factor']
+            
+            # Dans le détail :
+            
+            self.df_efficiency = result.copy()
+            
+            self.df_efficiency['efficiency_binned'] = self.df_efficiency['efficiency_binned'].replace({palier_1: 100,
+                                                                                palier_2: 110,
+                                                                                palier_3: 120})
+            
+
+
+
+            self.tcd_df_efficiency = self.df_efficiency.pivot_table(
+                    self.df_efficiency, 'rune_set', 'efficiency_binned', 'sum')['efficiency']
+                
+            self.tcd_df_efficiency['points'] = self.tcd_df_efficiency.apply(lambda x: (x[100] * 1 + x[110] * 2 + x[120] * 3) * coef_set.get(x.name, 1), axis=1)
+                
+            total_100 = self.tcd_df_efficiency[100].sum()
+            total_110 = self.tcd_df_efficiency[110].sum()
+            total_120 = self.tcd_df_efficiency[120].sum()
+            total = self.tcd_df_efficiency['points'].sum()
+
+            self.tcd_df_efficiency.loc['Total'] = [total_100, total_110, total_120, total]
+
+            
+
+
+            
+
+            
+
+            # on sépare les dataset à mettre en évidence et les autres
+
+            self.value_selected = result[result['rune_set'].isin(
+                category_selected)]
+            self.value_autres = result[~result['rune_set'].isin(category_selected)]
+
+            self.value_selected.drop(['factor'], axis=1, inplace=True)
+
+            # on ajoute les poids des sets
+
+            for set in category_selected:
+                self.value_selected['points'] = np.where(
+                    self.value_selected['rune_set'] == set, self.value_selected['points'] * coef_set[set], self.value_selected['points'])
+
+            self.value_autres = self.value_autres.groupby(
+                'efficiency_binned').sum()
+            self.value_autres.reset_index(inplace=True)
+            self.value_autres.insert(0, 'rune_set', 'Autre')
+            self.value_autres.drop(['factor'], axis=1, inplace=True)
+
+            # on regroupe
+
+            df_value = pd.concat([self.value_selected, self.value_autres])
+
+            # on replace pour plus de lisibilité
+
+            df_value['efficiency_binned'] = df_value['efficiency_binned'].replace({palier_1: 100,
+                                                                                palier_2: 110,
+                                                                                palier_3: 120})
+
+            self.score_r = df_value['points'].sum()
+
+            # Calcul du TCD :
+
+            self.tcd_value = df_value.pivot_table(
+                df_value, 'rune_set', 'efficiency_binned', 'sum')['efficiency']
+            # pas besoin du multiindex
+            self.tcd_value.columns.name = "efficiency"
+            self.tcd_value.index.name = 'Set'
+
+
+            if self.tcd_value.shape[0] == 1:
+                self.tcd_value.columns = [100, 110, 120]
+
+            total_100 = self.tcd_value[100].sum()
+            total_110 = self.tcd_value[110].sum()
+            total_120 = self.tcd_value[120].sum()
+
+            self.tcd_value.loc['Total'] = [total_100, total_110, total_120]
+
+            return self.tcd_value, self.score_r
         
-        # Dans le détail :
-        
-        self.df_efficiency = result.copy()
-        
-        self.df_efficiency['efficiency_binned'] = self.df_efficiency['efficiency_binned'].replace({palier_1: 100,
-                                                                               palier_2: 110,
-                                                                               palier_3: 120})
-        
-        self.tcd_df_efficiency = self.df_efficiency.pivot_table(
-            self.df_efficiency, 'rune_set', 'efficiency_binned', 'sum')['efficiency']
-        
-        self.tcd_df_efficiency['points'] = self.tcd_df_efficiency.apply(lambda x: (x[100] * 1 + x[110] * 2 + x[120] * 3) * coef_set.get(x.name, 1), axis=1)
-        
-        total_100 = self.tcd_df_efficiency[100].sum()
-        total_110 = self.tcd_df_efficiency[110].sum()
-        total_120 = self.tcd_df_efficiency[120].sum()
-        total = self.tcd_df_efficiency['points'].sum()
+        else:
 
-        self.tcd_df_efficiency.loc['Total'] = [total_100, total_110, total_120, total]
-        
+            self.data_r = self.data[['rune_set', 'efficiency']]
 
-        
+            # self.data_r = self.data_r[self.data_r['efficiency'] < 95]
 
-        # on sépare les dataset à mettre en évidence et les autres
+            self.data_r['efficiency_binned'] = pd.cut(
+                self.data_r['efficiency'], bins=(80, 90, 100, 110, 119.99, 139.99), right=False)
 
-        self.value_selected = result[result['rune_set'].isin(
-            category_selected)]
-        self.value_autres = result[~result['rune_set'].isin(category_selected)]
+            # en dessous de 100, renvoie null, on les enlève.
 
-        self.value_selected.drop(['factor'], axis=1, inplace=True)
+            self.data_r.dropna(inplace=True)
 
-        # on ajoute les poids des sets
+            result = self.data_r.groupby(['rune_set', 'efficiency_binned']).count()
+            # pas besoin d'un multiindex
+            result.reset_index(inplace=True)
+       # palier
+            palier_1 = result['efficiency_binned'].unique()[0]  # '80'
+            palier_2 = result['efficiency_binned'].unique()[1]  # '90'
 
-        for set in category_selected:
-            self.value_selected['points'] = np.where(
-                self.value_selected['rune_set'] == set, self.value_selected['points'] * coef_set[set], self.value_selected['points'])
 
-        self.value_autres = self.value_autres.groupby(
-            'efficiency_binned').sum()
-        self.value_autres.reset_index(inplace=True)
-        self.value_autres.insert(0, 'rune_set', 'Autre')
-        self.value_autres.drop(['factor'], axis=1, inplace=True)
+            palier_3 = result['efficiency_binned'].unique()[2]  # '[100.0, 110.0)'
+            palier_4 = result['efficiency_binned'].unique()[3]  # '[110.0, 120.0)'
+            palier_5 = result['efficiency_binned'].unique()[4]  # '[120.0, 130.0)'
 
-        # on regroupe
 
-        df_value = pd.concat([self.value_selected, self.value_autres])
 
-        # on replace pour plus de lisibilité
+            # poids des paliers
 
-        df_value['efficiency_binned'] = df_value['efficiency_binned'].replace({palier_1: 100,
-                                                                               palier_2: 110,
-                                                                               palier_3: 120})
+            palier = {palier_1 : 0,
+                      palier_2 : 0,
+                    palier_3: 1,
+                    palier_4: 2,
+                    palier_5: 3}
 
-        self.score_r = df_value['points'].sum()
+            result['factor'] = 0
 
-        # Calcul du TCD :
+            for key, value in palier.items():
+                result['factor'] = np.where(
+                    result['efficiency_binned'] == key, value, result['factor'])
 
-        self.tcd_value = df_value.pivot_table(
-            df_value, 'rune_set', 'efficiency_binned', 'sum')['efficiency']
-        # pas besoin du multiindex
-        self.tcd_value.columns.name = "efficiency"
-        self.tcd_value.index.name = 'Set'
+            result['points'] = result['efficiency'] * result['factor']
+            
+            # Dans le détail :
+            
+            self.df_efficiency = result.copy()
+            
+            self.df_efficiency['efficiency_binned'] = self.df_efficiency['efficiency_binned'].replace({
+                                                                                palier_1 : 80,
+                                                                                palier_2 : 90,
+                                                                                palier_3: 100,
+                                                                                palier_4: 110,
+                                                                                palier_5: 120})
+            
 
-        total_100 = self.tcd_value[100].sum()
-        total_110 = self.tcd_value[110].sum()
-        total_120 = self.tcd_value[120].sum()
 
-        self.tcd_value.loc['Total'] = [total_100, total_110, total_120]
 
-        return self.tcd_value, self.score_r
+            self.tcd_df_efficiency = self.df_efficiency.pivot_table(
+                    self.df_efficiency, 'rune_set', 'efficiency_binned', 'sum')['efficiency']
+                
+            self.tcd_df_efficiency['points'] = self.tcd_df_efficiency.apply(lambda x: (x[100] * 1 + x[110] * 2 + x[120] * 3) * coef_set.get(x.name, 1), axis=1)
+                
+            total_100 = self.tcd_df_efficiency[100].sum()
+            total_110 = self.tcd_df_efficiency[110].sum()
+            total_120 = self.tcd_df_efficiency[120].sum()
+            total = self.tcd_df_efficiency['points'].sum()
+
+            self.tcd_df_efficiency.loc['Total'] = [0, 0, total_100, total_110, total_120, total]
+
+            
+
+
+            
+
+            
+
+            # on sépare les dataset à mettre en évidence et les autres
+
+            self.value_selected = result[result['rune_set'].isin(
+                category_selected)]
+            self.value_autres = result[~result['rune_set'].isin(category_selected)]
+
+            self.value_selected.drop(['factor'], axis=1, inplace=True)
+
+            # on ajoute les poids des sets
+
+            for set in category_selected:
+                self.value_selected['points'] = np.where(
+                    self.value_selected['rune_set'] == set, self.value_selected['points'] * coef_set[set], self.value_selected['points'])
+
+            self.value_autres = self.value_autres.groupby(
+                'efficiency_binned').sum()
+            self.value_autres.reset_index(inplace=True)
+            self.value_autres.insert(0, 'rune_set', 'Autre')
+            self.value_autres.drop(['factor'], axis=1, inplace=True)
+
+            # on regroupe
+
+            df_value = pd.concat([self.value_selected, self.value_autres])
+
+            # on replace pour plus de lisibilité
+
+            df_value['efficiency_binned'] = df_value['efficiency_binned'].replace({palier_1 : 80,
+                                                                                    palier_2 : 90,
+                                                                                   palier_3: 100,
+                                                                                palier_4: 110,
+                                                                                palier_5: 120})
+
+            self.score_r = df_value['points'].sum()
+
+            # Calcul du TCD :
+
+            self.tcd_value = df_value.pivot_table(
+                df_value, 'rune_set', 'efficiency_binned', 'sum')['efficiency']
+            # pas besoin du multiindex
+            self.tcd_value.columns.name = "efficiency"
+            self.tcd_value.index.name = 'Set'
+
+
+            total_100 = self.tcd_value[100].sum()
+            total_110 = self.tcd_value[110].sum()
+            total_120 = self.tcd_value[120].sum()
+
+            self.tcd_value.loc['Total'] = [0, 0, total_100, total_110, total_120]
+
+            return self.tcd_value, self.score_r
 
     def scoring_spd(self, category_selected_spd, coef_set_spd):
         """Calcule le score speed du compte
@@ -553,10 +700,13 @@ class Rune():
             return df
 
         self.data_spd['spd'] = 0
+        self.data_spd_b = self.data_spd.copy()
 
         self.data_spd = self.data_spd.apply(detect_speed, axis=1)
 
         self.data_spd = self.data_spd[['rune_set', 'spd']]
+
+        # self.data_spd = self.data_spd[self.data_spd['spd'] < 16]
 
         self.data_spd['spd_binned'] = pd.cut(self.data_spd['spd'], 
                                             bins=(23, 26, 29, 32, 36, 40),
@@ -564,81 +714,178 @@ class Rune():
 
         self.data_spd.dropna(inplace=True)
 
-        self.result_spd = self.data_spd.groupby(
-            ['rune_set', 'spd_binned']).count()
+        if not self.data_spd.empty:
 
-        self.result_spd.reset_index(inplace=True)
+            self.result_spd = self.data_spd.groupby(
+                ['rune_set', 'spd_binned']).count()
 
-        palier_1 = self.result_spd['spd_binned'].unique()[0]  # 23-26
-        palier_2 = self.result_spd['spd_binned'].unique()[1]  # 26-29
-        palier_3 = self.result_spd['spd_binned'].unique()[2]  # 29-32
-        palier_4 = self.result_spd['spd_binned'].unique()[3]  # 32-36
-        palier_5 = self.result_spd['spd_binned'].unique()[4]  # 36+
+            self.result_spd.reset_index(inplace=True)
 
-        palier_spd = {palier_1: 1,
-                      palier_2: 2,
-                      palier_3: 3,
-                      palier_4: 4,
-                      palier_5: 5}
+            palier_1 = self.result_spd['spd_binned'].unique()[0]  # 23-26
+            palier_2 = self.result_spd['spd_binned'].unique()[1]  # 26-29
+            palier_3 = self.result_spd['spd_binned'].unique()[2]  # 29-32
+            palier_4 = self.result_spd['spd_binned'].unique()[3]  # 32-36
+            palier_5 = self.result_spd['spd_binned'].unique()[4]  # 36+
 
-        self.result_spd['factor_spd'] = 0
+            palier_spd = {palier_1: 1,
+                        palier_2: 2,
+                        palier_3: 3,
+                        palier_4: 4,
+                        palier_5: 5}
 
-        for key, value in palier_spd.items():
-            self.result_spd['factor_spd'] = np.where(
-                self.result_spd['spd_binned'] == key, value, self.result_spd['factor_spd'])
+            self.result_spd['factor_spd'] = 0
 
-        self.result_spd['points_spd'] = self.result_spd['spd'] * \
-            self.result_spd['factor_spd']
+            for key, value in palier_spd.items():
+                self.result_spd['factor_spd'] = np.where(
+                    self.result_spd['spd_binned'] == key, value, self.result_spd['factor_spd'])
 
-        # on sépare les dataset à mettre en évidence et les autres
+            self.result_spd['points_spd'] = self.result_spd['spd'] * \
+                self.result_spd['factor_spd']
 
-        self.value_selected_spd = self.result_spd[self.result_spd['rune_set'].isin(
-            category_selected_spd)]
-        self.value_autres_spd = self.result_spd[~self.result_spd['rune_set'].isin(
-            category_selected_spd)]
+            # on sépare les dataset à mettre en évidence et les autres
 
-        self.value_selected_spd.drop(['factor_spd'], axis=1, inplace=True)
+            self.value_selected_spd = self.result_spd[self.result_spd['rune_set'].isin(
+                category_selected_spd)]
+            self.value_autres_spd = self.result_spd[~self.result_spd['rune_set'].isin(
+                category_selected_spd)]
 
-        for set in category_selected_spd:
-            self.value_selected_spd['points_spd'] = np.where(
-                self.value_selected_spd['rune_set'] == set, self.value_selected_spd['points_spd'] * coef_set_spd[set], self.value_selected_spd['points_spd'])
+            self.value_selected_spd.drop(['factor_spd'], axis=1, inplace=True)
 
-        self.value_autres_spd = self.value_autres_spd.groupby(
-            'spd_binned').sum()
-        self.value_autres_spd.reset_index(inplace=True)
-        self.value_autres_spd.insert(0, 'rune_set', 'Autre')
-        self.value_autres_spd.drop(['factor_spd'], axis=1, inplace=True)
+            for set in category_selected_spd:
+                self.value_selected_spd['points_spd'] = np.where(
+                    self.value_selected_spd['rune_set'] == set, self.value_selected_spd['points_spd'] * coef_set_spd[set], self.value_selected_spd['points_spd'])
 
-        self.df_value_spd = pd.concat(
-            [self.value_selected_spd, self.value_autres_spd])
+            self.value_autres_spd = self.value_autres_spd.groupby(
+                'spd_binned').sum()
+            self.value_autres_spd.reset_index(inplace=True)
+            self.value_autres_spd.insert(0, 'rune_set', 'Autre')
+            self.value_autres_spd.drop(['factor_spd'], axis=1, inplace=True)
 
-        # on replace pour plus de lisibilité
+            self.df_value_spd = pd.concat(
+                [self.value_selected_spd, self.value_autres_spd])
 
-        self.df_value_spd['spd_binned'] = self.df_value_spd['spd_binned'].replace({palier_1: '23-25',
-                                                                                   palier_2: '26-28',
-                                                                                   palier_3: '29-31',
-                                                                                   palier_4: '32-35',
-                                                                                   palier_5: '36+'})
+            # on replace pour plus de lisibilité
 
-        self.score_spd = self.df_value_spd['points_spd'].sum()
+            self.df_value_spd['spd_binned'] = self.df_value_spd['spd_binned'].replace({palier_1: '23-25',
+                                                                                    palier_2: '26-28',
+                                                                                    palier_3: '29-31',
+                                                                                    palier_4: '32-35',
+                                                                                    palier_5: '36+'})
 
-        self.tcd_value_spd = self.df_value_spd.pivot_table(
-            self.df_value_spd, 'rune_set', 'spd_binned', 'sum')['spd']
+            self.score_spd = self.df_value_spd['points_spd'].sum()
 
-        # pas besoin du multiindex
-        self.tcd_value_spd.columns.name = "spd"
-        self.tcd_value_spd.index.name = 'Set'
+            self.tcd_value_spd = self.df_value_spd.pivot_table(
+                self.df_value_spd, 'rune_set', 'spd_binned', 'sum')['spd']
 
-        total_23_spd = self.tcd_value_spd['23-25'].sum()
-        total_26_spd = self.tcd_value_spd['26-28'].sum()
-        total_29_spd = self.tcd_value_spd['29-31'].sum()
-        total_32_spd = self.tcd_value_spd['32-35'].sum()
-        total_36_spd = self.tcd_value_spd['36+'].sum()
+            # pas besoin du multiindex
+            self.tcd_value_spd.columns.name = "spd"
+            self.tcd_value_spd.index.name = 'Set'
 
-        self.tcd_value_spd.loc['Total'] = [
-            total_23_spd, total_26_spd, total_29_spd, total_32_spd, total_36_spd]
+            total_23_spd = self.tcd_value_spd['23-25'].sum()
+            total_26_spd = self.tcd_value_spd['26-28'].sum()
+            total_29_spd = self.tcd_value_spd['29-31'].sum()
+            total_32_spd = self.tcd_value_spd['32-35'].sum()
+            total_36_spd = self.tcd_value_spd['36+'].sum()
+
+            self.tcd_value_spd.loc['Total'] = [
+                total_23_spd, total_26_spd, total_29_spd, total_32_spd, total_36_spd]
+            
+            return self.tcd_value_spd, self.score_spd
         
-        return self.tcd_value_spd, self.score_spd
+        else:
+
+            self.data_spd = self.data_spd_b
+
+            self.data_spd = self.data_spd.apply(detect_speed, axis=1)
+
+            self.data_spd = self.data_spd[['rune_set', 'spd']]
+
+            
+
+            self.data_spd['spd_binned'] = pd.cut(self.data_spd['spd'], 
+                                                bins=(12, 23, 26, 29, 32, 36, 40),
+                                                right=False)
+
+            self.data_spd.dropna(inplace=True)
+            self.result_spd = self.data_spd.groupby(
+                ['rune_set', 'spd_binned']).count()
+
+            self.result_spd.reset_index(inplace=True)
+
+            palier_0 = self.result_spd['spd_binned'].unique()[0]  # 23-26
+            palier_1 = self.result_spd['spd_binned'].unique()[1]  # 23-26
+            palier_2 = self.result_spd['spd_binned'].unique()[2]  # 26-29
+            palier_3 = self.result_spd['spd_binned'].unique()[3]  # 29-32
+            palier_4 = self.result_spd['spd_binned'].unique()[4]  # 32-36
+            palier_5 = self.result_spd['spd_binned'].unique()[5]  # 36+
+
+            palier_spd = {palier_0 : 0, 
+                        palier_1: 1,
+                        palier_2: 2,
+                        palier_3: 3,
+                        palier_4: 4,
+                        palier_5: 5}
+
+            self.result_spd['factor_spd'] = 0
+
+            for key, value in palier_spd.items():
+                self.result_spd['factor_spd'] = np.where(
+                    self.result_spd['spd_binned'] == key, value, self.result_spd['factor_spd'])
+
+            self.result_spd['points_spd'] = self.result_spd['spd'] * \
+                self.result_spd['factor_spd']
+
+            # on sépare les dataset à mettre en évidence et les autres
+
+            self.value_selected_spd = self.result_spd[self.result_spd['rune_set'].isin(
+                category_selected_spd)]
+            self.value_autres_spd = self.result_spd[~self.result_spd['rune_set'].isin(
+                category_selected_spd)]
+
+            self.value_selected_spd.drop(['factor_spd'], axis=1, inplace=True)
+
+            for set in category_selected_spd:
+                self.value_selected_spd['points_spd'] = np.where(
+                    self.value_selected_spd['rune_set'] == set, self.value_selected_spd['points_spd'] * coef_set_spd[set], self.value_selected_spd['points_spd'])
+
+            self.value_autres_spd = self.value_autres_spd.groupby(
+                'spd_binned').sum()
+            self.value_autres_spd.reset_index(inplace=True)
+            self.value_autres_spd.insert(0, 'rune_set', 'Autre')
+            self.value_autres_spd.drop(['factor_spd'], axis=1, inplace=True)
+
+            self.df_value_spd = pd.concat(
+                [self.value_selected_spd, self.value_autres_spd])
+
+            # on replace pour plus de lisibilité
+
+            self.df_value_spd['spd_binned'] = self.df_value_spd['spd_binned'].replace({palier_0 : '12-24',
+                                                                                    palier_1: '23-25',
+                                                                                    palier_2: '26-28',
+                                                                                    palier_3: '29-31',
+                                                                                    palier_4: '32-35',
+                                                                                    palier_5: '36+'})
+
+            self.score_spd = self.df_value_spd['points_spd'].sum()
+
+            self.tcd_value_spd = self.df_value_spd.pivot_table(
+                self.df_value_spd, 'rune_set', 'spd_binned', 'sum')['spd']
+
+            # pas besoin du multiindex
+            self.tcd_value_spd.columns.name = "spd"
+            self.tcd_value_spd.index.name = 'Set'
+
+            total_12_spd = self.tcd_value_spd['12-24'].sum()
+            total_23_spd = self.tcd_value_spd['23-25'].sum()
+            total_26_spd = self.tcd_value_spd['26-28'].sum()
+            total_29_spd = self.tcd_value_spd['29-31'].sum()
+            total_32_spd = self.tcd_value_spd['32-35'].sum()
+            total_36_spd = self.tcd_value_spd['36+'].sum()
+
+            self.tcd_value_spd.loc['Total'] = [
+                total_12_spd, total_23_spd, total_26_spd, total_29_spd, total_32_spd, total_36_spd]
+            
+            return self.tcd_value_spd, self.score_spd
     
     def scoring_com2us(self):
 
@@ -1302,7 +1549,6 @@ class Rune():
         list_count_gemmes = []
         list_count_gemmes_lgd = []
 
-        print(self.data_grind.columns)
 
         for type_rune in self.set.values():
             for propriete in self.property_grind.values():

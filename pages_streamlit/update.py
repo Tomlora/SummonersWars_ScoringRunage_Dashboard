@@ -26,6 +26,9 @@ tab2024, tab2023 = st.tabs(['2024', '2023'])
 
 with tab2024:
 
+    with st.expander('Version 02/12/2024', expanded=True):
+        st.info("- Ajout d'un mode pour les comptes early game") 
+
     with st.expander('Version 01/11/2024', expanded=True):
         st.info("- Ajout des classements scoring Com2us") 
 

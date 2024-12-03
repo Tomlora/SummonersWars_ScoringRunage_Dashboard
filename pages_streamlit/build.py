@@ -512,8 +512,10 @@ def build():
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:
-
-        build()
+        try:
+            build()
+        except KeyError:
+            st.warning('Cet onglet est réservé aux joueurs ayant un meilleur niveau de runes')
 
     else:
         st.switch_page("pages_streamlit/upload.py")

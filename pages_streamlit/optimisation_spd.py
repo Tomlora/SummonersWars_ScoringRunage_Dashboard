@@ -59,7 +59,7 @@ def opti_speed():
         st.subheader('Sur un monstre')
         
 
-        @st.experimental_fragment
+        @st.fragment
         def calcul_monsters():
         
             monster_selected = st.selectbox('Selectionner le monstre', st.session_state.df_mob_optimisation.index.unique())

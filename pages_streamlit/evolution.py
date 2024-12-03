@@ -271,16 +271,25 @@ def palier_page():
                         st.plotly_chart(fig, use_container_width=True)
 
                 with tab2:
-                        fig_rune_100 = plotline_evol_rune_visu(data_100)
-                        st.plotly_chart(fig_rune_100, use_container_width=True)
+                        try:
+                            fig_rune_100 = plotline_evol_rune_visu(data_100)
+                            st.plotly_chart(fig_rune_100, use_container_width=True)
+                        except:
+                             st.warning('Pas de rune')
 
                 with tab3:
-                        fig_rune_110 = plotline_evol_rune_visu(data_110)
-                        st.plotly_chart(fig_rune_110, use_container_width=True)
+                        try:
+                            fig_rune_110 = plotline_evol_rune_visu(data_110)
+                            st.plotly_chart(fig_rune_110, use_container_width=True)
+                        except:
+                             st.warning('Pas de rune')
 
                 with tab4:
-                        fig_rune_120 = plotline_evol_rune_visu(data_120)
-                        st.plotly_chart(fig_rune_120, use_container_width=True)
+                        try:
+                            fig_rune_120 = plotline_evol_rune_visu(data_120)
+                            st.plotly_chart(fig_rune_120, use_container_width=True)
+                        except:
+                             st.warning('Pas de rune')
                 
 
             elif button_select == 1:
@@ -327,8 +336,11 @@ def palier_page():
                         fig35 = plotline_evol_rune_visu(data_35)
                         st.plotly_chart(fig35, use_container_width=True)
                     with tab36:
-                        fig36 = plotline_evol_rune_visu(data_36)
-                        st.plotly_chart(fig36, use_container_width=True)
+                        try:
+                            fig36 = plotline_evol_rune_visu(data_36)
+                            st.plotly_chart(fig36, use_container_width=True)
+                        except:
+                            st.warning('Pas de rune')
 
     
             elif button_select == 2:
