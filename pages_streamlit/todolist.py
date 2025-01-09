@@ -28,7 +28,7 @@ def todo():
     notes = charger_notes(st.session_state.id_joueur)
     
         # # swarfarm
-    @st.cache_data(ttl='1h', show_spinner=st.session_state.langue['loading_rune'])
+    @st.cache_data(ttl='10m', show_spinner=st.session_state.langue['loading_rune'])
     def charger_data(joueur):
         swarfarm = st.session_state.swarfarm[[
             'com2us_id', 'name', 'image_filename', 'url']].set_index('com2us_id')
@@ -38,6 +38,8 @@ def todo():
         # On peut faire le mapping...
 
         st.session_state.data_rune.data_build = st.session_state.data_rune.data.copy()
+
+        st.session_state.data_rune.data_build = st.session_state.data_rune.data_build[st.session_state.data_rune.data_build['level'] >= 12]
 
         rename_column = {'rune_set': 'Set rune',
                         'rune_slot': 'Slot',
@@ -66,7 +68,7 @@ def todo():
 
 
         st.session_state.data_rune.data_build = st.session_state.data_rune.data_build[['Set rune', 'Slot', 'Equipé', 'Stat principal', 'Valeur stat principal',
-                                                                                    'innate_type', 'innate_value',
+                                                                                    'innate_type', 'innate_value', 'level',
                                                                                     'Substat 1', 'Substat 1 total',
                                                                                     'Substat 2', 'Substat 2 total',
                                                                                     'Substat 3', 'Substat 3 total',
@@ -79,11 +81,11 @@ def todo():
             columns={'index': 'id_rune'}, inplace=True)
 
         # on peut préparer la page
-        st.warning('En beta', icon="⚠️")
+        st.warning('Runes +12 ou +15 seulement', icon="⚠️")
         
 
                 
-        melt = st.session_state.data_rune.data_build.melt(id_vars=['id_rune', 'Set rune', 'Slot', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'],
+        melt = st.session_state.data_rune.data_build.melt(id_vars=['id_rune', 'Set rune', 'Slot', 'level', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'],
                             value_vars=['Substat 1 total', 'Substat 2 total', 'Substat 3 total', 'Substat 4 total'])
 
 
@@ -113,8 +115,12 @@ def todo():
     st.session_state.data_rune.data_build, swarfarm, df_mobs = charger_data(st.session_state.compteid)
     
 
-    data_build_filter = filter_dataframe(
-            st.session_state.data_rune.data_build.drop(['Substat 1', 'Substat 1 total', 'Substat 2', 'Substat 2 total', 'Substat 3', 'Substat 3 total', 'Substat 4', 'Substat 4 total', 'Aucun'], axis=1), 'data_build', type_number='int')
+    try:
+        data_build_filter = filter_dataframe(
+                st.session_state.data_rune.data_build.drop(['Substat 1', 'Substat 1 total', 'Substat 2', 'Substat 2 total', 'Substat 3', 'Substat 3 total', 'Substat 4', 'Substat 4 total', 'Aucun'], axis=1), 'data_build', type_number='int')
+    except KeyError:
+        data_build_filter = filter_dataframe(
+                st.session_state.data_rune.data_build.drop(['Substat 1', 'Substat 1 total', 'Substat 2', 'Substat 2 total', 'Substat 3', 'Substat 3 total', 'Substat 4', 'Substat 4 total'], axis=1), 'data_build', type_number='int')        
         
     if not 'img' in data_build_filter.columns:
         img = data_build_filter['Set rune'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')

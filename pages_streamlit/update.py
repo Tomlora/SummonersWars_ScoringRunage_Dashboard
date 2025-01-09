@@ -22,9 +22,17 @@ with col2:
     st_lottie(img, height=200, width=200)
 
 
-tab2024, tab2023 = st.tabs(['2024', '2023'])
+tab2025, tab2024, tab2023 = st.tabs(['2025', '2024', '2023'])
+
+with tab2025:
+    with st.expander('Version 09/01/2024', expanded=True):
+        st.info("- Ajout des nouveaux monstres de la collab Kimetsu no Yaiba")     
+
 
 with tab2024:
+
+    with st.expander('Version 11/12/2024', expanded=True):
+        st.info("- Ajout des nouveaux monstres") 
 
     with st.expander('Version 02/12/2024', expanded=True):
         st.info("- Ajout d'un mode pour les comptes early game") 
