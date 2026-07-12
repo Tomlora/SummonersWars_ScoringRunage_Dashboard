@@ -17,6 +17,26 @@ st.set_page_config(
     },
 )
 
+
+# Les pages historiques continuent d'appeler leurs anciens chemins avec
+# st.switch_page. Le routeur central les traduit vers les nouvelles pages
+# thématiques, notamment après la fin de l'upload JSON.
+if not hasattr(st, "_sw_original_switch_page"):
+    st._sw_original_switch_page = st.switch_page
+
+
+def _switch_page_with_theme_aliases(page):
+    aliases = {
+        "pages_streamlit/general.py": "pages_streamlit/general_theme.py",
+        "pages_streamlit/evolution.py": "pages_streamlit/evolution_theme.py",
+    }
+    target = aliases.get(str(page), page)
+    return st._sw_original_switch_page(target)
+
+
+st.switch_page = _switch_page_with_theme_aliases
+
+
 # Supprime les Future Warnings sur les copies
 pd.options.mode.chained_assignment = None  # default='warn'
 
