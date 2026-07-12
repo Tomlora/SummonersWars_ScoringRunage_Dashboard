@@ -98,7 +98,9 @@ def _real_rune_label(rune_id: Any) -> str | None:
     except (TypeError, ValueError):
         pass
 
-    efficiency = pd.to_numeric(pd.Series([row.get("efficiency", 0)]), errors="coerce").fillna(0).iloc[0]
+    efficiency = pd.to_numeric(
+        pd.Series([row.get("efficiency", 0)]), errors="coerce"
+    ).fillna(0).iloc[0]
     set_name = row.get("rune_set", "—")
     equipped_on = row.get("rune_equiped", "Inventaire")
     return (
@@ -114,24 +116,51 @@ def _run_build_manager() -> None:
     original_selectbox = st.selectbox
 
     def selectbox(label, options, *args, format_func=None, **kwargs):
-        if isinstance(label, str) and label.startswith("Rune slot") and format_func is not None:
-            original_format = format_func
+        is_rune_selector = isinstance(label, str) and label.startswith("Rune slot")
+        if not is_rune_selector:
+            return original_selectbox(
+                label,
+                options,
+                *args,
+                format_func=format_func,
+                **kwargs,
+            )
 
-            def corrected_format(value):
-                text = original_format(value)
-                if "Rune introuvable" in str(text) or "Missing rune" in str(text):
-                    return _real_rune_label(value) or text
-                return text
+        # Rune identifiers are large integers. Keeping them as raw widget
+        # values can make the selected value unstable between Streamlit
+        # reruns. The widget therefore stores strings, while the build page
+        # continues to receive a normal Python int.
+        numeric_options = [_safe_int(value) for value in options]
+        string_options = [str(value) for value in numeric_options]
+        widget_key = kwargs.get("key")
 
-            format_func = corrected_format
+        if widget_key:
+            current_value = str(_safe_int(st.session_state.get(widget_key, 0)))
+            if current_value not in string_options:
+                string_options.append(current_value)
+                numeric_options.append(_safe_int(current_value))
+            st.session_state[widget_key] = current_value
 
-        return original_selectbox(
+        original_format = format_func
+
+        def corrected_format(value: Any) -> str:
+            rune_id = _safe_int(value)
+            if original_format is None:
+                text = str(rune_id)
+            else:
+                text = original_format(rune_id)
+            if "Rune introuvable" in str(text) or "Missing rune" in str(text):
+                return _real_rune_label(rune_id) or str(text)
+            return str(text)
+
+        selected_value = original_selectbox(
             label,
-            options,
+            string_options,
             *args,
-            format_func=format_func,
+            format_func=corrected_format,
             **kwargs,
         )
+        return _safe_int(selected_value)
 
     try:
         st.selectbox = selectbox
