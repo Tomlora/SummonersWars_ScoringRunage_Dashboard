@@ -30,8 +30,8 @@ def _switch_page_with_theme_aliases(page):
         "pages_streamlit/general.py": "pages_streamlit/general_theme.py",
         "pages_streamlit/evolution.py": "pages_streamlit/evolution_theme.py",
         "pages_streamlit/ladder.py": "pages_streamlit/ladder_theme.py",
-        "pages_streamlit/grind_runes.py": "pages_streamlit/grind_runes_theme.py",
-        "pages_streamlit/build.py": "pages_streamlit/build_manager.py",
+        "pages_streamlit/grind_runes.py": "pages_streamlit/grind_runes_theme_safe.py",
+        "pages_streamlit/build.py": "pages_streamlit/build_manager_safe.py",
     }
     target = aliases.get(str(page), page)
     return st._sw_original_switch_page(target)
@@ -89,12 +89,12 @@ def main_page():
                         st.Page('pages_streamlit/ladder_others.py', title='Ladder PvP | WB', icon='🏆')],
                         # Section(name='Runages', icon=':crossed_swords:'),
                         "Runages" : [
-                        st.Page('pages_streamlit/grind_runes_theme.py', title='Optimisation', icon='🔍'),
+                        st.Page('pages_streamlit/grind_runes_theme_safe.py', title='Optimisation', icon='🔍'),
                         st.Page('pages_streamlit/stats_runes.py', title='Statistiques', icon='📊'),
                         st.Page('pages_streamlit/objectif_rune.py', title='Objectif Efficience', icon='💪'),
                         st.Page('pages_streamlit/upgrade_runes.py', title='Upgrade', icon='⬆️'),
                         st.Page('pages_streamlit/todolist.py', title='ToDoList', icon='📋'),
-                        st.Page('pages_streamlit/build_manager.py', title='Builds', icon='🔨'),
+                        st.Page('pages_streamlit/build_manager_safe.py', title='Builds', icon='🔨'),
                         st.Page('pages_streamlit/calculator.py', title='Calculateur efficience', icon='🔢'),
                         st.Page('pages_streamlit/optimisation_spd.py', title='Best Speed', icon='💻')],
                         # Section(name='Artefacts', icon=':gem:'),
