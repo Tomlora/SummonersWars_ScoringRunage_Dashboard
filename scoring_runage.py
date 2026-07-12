@@ -29,6 +29,7 @@ def _switch_page_with_theme_aliases(page):
     aliases = {
         "pages_streamlit/general.py": "pages_streamlit/general_theme.py",
         "pages_streamlit/evolution.py": "pages_streamlit/evolution_theme.py",
+        "pages_streamlit/ladder.py": "pages_streamlit/ladder_theme.py",
     }
     target = aliases.get(str(page), page)
     return st._sw_original_switch_page(target)
@@ -80,7 +81,7 @@ def main_page():
                         # Page('pages_streamlit/timelapse.py', 'Timelapse', ':bookmark_tabs:'), 
                         # Section(name='Classement', icon=':trophy:'),
                         "Classement" : [
-                        st.Page('pages_streamlit/ladder.py', title='Scoring', icon='🥇'),
+                        st.Page('pages_streamlit/ladder_theme.py', title='Scoring', icon='🥇'),
                         st.Page('pages_streamlit/ladder_value.py', title='Rune', icon='🏆'),
                         st.Page('pages_streamlit/ladder_arte.py', title='Artefact', icon='🏆'), 
                         st.Page('pages_streamlit/ladder_others.py', title='Ladder PvP | WB', icon='🏆')],
