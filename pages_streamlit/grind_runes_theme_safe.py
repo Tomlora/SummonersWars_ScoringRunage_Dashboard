@@ -8,12 +8,22 @@ import streamlit as st
 
 
 SUBSTATS = ["HP", "HP%", "ATQ", "ATQ%", "DEF", "DEF%", "SPD", "CRIT", "DCC", "RES", "ACC"]
+PERCENT_SUBSTATS = {"HP%", "ATQ%", "DEF%", "CRIT", "DCC", "RES", "ACC"}
+SUBSTAT_POSITIONS = ("first", "second", "third", "fourth")
 
 
-def _substats(namespace: dict[str, Any], data_class: Any, stats: list[str]) -> pd.DataFrame:
-    source = data_class.data_short
+def _substat_values(data_class: Any, stats: list[str]) -> pd.DataFrame:
+    """Return cached total and applied-grind values for requested substats.
+
+    ``data_short`` intentionally excludes detailed substats. They remain in
+    ``data_grind`` after ``calcul_potentiel`` and ``grind``. Each requested
+    stat is calculated once and stored as two compact int32 columns:
+    ``<stat>__total`` and ``<stat>__grind``.
+    """
+    source = data_class.data_grind
     source_id = id(source)
     cache = getattr(data_class, "_optimisation_substat_cache", None)
+
     if (
         getattr(data_class, "_optimisation_substat_source_id", None) != source_id
         or not isinstance(cache, pd.DataFrame)
@@ -23,11 +33,54 @@ def _substats(namespace: dict[str, Any], data_class: Any, stats: list[str]) -> p
         data_class._optimisation_substat_cache = cache
         data_class._optimisation_substat_source_id = source_id
 
-    extract_stat = namespace["_extract_stat"]
     for stat in stats:
-        if stat not in cache.columns:
-            cache[stat] = extract_stat(source, data_class, stat).round().astype("int32")
-    return cache.loc[:, stats]
+        total_column = f"{stat}__total"
+        grind_column = f"{stat}__grind"
+        if total_column in cache.columns and grind_column in cache.columns:
+            continue
+
+        base_values = pd.Series(0, index=source.index, dtype="int32")
+        grind_values = pd.Series(0, index=source.index, dtype="int32")
+
+        for position in SUBSTAT_POSITIONS:
+            name_column = f"{position}_sub"
+            base_column = f"{position}_sub_value"
+            applied_grind_column = f"{position}_sub_grinded_value"
+            if name_column not in source.columns or base_column not in source.columns:
+                continue
+
+            names = source[name_column].astype(str)
+            mask = names.eq(stat)
+            if not mask.any():
+                continue
+
+            base = pd.to_numeric(source[base_column], errors="coerce").fillna(0)
+            if applied_grind_column in source.columns:
+                grind = pd.to_numeric(source[applied_grind_column], errors="coerce").fillna(0)
+            else:
+                grind = pd.Series(0, index=source.index)
+
+            base_values = base_values.add(base.where(mask, 0).astype("int32"), fill_value=0)
+            grind_values = grind_values.add(grind.where(mask, 0).astype("int32"), fill_value=0)
+
+        cache[grind_column] = grind_values.astype("int32")
+        cache[total_column] = (base_values + grind_values).astype("int32")
+
+    requested_columns = [
+        column
+        for stat in stats
+        for column in (f"{stat}__total", f"{stat}__grind")
+    ]
+    return cache.loc[:, requested_columns]
+
+
+def _format_total_with_grind(total: Any, grind: Any, *, percent: bool) -> str:
+    total_value = int(total or 0)
+    grind_value = int(grind or 0)
+    suffix = " %" if percent else ""
+    if grind_value:
+        return f"{total_value}{suffix} (+{grind_value}{suffix})"
+    return f"{total_value}{suffix}"
 
 
 def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
@@ -50,6 +103,8 @@ def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
 
     selected_stats: list[str] = []
     minimums: dict[str, int] = {}
+    display_mode = tr("Total", "Total")
+
     with st.expander(tr("Filtres et colonnes", "Filters and columns"), expanded=True):
         c1, c2, c3, c4 = st.columns([1.4, 1.2, 1.1, 1])
         sets = c1.multiselect(
@@ -90,18 +145,28 @@ def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
             value=False,
             key="optimisation_show_substats",
             help=tr(
-                "Les colonnes sont calculées une seule fois, puis réutilisées.",
-                "Columns are calculated once, then reused.",
+                "Les colonnes sont calculées une seule fois depuis les données détaillées, puis réutilisées.",
+                "Columns are calculated once from detailed data, then reused.",
             ),
         ):
+            display_mode = st.segmented_control(
+                tr("Affichage des valeurs", "Value display"),
+                [tr("Total", "Total"), tr("Total + meule", "Total + grind")],
+                default=tr("Total", "Total"),
+                key="optimisation_substat_display_mode",
+                help=tr(
+                    "Le second mode affiche par exemple 49 % (+7 %) : total 49, dont 7 apportés par la meule.",
+                    "The second mode displays, for example, 49% (+7%): total 49, including 7 from the grind.",
+                ),
+            ) or tr("Total", "Total")
             selected_stats = st.multiselect(
                 tr("Sous-statistiques affichées", "Displayed substats"),
                 SUBSTATS,
                 default=SUBSTATS,
                 key="optimisation_displayed_substats",
                 help=tr(
-                    "Valeurs totales, meules déjà appliquées incluses.",
-                    "Total values, including existing grinds.",
+                    "Le total correspond à la valeur de base plus la meule déjà appliquée.",
+                    "Total equals the base value plus the applied grind.",
                 ),
             )
             filtered_stats = st.multiselect(
@@ -109,8 +174,8 @@ def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
                 selected_stats,
                 key="optimisation_filtered_substats",
                 help=tr(
-                    "Les minimums sont cumulés : la rune doit tous les respecter.",
-                    "Minimums are combined: the rune must meet all of them.",
+                    "Les filtres utilisent toujours le total et se cumulent.",
+                    "Filters always use the total and are combined.",
                 ),
             )
             if filtered_stats:
@@ -127,9 +192,25 @@ def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
                             )
                         )
 
-    missing_stats = [stat for stat in selected_stats if stat not in view.columns]
-    if missing_stats:
-        view = view.join(_substats(namespace, data_class, missing_stats), how="left")
+    if selected_stats:
+        details = _substat_values(data_class, selected_stats)
+        view = view.join(details, how="left")
+
+        for stat in selected_stats:
+            total_column = f"{stat}__total"
+            grind_column = f"{stat}__grind"
+            if display_mode == tr("Total + meule", "Total + grind"):
+                view[stat] = [
+                    _format_total_with_grind(total, grind, percent=stat in PERCENT_SUBSTATS)
+                    for total, grind in zip(view[total_column], view[grind_column])
+                ]
+            else:
+                view[stat] = view[total_column].astype("int32")
+    else:
+        # SPD remains part of the compact default view. Compute only this one
+        # detailed column when the full substat display is disabled.
+        speed = _substat_values(data_class, ["SPD"])
+        view["SPD"] = speed["SPD__total"].reindex(view.index).fillna(0).astype("int32")
 
     filtered = view
     if sets:
@@ -142,7 +223,7 @@ def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
         filtered = filtered[filtered["Équipée sur"] != "Inventaire"]
     filtered = filtered[filtered["Gain potentiel"] >= min_gain]
     for stat, minimum in minimums.items():
-        filtered = filtered[filtered[stat] >= minimum]
+        filtered = filtered[filtered[f"{stat}__total"] >= minimum]
 
     limit = st.select_slider(
         tr("Nombre de lignes", "Rows displayed"),
@@ -173,8 +254,13 @@ def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
             max_value=max(max_gain, 1.0),
         ),
     }
-    for stat in set(selected_stats or ["SPD"]):
-        config[stat] = st.column_config.NumberColumn(stat, format="%d", width="small")
+    if display_mode == tr("Total", "Total"):
+        for stat in set(selected_stats or ["SPD"]):
+            number_format = "%d %%" if stat in PERCENT_SUBSTATS else "%d"
+            config[stat] = st.column_config.NumberColumn(stat, format=number_format, width="small")
+    else:
+        for stat in selected_stats:
+            config[stat] = st.column_config.TextColumn(stat, width="small")
 
     st.dataframe(
         shown.loc[:, columns],
