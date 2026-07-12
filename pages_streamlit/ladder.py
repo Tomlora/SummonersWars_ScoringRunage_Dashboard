@@ -275,4 +275,4 @@ else:
     st.switch_page("pages_streamlit/upload.py")
     
     
- st.caption('Made by Tomlora :sunglasses:')
+st.caption('Made by Tomlora :sunglasses:')
