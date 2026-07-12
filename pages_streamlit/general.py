@@ -3,11 +3,13 @@ import streamlit as st
 import plotly.graph_objects as go
 import plotly_express as px
 import pandas as pd
-from fonctions.visuel import css, page_header, section_header
+from fonctions.visuel import load_lottieurl, css
+from streamlit_lottie import st_lottie
 from params.coef import coef_set
 from fonctions.visualisation import filter_dataframe, table_with_images
 from fonctions.gestion_bdd import requete_perso_bdd, sauvegarde_bdd
 import traceback
+from streamlit_extras.metric_cards import style_metric_cards
 
 
 
@@ -19,6 +21,14 @@ css()
 
 new_index = ['Autre', 'Seal', 'Despair', 'Destroy', 'Violent', 'Will', 'Intangible', 'Total']
 new_index_spd = ['Autre', 'Seal', 'Despair', 'Destroy', 'Swift', 'Violent', 'Will', 'Intangible', 'Total']
+
+# @st.cache_data
+def show_lottie(img, height=300 , width=300):
+    st_lottie(img, height=height, width=width)
+    
+    
+style_metric_cards(background_color='#03152A', border_color='#0083B9', border_left_color='#0083B9', border_size_px=0, box_shadow=False)
+
 
 def show_img_monsters(user_id, data, stars, variable='*', width=70, ):
 
@@ -48,58 +58,43 @@ def general_page():
         if st.session_state.submitted:
             
 
-            page_header(
-                f'{st.session_state.pseudo} · {st.session_state.guilde}',
-                'Vue synthétique de la qualité des runes, de la vitesse et des artéfacts du compte.',
-                icon='📚',
-                eyebrow='Vue d’ensemble',
-            )
+            col1, col2 = st.columns([0.6,0.4])
+
+            with col1:
+                st.subheader(f'{st.session_state.pseudo} ({st.session_state.guilde})')
+
+            with col2:
+                img = load_lottieurl(
+                                'https://assets4.lottiefiles.com/packages/lf20_yMpiqXia1k.json')
+                show_lottie(img, width=60, height=60)
+
+            
 
             # self.data_set = map_stats(self.data_set, ['innate_type', 'first_sub', 'second_sub', 'third_sub', 'fourth_sub', 'main_type'])
 
             # -------------- Scoring du compte
             try:
-                analysis_date = (
-                    st.session_state.tcd.iloc[0].get('date', '—')
-                    if not st.session_state.tcd.empty
-                    else '—'
-                )
+                tcd_column, _, score_column = st.columns([0.4,0.2,0.4])
 
-                kpi_rune, kpi_speed, kpi_arte, kpi_date = st.columns(4)
-                kpi_rune.metric(
-                    st.session_state.langue['Score_Rune'],
-                    st.session_state['score'],
-                )
-                kpi_speed.metric(
-                    st.session_state.langue['Score_Speed'],
-                    st.session_state['score_spd'],
-                )
-                kpi_arte.metric(
-                    st.session_state.langue['Score_Arte'],
-                    st.session_state['score_arte'],
-                )
-                kpi_date.metric('Dernière analyse', analysis_date)
+                with tcd_column:
+                    # Stat du joueur
+                    # https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/accuracy.png
+                    
+                    st.session_state.tcd = get_img_runes(st.session_state.tcd)
+                    
+                    st.session_state.tcd.rename(columns={100 : '100', 110 : '110', 120 : '120'}, inplace=True)
+                    st.dataframe(
+                        st.session_state.tcd[['set', '100', '110', '120', 'img']].reindex(new_index).set_index('img').dropna(how='all'), 
+                        use_container_width=True, 
+                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
+                        )
+                    
 
-                section_header(
-                    'Répartition des runes',
-                    'Nombre de runes par palier d’efficience et par set prioritaire.',
-                )
+                with score_column:
+                    # Score du joueur
+                    st.metric(st.session_state.langue['Score_Rune'], st.session_state['score'])
+                    st.metric('Date', st.session_state.tcd.iloc[0]['date'])
 
-                st.session_state.tcd = get_img_runes(st.session_state.tcd)
-                st.session_state.tcd.rename(
-                    columns={100: '100', 110: '110', 120: '120'},
-                    inplace=True,
-                )
-                st.dataframe(
-                    st.session_state.tcd[['set', '100', '110', '120', 'img']]
-                    .reindex(new_index)
-                    .set_index('img')
-                    .dropna(how='all'),
-                    use_container_width=True,
-                    column_config={
-                        'img': st.column_config.ImageColumn('Rune', help='Set de rune')
-                    },
-                )
 
 
                 tab1, tab2, tab3, tab4= st.tabs(
@@ -284,84 +279,155 @@ def general_page():
                         st.session_state.df_mobs_name_all = df_mobs_name
 
                         taille_image = st.slider(
-                            st.session_state.langue['taille_image'], min_value=30, max_value=100, value=70, step=10)
-                        
-                        # filtre monstre
-
-                        df_mobs_name_filter = filter_dataframe(df_mobs_name)
-
-                        
+                            st.session_state.langue['taille_image'], 30, 200, 70, step=5)
                         
 
-                        
+                        menu1, menu2, menu3, menu4 = st.tabs(
+                            ['Box', '2A', 'LD', 'Autel de scellement'])
 
-                        tab_6, tab_5, tab_4, tab_3, tab_2, tab_1 = st.tabs(
-                            ['6*', '5*', '4*', '3*', '2*', '1*'])
+                        with menu1:
+                            tab1, tab2, tab3, tab4, tab5 = st.tabs(
+                                ['6 etoiles', '5 etoiles', '4 etoiles', '3 etoiles', '2 etoiles'])
 
-                        with tab_6:
-                            show_img_monsters(st.session_state['id_joueur'],
-                                df_mobs_name_filter, 6, width=taille_image)
+                            with tab1:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_name, 6, width=taille_image)
 
-                        with tab_5:
-                            show_img_monsters(st.session_state['id_joueur'],
-                                df_mobs_name_filter, 5, width=taille_image)
+                            with tab2:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_name, 5, width=taille_image)
 
-                        with tab_4:
-                            show_img_monsters(st.session_state['id_joueur'],
-                                df_mobs_name_filter, 4, width=taille_image)
+                            with tab3:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_name, 4, width=taille_image)
 
-                        with tab_3:
-                            show_img_monsters(st.session_state['id_joueur'],
-                                df_mobs_name_filter, 3, width=taille_image)
+                            with tab4:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_name, 3, width=taille_image)
 
-                        with tab_2:
-                            show_img_monsters(st.session_state['id_joueur'],
-                                df_mobs_name_filter, 2, width=taille_image)
+                            with tab5:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_name, 2, width=taille_image)
 
-                        with tab_1:
-                            show_img_monsters(st.session_state['id_joueur'],
-                                df_mobs_name_filter, 1, width=taille_image)
+                        with menu2:
+                            tab1, tab2, tab3, tab4, tab5 = st.tabs(
+                                ['6 etoiles', '5 etoiles', '4 etoiles', '3 etoiles', '2 etoiles'])
+
+                            df_mobs_2a_only = df_mobs_name[df_mobs_name['awaken_level'] == 2]
+
+                            with tab1:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_2a_only, 6, width=taille_image)
+
+                            with tab2:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_2a_only, 5, width=taille_image)
+
+                            with tab3:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_2a_only, 4, width=taille_image)
+
+                            with tab4:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_2a_only, 3, width=taille_image)
+
+                            with tab5:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_2a_only, 2, width=taille_image)
+
+                        with menu3:
+                            df_mobs_ld_only = df_mobs_name[df_mobs_name['element_number'].isin([
+                                                                                            3, 4])]
+
+                            tab1, tab2, tab3, tab4 = st.tabs(
+                                ['5 etoiles naturel', '4 etoiles naturel', '3 etoiles naturel', '2 etoiles naturel'])
+
+                            with tab1:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_ld_only, 5, 'natural_stars', width=taille_image)
+
+                            with tab2:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_ld_only, 4, 'natural_stars', width=taille_image)
+
+                            with tab3:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_ld_only, 3, 'natural_stars', width=taille_image)
+
+                            with tab4:
+                                show_img_monsters(
+                                    st.session_state.compteid, df_mobs_ld_only, 2, 'natural_stars', width=taille_image)
+
+
+                        with menu4:
+
+                            # autel de scellement
+
+                            # @st.cache_data(show_spinner=False)
+                            def chargement_storage():
+                                data_storage = pd.DataFrame(
+                                    st.session_state['data_json']['unit_storage_list'])
+                                df_storage_complet = pd.merge(
+                                    data_storage, st.session_state.swarfarm, left_on='unit_master_id', right_on='com2us_id')
+
+                                df_storage_complet = df_storage_complet[[
+                                    'unit_master_id', 'name', 'element', 'class', 'quantity', 'image_filename']]
+
+                                df_storage_complet['url'] = df_storage_complet.apply(
+                                    lambda x:  f'https://swarfarm.com/static/herders/images/monsters/{x["image_filename"]}', axis=1)
+
+                                df_storage_complet.rename(
+                                    columns={'class': '*', 'quantity': 'quantité'}, inplace=True)
+
+                                df_storage_complet.sort_values(
+                                    by='*', ascending=False, inplace=True)
+
+                                return df_storage_complet
+
+        
+                            try:
+                                tab1, tab2 = st.tabs(['Interactif', 'Image'])
+                                df_storage_complet = chargement_storage()
+
+                                with tab1:
+                                    df_storage_complet_filter = filter_dataframe(
+                                        df_storage_complet.drop(['unit_master_id', 'url', 'image_filename'], axis=1), 'data_build', type_number='int', disabled=True)
+
+                                    st.dataframe(df_storage_complet_filter)
+
+                                with tab2:
+                                    df_html = table_with_images(
+                                        df=df_storage_complet[['url', 'name', 'quantité']], url_columns=("url",))
+
+                                    st.markdown(df_html, unsafe_allow_html=True)
+                            except KeyError:
+                                st.error(
+                                    st.session_state.langue['no_storage'])
+                                
 
 
 
+                # Stockage monstres
 
+                df_mobs_global = st.session_state.df_mobs.groupby(by=['id_monstre']).count()
 
-                # tableau avec image
+                df_mobs_global['storage'] = False
 
-                # ## à revoir en tableau croisé
+                df_mobs_global.reset_index(inplace=True)
+                df_mobs_global.rename(
+                    columns={'id_unit': 'quantité'}, inplace=True)
 
-                # check_tableau = st.checkbox('Tableau résumé')
+                # df_storage_global = df_storage_complet.copy()
 
-                # if check_tableau:
-                #     df_mobs_name = st.session_state.df_mobs_name_all
-                #     # df_mobs_name = df_mobs_name[[
-                #     #     'name', '*', 'level', 'element', 'natural_stars', 'awaken_level', 'Date_invocation']]
-
-                #     df_mobs_name.drop(['image_filename'], axis=1, inplace=True)
-                #     # df_mobs_name['avatar'] = df_mobs_name.apply(
-                #     #     lambda x:  f'<img src="{x.url}" width="60" >', axis=1)
-
-                #     # df_mobs_name.drop('url', axis=1, inplace=True)
-
-                #     # st.markdown(df_mobs_name.to_html(escape=False, index=False), unsafe_allow_html=True)
-
-                #     table_with_images(df_mobs_name)
-                
-                
                 try:
-                    df_global = pd.merge(
-                        st.session_state.df_mobs, st.session_state.swarfarm, left_on='id_monstre', right_on='com2us_id')
+                    df_storage_complet['storage'] = True
+                    df_storage_complet.rename(
+                        columns={'unit_master_id': 'id_monstre'}, inplace=True)
+                    df_global = pd.concat([df_mobs_global[['id_monstre', 'quantité', 'storage']], df_storage_complet[[
+                                        'id_monstre', 'quantité', 'storage']]]).reset_index(drop=True)
 
-                    df_global = df_global[['id_unit', 'id_monstre', '*', 'level', 'storage', 'Date_invocation']]
-
-                    df_global.rename(columns={'*' : 'etoiles'}, inplace=True)
-                    
                     df_global['id'] = st.session_state['id_joueur']
-                    
-                    df_global = df_global.groupby(['id', 'id_monstre', 'storage']).agg({'etoiles': 'max', 'level': 'max', 'id_unit': 'count', 'Date_invocation' : 'min'})
-                    df_global.rename(columns={'id_unit' : 'quantité'}, inplace=True)
 
-                    df_global.reset_index(inplace=True)
                     # on supprime les informations qu'on avait déjà
                     requete_perso_bdd('''DELETE FROM sw_monsters WHERE "id" = :id''', dict_params={
                                     'id': st.session_state['id_joueur']})
