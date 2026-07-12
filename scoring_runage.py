@@ -49,8 +49,8 @@ def main_page():
                         st.Page('pages_streamlit/timeline_summon.py', title='Invocation', icon='👻')],
                         # Section(name='Scoring', icon=':bar_chart:'),
                         "Scoring" : [
-                        st.Page('pages_streamlit/general.py', title='General', icon='📚'),
-                        st.Page('pages_streamlit/evolution.py', title='Evolution', icon='📈'),
+                        st.Page('pages_streamlit/general_theme.py', title='General', icon='📚'),
+                        st.Page('pages_streamlit/evolution_theme.py', title='Evolution', icon='📈'),
                         st.Page('pages_streamlit/comparaison.py', title='Comparaison', icon='💹')],
                         # Section(name='Live', icon=':japanese_ogre:'),
                         "Live" : [
