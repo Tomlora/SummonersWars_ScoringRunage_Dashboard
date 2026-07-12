@@ -7,7 +7,15 @@ from sqlalchemy.exc import OperationalError, PendingRollbackError
 from fonctions.gestion_bdd import rollback
 
 
-st.set_page_config(layout="wide")
+st.set_page_config(
+    page_title="Summoners War · Scoring & Runage",
+    page_icon="⚔️",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        "About": "Dashboard communautaire d'analyse des runes et artéfacts Summoners War.",
+    },
+)
 
 # Supprime les Future Warnings sur les copies
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -104,7 +112,7 @@ def main_page():
 
                         
                                 
-                        pg = st.navigation(pages)    
+                        pg = st.navigation(pages, position="sidebar", expanded=False)    
 
                         pg.run()
 
