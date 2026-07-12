@@ -8,7 +8,7 @@ from streamlit_extras.button_selector import button_selector
 
 
 
-from fonctions.visuel import css
+from fonctions.visuel import css, page_header
 css()
 
 
@@ -31,54 +31,94 @@ set_to_show = ['Violent', 'Will', 'Destroy', 'Despair', 'Swift',
 
 
 def mise_en_forme_classement(df, variable='score', size=36):
-    """Met en forme le classement final :  
-    
-    - Reset l'index
-    - Trie du plus grand score au plus petit
-    - Applique le paramètre de visibilité
-    - Garde les variables à afficher
-    - Filtre (optionnel) en fonction de si le filtre guilde est activé ou non
-    
-    Return le dataframe streamlit"""
-    # on restreint à ce qu'on veut afficher
-
-    # on sort_value
-    df.reset_index(inplace=True)
+    """Prepare and display a compact, readable leaderboard."""
+    df = df.reset_index()
     df.sort_values(variable, ascending=False, inplace=True)
-    # on anonymise
-    
-    if not df.empty:
-        df['joueur'] = df.apply(
-            lambda x: "***" if x['visibility'] == 1 and st.session_state['pseudo'] != x['joueur'] else x['joueur'], axis=1)
-        df['joueur'] = df.apply(
-            lambda x: "***" if x['visibility'] == 4 and st.session_state['pseudo'] != x['joueur'] and st.session_state['guilde'] != x['guilde'] else x['joueur'], axis=1)
-        
-        # on filtre pour ceux qui veulent only guilde :
-        df = df.apply(cleaning_only_guilde, axis=1)
-        df = df[df['private'] == 0]
 
-        df = df[['joueur', variable, 'date', 'guilde']]
-
-        filtre_guilde = st.checkbox(st.session_state.langue['filter_guilde'])
-
-        if filtre_guilde:
-            df = df[df['guilde']
-                    == st.session_state.guilde]
-            
-        df.reset_index(inplace=True, drop=True)
-        height_dataframe = size * df.shape[0]
-
-        
-        st.dataframe(df.rename(columns={'score_general' : 'General',
-                                        'score_spd' : 'Speed',
-                                        'score_arte' : 'Artefact'}), height=height_dataframe,
-                    use_container_width=True)
-    
-    else:
+    if df.empty:
         st.warning(st.session_state.langue['no_data'])
+        return df
 
+    df['joueur'] = df.apply(
+        lambda x: "***"
+        if x['visibility'] == 1 and st.session_state['pseudo'] != x['joueur']
+        else x['joueur'],
+        axis=1,
+    )
+    df['joueur'] = df.apply(
+        lambda x: "***"
+        if x['visibility'] == 4
+        and st.session_state['pseudo'] != x['joueur']
+        and st.session_state['guilde'] != x['guilde']
+        else x['joueur'],
+        axis=1,
+    )
+
+    df = df.apply(cleaning_only_guilde, axis=1)
+    df = df[df['private'] == 0]
+    df = df[['joueur', variable, 'date', 'guilde']]
+
+    filtre_guilde = st.toggle(
+        st.session_state.langue['filter_guilde'],
+        value=False,
+        help="Limiter le classement à votre guilde.",
+    )
+    if filtre_guilde:
+        df = df[df['guilde'] == st.session_state.guilde]
+
+    df.reset_index(inplace=True, drop=True)
+    if df.empty:
+        st.warning(st.session_state.langue['no_data'])
+        return df
+
+    rank_labels = []
+    for rank in range(1, len(df) + 1):
+        rank_labels.append({1: '🥇', 2: '🥈', 3: '🥉'}.get(rank, str(rank)))
+
+    score_label = {
+        'score_general': 'General',
+        'score_spd': 'Speed',
+        'score_arte': 'Artefact',
+        'score_qual': 'Qualité',
+        'score': 'Score',
+        'max': 'Maximum',
+        'moyenne': 'Moyenne',
+    }.get(variable, variable)
+
+    player_name = st.session_state.get('pseudo')
+    display_df = pd.DataFrame({
+        'Rang': rank_labels,
+        'Joueur': [f'● {name}' if name == player_name else name for name in df['joueur']],
+        'Guilde': df['guilde'],
+        score_label: pd.to_numeric(df[variable], errors='coerce'),
+        'Dernière analyse': df['date'],
+    })
+
+    max_score = float(display_df[score_label].max() or 1)
+    table_height = min(640, max(250, 38 * (min(len(display_df), 15) + 1)))
+
+    st.caption(f"{len(display_df)} joueur{'s' if len(display_df) > 1 else ''} classé{'s' if len(display_df) > 1 else ''}")
+    st.dataframe(
+        display_df,
+        width='stretch',
+        height=table_height,
+        hide_index=True,
+        column_config={
+            'Rang': st.column_config.TextColumn('Rang', width='small'),
+            'Joueur': st.column_config.TextColumn('Joueur', width='medium'),
+            'Guilde': st.column_config.TextColumn('Guilde', width='medium'),
+            score_label: st.column_config.ProgressColumn(
+                score_label,
+                min_value=0,
+                max_value=max_score,
+                width='large',
+            ),
+            'Dernière analyse': st.column_config.TextColumn(
+                'Dernière analyse', width='small'
+            ),
+        },
+    )
     return df
-
 
 
 def classement():
@@ -211,7 +251,12 @@ def classement():
 
 if 'submitted' in st.session_state:
     if st.session_state.submitted:    
-        st.title('Classement Scoring')
+        page_header(
+            'Classement Scoring',
+            'Comparez les comptes avec un leaderboard compact et mettez votre position en évidence.',
+            icon='🏆',
+            eyebrow='Classements',
+        )
         classement()
     
     else:
