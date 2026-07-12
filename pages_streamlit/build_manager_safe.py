@@ -109,6 +109,36 @@ def _real_rune_label(rune_id: Any) -> str | None:
     )
 
 
+def _full_rune_ids_for_slot(slot: int) -> list[int]:
+    """Return full 64-bit rune identifiers for one slot.
+
+    ``build_manager.py`` historically calls ``astype(int)`` while preparing
+    selectbox options. On Windows, NumPy may interpret that as int32, which
+    overflows Summoners War rune identifiers and produces negative values.
+    Reading the original DataFrame index here preserves the complete IDs.
+    """
+    data_class = st.session_state.get("data_rune")
+    data = getattr(data_class, "data", None)
+    if not isinstance(data, pd.DataFrame) or "rune_slot" not in data.columns:
+        return []
+
+    slot_values = pd.to_numeric(data["rune_slot"], errors="coerce")
+    subset = data.loc[slot_values.eq(slot)]
+    if subset.empty:
+        return []
+
+    if "efficiency" in subset.columns:
+        efficiency = pd.to_numeric(subset["efficiency"], errors="coerce").fillna(0)
+        subset = subset.assign(_efficiency_sort=efficiency).sort_values(
+            "_efficiency_sort", ascending=False
+        )
+
+    rune_ids = pd.to_numeric(
+        pd.Series(subset.index, dtype="object"), errors="coerce"
+    ).dropna()
+    return [int(value) for value in rune_ids.astype("int64").tolist()]
+
+
 def _run_build_manager() -> None:
     _repair_monster_rune_slots()
 
@@ -126,11 +156,14 @@ def _run_build_manager() -> None:
                 **kwargs,
             )
 
-        # Rune identifiers are large integers. Keeping them as raw widget
-        # values can make the selected value unstable between Streamlit
-        # reruns. The widget therefore stores strings, while the build page
-        # continues to receive a normal Python int.
-        numeric_options = [_safe_int(value) for value in options]
+        try:
+            slot = int(str(label).rsplit(" ", 1)[-1])
+        except (TypeError, ValueError):
+            slot = 0
+
+        # Ignore the options already converted with astype(int) by the legacy
+        # page. Rebuild them from the original int64 DataFrame index instead.
+        numeric_options = [0] + _full_rune_ids_for_slot(slot)
         string_options = [str(value) for value in numeric_options]
         widget_key = kwargs.get("key")
 
@@ -138,20 +171,13 @@ def _run_build_manager() -> None:
             current_value = str(_safe_int(st.session_state.get(widget_key, 0)))
             if current_value not in string_options:
                 string_options.append(current_value)
-                numeric_options.append(_safe_int(current_value))
             st.session_state[widget_key] = current_value
-
-        original_format = format_func
 
         def corrected_format(value: Any) -> str:
             rune_id = _safe_int(value)
-            if original_format is None:
-                text = str(rune_id)
-            else:
-                text = original_format(rune_id)
-            if "Rune introuvable" in str(text) or "Missing rune" in str(text):
-                return _real_rune_label(rune_id) or str(text)
-            return str(text)
+            if rune_id == 0:
+                return "Aucune rune"
+            return _real_rune_label(rune_id) or f"Rune introuvable · #{rune_id}"
 
         selected_value = original_selectbox(
             label,
