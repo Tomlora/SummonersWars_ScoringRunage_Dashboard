@@ -85,16 +85,23 @@ def mise_en_forme_classement(df, variable='score', size=36):
         'moyenne': 'Moyenne',
     }.get(variable, variable)
 
+    score_values = (
+        pd.to_numeric(df[variable], errors='coerce')
+        .fillna(0)
+        .round()
+        .astype('int64')
+    )
+
     player_name = st.session_state.get('pseudo')
     display_df = pd.DataFrame({
         'Rang': rank_labels,
         'Joueur': [f'● {name}' if name == player_name else name for name in df['joueur']],
         'Guilde': df['guilde'],
-        score_label: pd.to_numeric(df[variable], errors='coerce'),
+        score_label: score_values,
         'Dernière analyse': df['date'],
     })
 
-    max_score = float(display_df[score_label].max() or 1)
+    max_score = int(display_df[score_label].max() or 1)
     table_height = min(640, max(250, 38 * (min(len(display_df), 15) + 1)))
 
     st.caption(f"{len(display_df)} joueur{'s' if len(display_df) > 1 else ''} classé{'s' if len(display_df) > 1 else ''}")
@@ -109,8 +116,10 @@ def mise_en_forme_classement(df, variable='score', size=36):
             'Guilde': st.column_config.TextColumn('Guilde', width='medium'),
             score_label: st.column_config.ProgressColumn(
                 score_label,
+                format='%d pts',
                 min_value=0,
                 max_value=max_score,
+                step=1,
                 width='large',
             ),
             'Dernière analyse': st.column_config.TextColumn(
@@ -266,4 +275,4 @@ else:
     st.switch_page("pages_streamlit/upload.py")
     
     
-st.caption('Made by Tomlora :sunglasses:')
+ st.caption('Made by Tomlora :sunglasses:')
