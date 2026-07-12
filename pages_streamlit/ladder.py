@@ -1,3 +1,5 @@
+from html import escape
+
 from fonctions.gestion_bdd import lire_bdd_perso, cleaning_only_guilde
 import pandas as pd
 import streamlit as st
@@ -7,27 +9,147 @@ from datetime import timedelta
 from streamlit_extras.button_selector import button_selector
 
 
-
 from fonctions.visuel import css, page_header
 css()
 
 
-
-dict_type = {st.session_state.langue['Score_Rune'] : 'score_general',
-                 st.session_state.langue['Score_Speed'] : 'score_spd',
-                 f'{st.session_state.langue["Score_Rune"]} (Set)' : 'score sur un set',
-                 f'{st.session_state.langue["Score_Speed"]} (Set)' : 'score spd sur un set',
-                 st.session_state.langue['Score_Arte'] : 'score_arte',
-                 st.session_state.langue['Score_Qualite'] : 'score_qual',
-                 'Score Rune Com2us' : 'score_com2us',
-                 'Score Rune Com2us (Set)' : 'score_com2us_set'}
+dict_type = {st.session_state.langue['Score_Rune']: 'score_general',
+             st.session_state.langue['Score_Speed']: 'score_spd',
+             f'{st.session_state.langue["Score_Rune"]} (Set)': 'score sur un set',
+             f'{st.session_state.langue["Score_Speed"]} (Set)': 'score spd sur un set',
+             st.session_state.langue['Score_Arte']: 'score_arte',
+             st.session_state.langue['Score_Qualite']: 'score_qual',
+             'Score Rune Com2us': 'score_com2us',
+             'Score Rune Com2us (Set)': 'score_com2us_set'}
 
 dict_list = list(dict_type.keys())
 
-    
+
 set_to_show = ['Violent', 'Will', 'Destroy', 'Despair', 'Swift',
-                'Blade', 'Endure', 'Energy', 'Fatal', 'Focus', 'Guard', 'Nemesis',
-                'Rage', 'Revenge', 'Shield', 'Tolerance', 'Vampire']
+               'Blade', 'Endure', 'Energy', 'Fatal', 'Focus', 'Guard', 'Nemesis',
+               'Rage', 'Revenge', 'Shield', 'Tolerance', 'Vampire']
+
+
+def _leaderboard_table(display_df: pd.DataFrame, score_label: str, max_score: int) -> str:
+    """Render an accessible score bar whose width is relative to the top score."""
+    rows = []
+    for row in display_df.itertuples(index=False, name=None):
+        rank, player, guild, score, date = row
+        score = int(score)
+        ratio = min(max(score / max_score * 100, 0), 100)
+        player_text = str(player)
+        current_class = ' sw-leaderboard__row--current' if player_text.startswith('● ') else ''
+        score_text = f"{score:,}".replace(',', ' ')
+        rows.append(
+            f"""
+            <tr class="sw-leaderboard__row{current_class}">
+                <td class="sw-leaderboard__rank">{escape(str(rank))}</td>
+                <td>{escape(player_text)}</td>
+                <td>{escape(str(guild) if pd.notna(guild) else '—')}</td>
+                <td class="sw-leaderboard__score">
+                    <div class="sw-score-cell">
+                        <div class="sw-score-track" role="progressbar"
+                             aria-label="{escape(score_label)} de {escape(player_text)}"
+                             aria-valuemin="0" aria-valuemax="{max_score}"
+                             aria-valuenow="{score}" title="{ratio:.1f} % du score du top 1">
+                            <div class="sw-score-fill" style="width:{ratio:.4f}%"></div>
+                        </div>
+                        <span class="sw-score-value">{score_text} pts</span>
+                    </div>
+                </td>
+                <td>{escape(str(date))}</td>
+            </tr>
+            """
+        )
+
+    return f"""
+    <style>
+        .sw-leaderboard-wrap {{
+            max-height: 640px;
+            overflow: auto;
+            border: 1px solid var(--sw-border);
+            border-radius: var(--sw-radius-md);
+            background: rgba(11, 23, 40, 0.72);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+        }}
+        .sw-leaderboard {{
+            width: 100%;
+            min-width: 900px;
+            border-collapse: separate;
+            border-spacing: 0;
+            color: var(--sw-text);
+            font-size: 0.88rem;
+        }}
+        .sw-leaderboard th {{
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            padding: 0.78rem 0.85rem;
+            border-bottom: 1px solid var(--sw-border);
+            background: #172131;
+            color: var(--sw-text-muted);
+            font-weight: 600;
+            text-align: left;
+            white-space: nowrap;
+        }}
+        .sw-leaderboard td {{
+            padding: 0.66rem 0.85rem;
+            border-bottom: 1px solid var(--sw-border);
+            background: rgba(7, 24, 43, 0.72);
+            vertical-align: middle;
+        }}
+        .sw-leaderboard tr:last-child td {{ border-bottom: 0; }}
+        .sw-leaderboard__row:hover td {{ background: rgba(73, 164, 255, 0.08); }}
+        .sw-leaderboard__row--current td {{ background: rgba(73, 164, 255, 0.12); }}
+        .sw-leaderboard__rank {{ width: 72px; font-variant-numeric: tabular-nums; }}
+        .sw-leaderboard__score {{ width: 44%; min-width: 330px; }}
+        .sw-score-cell {{
+            display: grid;
+            grid-template-columns: minmax(180px, 1fr) 88px;
+            align-items: center;
+            gap: 0.75rem;
+        }}
+        .sw-score-track {{
+            width: 100%;
+            height: 9px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(159, 176, 198, 0.18);
+            box-shadow: inset 0 0 0 1px rgba(191, 211, 236, 0.06);
+        }}
+        .sw-score-fill {{
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #168ac3, var(--sw-primary));
+            box-shadow: 0 0 12px rgba(73, 164, 255, 0.22);
+        }}
+        .sw-score-value {{
+            color: var(--sw-text);
+            font-weight: 650;
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+            white-space: nowrap;
+        }}
+        @media (max-width: 900px) {{
+            .sw-leaderboard__score {{ min-width: 280px; }}
+            .sw-score-cell {{ grid-template-columns: minmax(140px, 1fr) 82px; }}
+        }}
+    </style>
+    <div class="sw-leaderboard-wrap">
+        <table class="sw-leaderboard">
+            <thead>
+                <tr>
+                    <th>Rang</th>
+                    <th>Joueur</th>
+                    <th>Guilde</th>
+                    <th>{escape(score_label)}</th>
+                    <th>Dernière analyse</th>
+                </tr>
+            </thead>
+            <tbody>{''.join(rows)}</tbody>
+        </table>
+    </div>
+    """
 
 
 def mise_en_forme_classement(df, variable='score', size=36):
@@ -93,13 +215,6 @@ def mise_en_forme_classement(df, variable='score', size=36):
         .astype('int64')
     )
     max_score = max(int(score_values.max()), 1)
-    relative_to_top = (
-        score_values.div(max_score)
-        .mul(100)
-        .clip(lower=0, upper=100)
-        .round()
-        .astype('int64')
-    )
 
     player_name = st.session_state.get('pseudo')
     display_df = pd.DataFrame({
@@ -107,51 +222,25 @@ def mise_en_forme_classement(df, variable='score', size=36):
         'Joueur': [f'● {name}' if name == player_name else name for name in df['joueur']],
         'Guilde': df['guilde'],
         score_label: score_values,
-        'Vs top 1': relative_to_top,
         'Dernière analyse': df['date'],
     })
-
-    table_height = min(640, max(250, 38 * (min(len(display_df), 15) + 1)))
 
     st.caption(
         f"{len(display_df)} joueur{'s' if len(display_df) > 1 else ''} "
         f"classé{'s' if len(display_df) > 1 else ''} · "
-        f"score de référence : {max_score} pts"
+        f"barre calculée par rapport au top 1 ({max_score} pts)"
     )
-    st.dataframe(
-        display_df,
-        width='stretch',
-        height=table_height,
-        hide_index=True,
-        column_config={
-            'Rang': st.column_config.TextColumn('Rang', width='small'),
-            'Joueur': st.column_config.TextColumn('Joueur', width='medium'),
-            'Guilde': st.column_config.TextColumn('Guilde', width='medium'),
-            score_label: st.column_config.NumberColumn(
-                score_label,
-                format='%d pts',
-                width='medium',
-            ),
-            'Vs top 1': st.column_config.ProgressColumn(
-                'Vs top 1',
-                help='Score du joueur divisé par le score du premier du classement.',
-                format='%d %%',
-                min_value=0,
-                max_value=100,
-                step=1,
-                width='large',
-            ),
-            'Dernière analyse': st.column_config.TextColumn(
-                'Dernière analyse', width='small'
-            ),
-        },
+    st.markdown(
+        _leaderboard_table(display_df, score_label, max_score),
+        unsafe_allow_html=True,
     )
     return df
+
 
 def classement():
     # On lit la BDD
     # on récupère la data
-    
+
     st.info(f'**Note** : {st.session_state.langue["update_ladder"]}', icon="ℹ️")
 
     if st.session_state.visibility == 0:
@@ -167,17 +256,10 @@ def classement():
 
     data = load_data_ladder()
 
-    # choice_radio = st.radio(st.session_state.langue['Classement'], options=dict_type.keys(), index=0, horizontal=True)
-
     choice_radio = button_selector(dict_type.keys())
-
-
-    
     classement = dict_type[dict_list[choice_radio]]
 
-
     if classement == 'score sur un set':
-        # set = st.radio('Quel set ?', options=coef_set.keys(), horizontal=True)
         set = st.radio('Set ?', options=st.session_state.set_rune, horizontal=True)
 
         if set in ['Violent', 'Will', 'Despair', 'Destroy']:
@@ -186,16 +268,13 @@ def classement():
                             INNER JOIN sw ON sw_user.id = sw.id
                             where sw_user.visibility != 0
                             and sw."Set" = '{set}';''').transpose().reset_index()
-        
         else:
             data_set = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_detail.date, sw_detail."rune_set", sw_detail."100", sw_detail."110", sw_detail."120", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user
                             INNER JOIN sw_detail ON sw_user.id = sw_detail.id
                             where sw_user.visibility != 0
                             and sw_detail."rune_set" = '{set}';''').transpose().reset_index()
-            
 
-        
         data_set['date'] = pd.to_datetime(data_set['date'], format="%d/%m/%Y")
 
         data_set_grp = data_set.groupby(['joueur', 'guilde']).agg(
@@ -203,11 +282,8 @@ def classement():
 
         data_set_grp['date'] = data_set_grp['date'].dt.strftime('%d/%m/%Y')
 
-        # calcul points
         data_set_grp['score'] = (data_set_grp['100'] * 1 + data_set_grp['110']
-                                 * 2 + data_set_grp['120'] * 3) * coef_set.get(set,1)
-
-        # on restreint à ce qu'on veut afficher
+                                 * 2 + data_set_grp['120'] * 3) * coef_set.get(set, 1)
 
         mise_en_forme_classement(data_set_grp)
 
@@ -230,23 +306,22 @@ def classement():
 
         data_spd_grp['score'] = (data_spd_grp['23-25'] * 1 + data_spd_grp['26-28'] * 2 +
                                  data_spd_grp['29-31'] * 3 + data_spd_grp['32-35'] *
-                                 4 + data_spd_grp['36+'] * 5) * coef_set_spd.get(set_spd,1)
-        
-       
+                                 4 + data_spd_grp['36+'] * 5) * coef_set_spd.get(set_spd, 1)
+
         mise_en_forme_classement(data_spd_grp)
 
     elif classement == 'score_com2us':
-        
+
         data_set = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, MAX(sw_scoring_com2us.date) as "date", MAX(sw_scoring_com2us."mean_SCORE") as "moyenne", MAX(sw_scoring_com2us."max_SCORE") as "max", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
                             FROM sw_user
                             INNER JOIN sw_scoring_com2us ON sw_user.id = sw_scoring_com2us.id
                             where sw_user.visibility != 0
                             Group by sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, guilde  ''').transpose().reset_index()
-        
+
         option = st.radio('Option :', options=['max', 'moyenne'], index=0, horizontal=True)
-        
+
         mise_en_forme_classement(data_set, option, size=50)
-    
+
     elif classement == 'score_com2us_set':
         set = st.radio('Set ?', options=st.session_state.set_rune, horizontal=True)
         data_set = lire_bdd_perso(f'''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, sw_scoring_com2us.rune_set, MAX(sw_scoring_com2us.date) as "date", MAX(sw_scoring_com2us."mean_SCORE") as "moyenne", MAX(sw_scoring_com2us."max_SCORE") as "max", (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde
@@ -255,42 +330,37 @@ def classement():
                             where sw_user.visibility != 0
                             and sw_scoring_com2us.rune_set = '{set}'
                             Group by sw_user.id, sw_user.joueur, sw_scoring_com2us.rune_set, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id, guilde  ''').transpose().reset_index()
-        
+
         option = st.radio('Option :', options=['max', 'moyenne'], index=0, horizontal=True)
 
-        
         mise_en_forme_classement(data_set, option, size=50)
 
     else:
 
-        # on transpose la date au format date
         data['date'] = pd.to_datetime(data['date'], format="%d/%m/%Y")
 
-        # on groupby : score, dernière date et visibilité
         data_ranking = data.groupby(['joueur', 'guilde']).agg(
             {classement: 'max', 'date': 'max', 'visibility': 'max'})
-        # on met en forme la date
         data_ranking['date'] = data_ranking['date'].dt.strftime('%d/%m/%Y')
-        
+
         mise_en_forme_classement(data_ranking, classement)
 
 
-
 if 'submitted' in st.session_state:
-    if st.session_state.submitted:    
+    if st.session_state.submitted:
         page_header(
             'Classement Scoring',
-            'Comparez les comptes avec un score en points et une progression relative au meilleur joueur.',
+            'Comparez les comptes avec une barre calculée directement sur le score du meilleur joueur.',
             icon='🏆',
             eyebrow='Classements',
         )
         classement()
-    
+
     else:
         st.switch_page("pages_streamlit/upload.py")
 
 else:
     st.switch_page("pages_streamlit/upload.py")
-    
-    
+
+
 st.caption('Made by Tomlora :sunglasses:')
