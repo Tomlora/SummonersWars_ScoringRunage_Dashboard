@@ -71,9 +71,10 @@ def mise_en_forme_classement(df, variable='score', size=36):
         st.warning(st.session_state.langue['no_data'])
         return df
 
-    rank_labels = []
-    for rank in range(1, len(df) + 1):
-        rank_labels.append({1: '🥇', 2: '🥈', 3: '🥉'}.get(rank, str(rank)))
+    rank_labels = [
+        {1: '🥇', 2: '🥈', 3: '🥉'}.get(rank, str(rank))
+        for rank in range(1, len(df) + 1)
+    ]
 
     score_label = {
         'score_general': 'General',
@@ -91,6 +92,14 @@ def mise_en_forme_classement(df, variable='score', size=36):
         .round()
         .astype('int64')
     )
+    max_score = max(int(score_values.max()), 1)
+    relative_to_top = (
+        score_values.div(max_score)
+        .mul(100)
+        .clip(lower=0, upper=100)
+        .round()
+        .astype('int64')
+    )
 
     player_name = st.session_state.get('pseudo')
     display_df = pd.DataFrame({
@@ -98,13 +107,17 @@ def mise_en_forme_classement(df, variable='score', size=36):
         'Joueur': [f'● {name}' if name == player_name else name for name in df['joueur']],
         'Guilde': df['guilde'],
         score_label: score_values,
+        'Vs top 1': relative_to_top,
         'Dernière analyse': df['date'],
     })
 
-    max_score = int(display_df[score_label].max() or 1)
     table_height = min(640, max(250, 38 * (min(len(display_df), 15) + 1)))
 
-    st.caption(f"{len(display_df)} joueur{'s' if len(display_df) > 1 else ''} classé{'s' if len(display_df) > 1 else ''}")
+    st.caption(
+        f"{len(display_df)} joueur{'s' if len(display_df) > 1 else ''} "
+        f"classé{'s' if len(display_df) > 1 else ''} · "
+        f"score de référence : {max_score} pts"
+    )
     st.dataframe(
         display_df,
         width='stretch',
@@ -114,11 +127,17 @@ def mise_en_forme_classement(df, variable='score', size=36):
             'Rang': st.column_config.TextColumn('Rang', width='small'),
             'Joueur': st.column_config.TextColumn('Joueur', width='medium'),
             'Guilde': st.column_config.TextColumn('Guilde', width='medium'),
-            score_label: st.column_config.ProgressColumn(
+            score_label: st.column_config.NumberColumn(
                 score_label,
                 format='%d pts',
+                width='medium',
+            ),
+            'Vs top 1': st.column_config.ProgressColumn(
+                'Vs top 1',
+                help='Score du joueur divisé par le score du premier du classement.',
+                format='%d %%',
                 min_value=0,
-                max_value=max_score,
+                max_value=100,
                 step=1,
                 width='large',
             ),
@@ -128,7 +147,6 @@ def mise_en_forme_classement(df, variable='score', size=36):
         },
     )
     return df
-
 
 def classement():
     # On lit la BDD
@@ -262,7 +280,7 @@ if 'submitted' in st.session_state:
     if st.session_state.submitted:    
         page_header(
             'Classement Scoring',
-            'Comparez les comptes avec un leaderboard compact et mettez votre position en évidence.',
+            'Comparez les comptes avec un score en points et une progression relative au meilleur joueur.',
             icon='🏆',
             eyebrow='Classements',
         )
