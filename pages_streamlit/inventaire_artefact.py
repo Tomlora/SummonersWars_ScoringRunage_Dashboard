@@ -1,6 +1,6 @@
 
 import streamlit as st
-from fonctions.visualisation import filter_dataframe
+from fonctions.visualisation import filter_dataframe, load_pygwalker
 from streamlit_extras.colored_header import colored_header
 import pandas as pd
 from fonctions.export import export_excel
@@ -208,6 +208,80 @@ def inventaire_arte():
                 
         st.download_button('Télécharger la data (Excel)', data_xlsx2, file_name=f'artefacts_details {st.session_state["pseudo"]}.xlsx',
                                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        
+
+        colored_header(
+            label=st.session_state.langue['analyse_poussee'],
+            description="",
+            color_name="blue-70",
+        )
+        if st.checkbox(st.session_state.langue["construire_tcd"]): 
+            vis_spec = r"""{"config":[{"config":{"defaultAggregated":true,"geoms":["auto"],"coordSystem":"generic","limit":-1,"timezoneDisplayOffset":0},
+            "encodings":
+            {"dimensions":
+            [
+            {"fid":"Type","name":"Type","basename":"Type","semanticType":"nominal","analyticType":"dimension","offset":0},
+            {"fid":"Attribut","name":"Attribut","basename":"Attribut","semanticType":"nominal","analyticType":"dimension","offset":0},
+            {"fid":"Equipé","name":"Equipé","basename":"Equipé","semanticType":"nominal","analyticType":"dimension","offset":0},
+            {"fid":"level","name":"level","basename":"level","semanticType":"quantitative","analyticType":"dimension","offset":0},
+            {"fid":"main_type","name":"main_type","basename":"main_type","semanticType":"nominal","analyticType":"dimension","offset":0},
+            {"fid":"gw_mea_key_fid","name":"Measure names","analyticType":"dimension","semanticType":"nominal"}],
+            "measures":
+            [
+            {"fid":"efficience","name":"efficience","basename":"efficience","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"SPD EN CAS D'INCAPACITE","name":"SPD EN CAS D'INCAPACITE","basename":"SPD EN CAS D'INCAPACITE","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"REVENGE ET COOP","name":"REVENGE ET COOP","basename":"REVENGE ET COOP","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"REVENGE","name":"REVENGE","basename":"REVENGE","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"RENFORCEMENT DEF","name":"RENFORCEMENT DEF","basename":"RENFORCEMENT DEF","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"RENFORCEMENT CRITRATE","name":"RENFORCEMENT CRITRATE","basename":"RENFORCEMENT CRITRATE","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"RENFORCEMENT ATK","name":"RENFORCEMENT ATK","basename":"RENFORCEMENT ATK","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"PREMIER HIT CRIT DMG","name":"PREMIER HIT CRIT DMG","basename":"PREMIER HIT CRIT DMG","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"HP REVIVE","name":"HP REVIVE","basename":"HP REVIVE","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"DMG SUR VENT","name":"DMG SUR VENT","basename":"DMG SUR VENT","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"DMG SUR FEU","name":"DMG SUR FEU","basename":"DMG SUR FEU","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"DMG SUR DARK","name":"DMG SUR DARK","basename":"DMG SUR DARK","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"DMG SUPP EN FONCTION DE LA DEF","name":"DMG SUPP EN FONCTION DE LA DEF","basename":"DMG SUPP EN FONCTION DE LA DEF","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"DMG SUPP EN FONCTION DE L'ATQ","name":"DMG SUPP EN FONCTION DE L'ATQ","basename":"DMG SUPP EN FONCTION DE L'ATQ","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"CRUSHING DMG","name":"CRUSHING DMG","basename":"CRUSHING DMG","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"CRIT DMG SUR CIBLE UNIQUE","name":"CRIT DMG SUR CIBLE UNIQUE","basename":"CRIT DMG SUR CIBLE UNIQUE","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"CRIT DMG S4","name":"CRIT DMG S4","basename":"CRIT DMG S4","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"CRIT DMG S3/S4","name":"CRIT DMG S3/S4","basename":"CRIT DMG S3/S4","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"CRIT DMG S3","name":"CRIT DMG S3","basename":"CRIT DMG S3","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"CRIT DMG RECU","name":"CRIT DMG RECU","basename":"CRIT DMG RECU","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"COOP DMG","name":"COOP DMG","basename":"COOP DMG","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"BOMBE DMG","name":"BOMBE DMG","basename":"BOMBE DMG","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"ATK EN FONCTION HP PERDUS","name":"ATK EN FONCTION HP PERDUS","basename":"ATK EN FONCTION HP PERDUS","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"ATB REVIVE","name":"ATB REVIVE","basename":"ATB REVIVE","semanticType":"quantitative","analyticType":"measure","offset":0},
+            {"fid":"CRIT DMG EN FONCTION DES HP ELEVES","name":"CRIT DMG EN FONCTION DES HP ELEVES","basename":"CRIT DMG EN FONCTION DES HP ELEVES","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"CRIT DMG EN FONCTION DES HP FAIBLES","name":"CRIT DMG EN FONCTION DES HP FAIBLES","basename":"CRIT DMG EN FONCTION DES HP FAIBLES","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"CRIT DMG S1","name":"CRIT DMG S1","basename":"CRIT DMG S1","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"CRIT DMG S2","name":"CRIT DMG S2","basename":"CRIT DMG S2","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"DEF EN FONCTION HP PERDUS","name":"DEF EN FONCTION HP PERDUS","basename":"DEF EN FONCTION HP PERDUS","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"DMG SUPP EN FONCTION DE LA SPD","name":"DMG SUPP EN FONCTION DE LA SPD","basename":"DMG SUPP EN FONCTION DE LA SPD","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"DMG SUPP EN FONCTION DES HP","name":"DMG SUPP EN FONCTION DES HP","basename":"DMG SUPP EN FONCTION DES HP","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"DMG SUR EAU","name":"DMG SUR EAU","basename":"DMG SUR EAU","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"DMG SUR LUMIERE","name":"DMG SUR LUMIERE","basename":"DMG SUR LUMIERE","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"PRECISION S1","name":"PRECISION S1","basename":"PRECISION S1","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"PRECISION S2","name":"PRECISION S2","basename":"PRECISION S2","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"PRECISION S3","name":"PRECISION S3","basename":"PRECISION S3","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"REDUCTION SUR DARK","name":"REDUCTION SUR DARK","basename":"REDUCTION SUR DARK","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"REDUCTION SUR EAU","name":"REDUCTION SUR EAU","basename":"REDUCTION SUR EAU","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"REDUCTION SUR FEU","name":"REDUCTION SUR FEU","basename":"REDUCTION SUR FEU","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"REDUCTION SUR LUMIERE","name":"REDUCTION SUR LUMIERE","basename":"REDUCTION SUR LUMIERE","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"REDUCTION SUR VENT","name":"REDUCTION SUR VENT","basename":"REDUCTION SUR VENT","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"RENFORCEMENT ATK/DEF","name":"RENFORCEMENT ATK/DEF","basename":"RENFORCEMENT ATK/DEF","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"RENFORCEMENT SPD","name":"RENFORCEMENT SPD","basename":"RENFORCEMENT SPD","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"SOIN S1","name":"SOIN S1","basename":"SOIN S1","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"SOIN S2","name":"SOIN S2","basename":"SOIN S2","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"SOIN S3","name":"SOIN S3","basename":"SOIN S3","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"SPD EN FONCTION HP PERDUS","name":"SPD EN FONCTION HP PERDUS","basename":"SPD EN FONCTION HP PERDUS","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"VOL DE VIE","name":"VOL DE VIE","basename":"VOL DE VIE","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+            {"fid":"gw_count_fid","name":"Row count","analyticType":"measure","semanticType":"quantitative","aggName":"sum","computed":true,
+            "expression":{"op":"one","params":[],"as":"gw_count_fid"}},{"fid":"gw_mea_val_fid","name":"Measure values","analyticType":"measure","semanticType":"quantitative","aggName":"sum"}],"rows":[],"columns":[],"color":[],"opacity":[],"size":[],"shape":[],"radius":[],"theta":[],"longitude":[],"latitude":[],"geoId":[],"details":[],"filters":[],"text":[]},"layout":{"showActions":false,"showTableSummary":false,"stack":"stack","interactiveScale":false,"zeroScale":true,"size":{"mode":"auto","width":320,"height":200},"format":{},"geoKey":"name","resolve":{"x":false,"y":false,"color":false,"opacity":false,"shape":false,"size":false}},"visId":"gw_KJs5","name":"Chart 1"}],"chart_map":{},"workflow_list":[{"workflow":[{"type":"view","query":[{"op":"raw","fields":[]}]}]}],"version":"0.4.9.13"}"""
+
+            pyg = load_pygwalker(df_filter2, vis_spec)
+            pyg.explorer()
+
     
 if 'submitted' in st.session_state:
     if st.session_state.submitted:

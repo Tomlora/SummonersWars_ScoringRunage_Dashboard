@@ -4,7 +4,7 @@
     "loading_rune" : "Chargement des runes...",
     "loading_data" : "Chargement des données...",
     "telechargement_wait": "Vous serez redirigé automatiquement à la fin du téléchargement.",
-    "mode_appli" : "L'application est par defaut en mode elargi. L'affichage est modifiable dans le menu en haut à droite. \n\nJe ne suis pas developpeur web. Merci d'être conciliant avec les potentiels limites du site :)",
+    "mode_appli" : "L'application est par defaut en mode elargi. L'affichage est modifiable dans le menu en haut à droite. \n\nJe ne suis pas developpeur web. Merci d'être conciliant avec les potentielles limites du site :)",
     "calcul_upload" : "Calcule mon score",
     "add_filters" : "Ajouter des filtres",
     "filters_data" : "Filtrer sur la data sur",
@@ -139,7 +139,7 @@
     "dmg_sur" : "DMG SUR",
     "warning_telechargement" : "En uploadant votre json, vous sauvegardez sur le serveur : \n - Les différents scorings et la moyenne / médiane d'efficience par set pour suivre l'évolution \n - Le nombre de runes en fonction de leurs raretés. Les détails de vos runes ne sont pas sauvegardés. \n - La valeur de la meilleure substat (et uniquement la meilleure) de votre compte par set ou par type d'artefact",
     "warning_detail_runes" : "Note : Seuls les identifiants uniques des runes sont sauvegardés pour pouvoir les identifier. Les substats ou la qualité restent vos données personnelles",
-    "warning_choice" : "Vous avez le choix de : \n - Apparaitre ou non dans les différents classement en fonction de vos propres critères \n - Supprimer partiellement ou intégralement vos données",
+    "warning_choice" : "Vous avez le choix de : \n - Apparaitre ou non dans les différents classements en fonction de vos propres critères \n - Supprimer partiellement ou intégralement vos données",
     "reap_tag" : "Ajouter un tag Reap",
     "obligatoire" : "Obligatoire",
     "taille_image" : "Taille des images",
@@ -152,5 +152,8 @@
     "no_filter" : "Aucun filtre actif",
     "scoring_com2us_artefact" : "Note : Il n'y a pas le scoring com2us pour les artefacts car cela revient à faire efficience x2 : Ce qui n'apporte rien au scoring actuel.\n\n Le score maximal pour une rune (non-antique) est de 285",
     "explication_scoring_qualite" : "LGD = 1 points | Antique = 2 points. Même coefficient que le score général",
-    "explication_scoring_artefact" : "Formule : (nb 80) * 1 + (nb 85) * 2 + (nb 90) * 3 + (nb 95) * 4 + (nb 100) * 5"
+    "explication_scoring_artefact" : "Formule : (nb 80) * 1 + (nb 85) * 2 + (nb 90) * 3 + (nb 95) * 4 + (nb 100) * 5",
+    "config_reporting_help" : "Clique ensuite sur un bouton en bas",
+    "construire_tcd" : "Construire ma propre analyse",
+    "analyse_poussee" : "Analyse poussée"
 }

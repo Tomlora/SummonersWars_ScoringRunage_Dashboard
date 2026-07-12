@@ -1006,7 +1006,7 @@ class Rune():
         self.optimisation_speed = self.df_optimisation_speed['spd'].sum().astype(int)    
         
         return self.df_optimisation_speed, self.optimisation_speed    
-        
+
         
     def score_quality(self, coef_set : dict):
         

@@ -18,106 +18,210 @@ dict_list = list(dict_type.keys())
 
 
 
-def mise_en_forme_classement(df, variable='score', autres_var=None, ascending=False):
-    """Met en forme le classement final :  
-    
-    - Reset l'index
-    - Trie du plus grand score au plus petit
-    - Applique le paramètre de visibilité
-    - Garde les variables à afficher
-    - Filtre (optionnel) en fonction de si le filtre guilde est activé ou non
-    
-    Return le dataframe streamlit"""
-    # on restreint à ce qu'on veut afficher
+def to_dataframe_safe(result) -> pd.DataFrame:
+    """
+    Convertit divers formats (DataFrame, list[dict], dict[str,dict], dict[str,list], list[tuple], etc.)
+    en pandas.DataFrame sans générer de doublons de colonnes liés à des clés "dynamiques" (ex: pseudos).
+    """
+    if isinstance(result, pd.DataFrame):
+        df = result.copy()
+        return df
 
-    # on sort_value
-    df.reset_index(inplace=True)
-    df.sort_values(variable, ascending=ascending, inplace=True)
-    # on anonymise
-    
-    if not df.empty:
-        df['joueur'] = df.apply(
-            lambda x: "***" if x['visibility'] == 1 and st.session_state['pseudo'] != x['joueur'] else x['joueur'], axis=1)
-        df['joueur'] = df.apply(
-            lambda x: "***" if x['visibility'] == 4 and st.session_state['pseudo'] != x['joueur'] and st.session_state['guilde'] != x['guilde'] else x['joueur'], axis=1)
-        # on filtre pour ceux qui veulent only guilde :
-        df = df.apply(cleaning_only_guilde, axis=1)
-        df = df[df['private'] == 0]
-        
-        variable_to_show = ['joueur', variable, 'date', 'guilde']
-        
-        if autres_var is not None:
-            variable_to_show += autres_var
+    # list[...] ------------------------------------------------------
+    if isinstance(result, list):
+        if not result:
+            return pd.DataFrame()
+        # list de dicts (cas le plus propre)
+        if isinstance(result[0], dict):
+            return pd.DataFrame.from_records(result)
+        # list de Row/tuple -> DataFrame tabulaire sans noms
+        return pd.DataFrame(result)
 
-        df = df[variable_to_show]
+    # dict[...] ------------------------------------------------------
+    if isinstance(result, dict):
+        # dict de dicts -> on prend les valeurs comme lignes
+        # (les clés externes ne deviennent PAS des noms de colonnes)
+        if all(isinstance(v, dict) for v in result.values()):
+            df = pd.DataFrame.from_dict(result, orient="index").reset_index(drop=True)
+            return df
+        # dict de listes -> on prend les valeurs comme lignes si longueurs homogènes
+        if all(isinstance(v, (list, tuple)) for v in result.values()):
+            # On essaie d'interpréter comme une liste d'objets (lignes),
+            # pour éviter que les clés (souvent des pseudos) deviennent colonnes.
+            values = list(result.values())
+            try:
+                # si ça ressemble à list[dict] aplatie dans un dict de colonnes
+                lengths = {len(v) for v in values}
+                if len(lengths) == 1:
+                    # reformer une liste de lignes
+                    rows = [dict(zip(result.keys(), row_vals)) for row_vals in zip(*values)]
+                    return pd.DataFrame.from_records(rows)
+            except Exception:
+                pass
+            # fallback: au pire, on empile en lignes
+            return pd.DataFrame({"key": list(result.keys()), "value": list(result.values())})
+        # un simple dict -> une seule ligne
+        return pd.DataFrame([result])
 
-        filtre_guilde = st.checkbox(st.session_state.langue['filter_guilde'])
+    # fallback ultime ------------------------------------------------
+    try:
+        return pd.DataFrame(result)
+    except Exception:
+        return pd.DataFrame()
 
-        if filtre_guilde:
-            df = df[df['guilde']
-                    == st.session_state.guilde]
 
-        df.reset_index(inplace=True, drop=True)
-        height_dataframe = 70 * df.shape[0]
-
-        
-        st.dataframe(df, height=height_dataframe,
-                    use_container_width=True)
-    
-    else:
-        st.warning(st.session_state.langue['no_data'])
-
-    return df
-
+def _enforce_columns(df: pd.DataFrame, expected_cols: list) -> pd.DataFrame:
+    """Garde/ordonne uniquement les colonnes attendues si elles existent."""
+    keep = [c for c in expected_cols if c in df.columns]
+    if not keep:
+        return df  # on laisse tel quel si rien ne correspond
+    return df[keep]
 
 
 def classement():
-    # On lit la BDD
-    # on récupère la data
-    
+    # Bandeau d'info
     st.info(f'**Note** : {st.session_state.langue["update_ladder"]}', icon="ℹ️")
-
     if st.session_state.visibility == 0:
         st.warning(st.session_state.langue['no_visibility'], icon="ℹ️")
 
-    @st.cache_data(ttl=timedelta(minutes=10), show_spinner=st.session_state.langue["loading_data"])
-    def load_data_ladder():
-        data = lire_bdd_perso('''SELECT sw_user.id, sw_user.joueur, sw_user.visibility, sw_user.guilde_id, sw_user.joueur_id,
-                              sw_pvp.date, sw_pvp.win, sw_pvp.lose,
-                              (SELECT guilde from sw_guilde where sw_guilde.guilde_id = sw_user.guilde_id) as guilde,
-                              sw_wb.rank, sw_wb.damage as "DMG", sw_wb.date as date_wb
-                            FROM sw_user
-                            INNER JOIN sw_pvp ON sw_user.id = sw_pvp.id_joueur
-                            INNER JOIN sw_wb ON sw_user.id = sw_wb.id_joueur
-                            where sw_user.visibility != 0''').transpose().reset_index()
-        return data
+    # Le checkbox doit être lu hors cache pour éviter clé de cache différente à chaque clic
+    filtre_guilde_checked = st.checkbox(st.session_state.langue['filter_guilde'])
 
-    data = load_data_ladder()
+    @st.cache_data(ttl=timedelta(minutes=10),
+                   show_spinner=st.session_state.langue["loading_data"])
+    def load_data_ladder(classement_type: str, pseudo: str, guilde: str, filter_guilde: bool):
+        if classement_type == "arene":
+            query = """
+            WITH data AS (
+              SELECT
+                  u.id,
+                  u.joueur,
+                  u.visibility,
+                  u.guilde_id,
+                  to_date(p.date, 'DD/MM/YYYY')::date AS date_,
+                  p.win,
+                  p.lose,
+                  (SELECT g.guilde FROM sw_guilde g WHERE g.guilde_id = u.guilde_id) AS guilde
+              FROM sw_user u
+              JOIN sw_pvp  p ON u.id = p.id_joueur
+              WHERE u.visibility <> 0
+            ),
+            agg AS (
+              SELECT
+                  joueur,
+                  guilde,
+                  MAX(visibility) AS visibility,
+                  MAX(date_)      AS date_,
+                  MAX(win)        AS win,
+                  MAX(lose)       AS lose,
+                  ROUND( (MAX(win)::numeric / NULLIF(MAX(win)+MAX(lose),0)) * 100, 1) AS score
+              FROM data
+              GROUP BY joueur, guilde
+            ),
+            anonym AS (
+              SELECT
+                CASE
+                  WHEN visibility = 1 AND joueur <> :pseudo THEN '***'
+                  WHEN visibility = 4 AND joueur <> :pseudo AND guilde <> :guilde THEN '***'
+                  ELSE joueur
+                END AS joueur,
+                score,
+                to_char(date_, 'DD/MM/YYYY') AS date,
+                guilde
+              FROM agg
+            ),
+            filtered AS (
+              SELECT *
+              FROM anonym
+              WHERE (NOT :filter_guilde) OR (guilde = :guilde)
+            )
+            SELECT joueur, score, date, guilde
+            FROM filtered
+            ORDER BY score DESC;
+            """
+            expected_cols = ["joueur", "score", "date", "guilde"]
+        else:  # classement WB
+            query = """
+            WITH data AS (
+              SELECT
+                  u.id,
+                  u.joueur,
+                  u.visibility,
+                  u.guilde_id,
+                  to_date(w.date, 'DD/MM/YYYY')::date AS date_wb,
+                  w.rank,
+                  w.damage AS dmg,
+                  (SELECT g.guilde FROM sw_guilde g WHERE g.guilde_id = u.guilde_id) AS guilde
+              FROM sw_user u
+              JOIN sw_wb   w ON u.id = w.id_joueur
+              WHERE u.visibility <> 0
+            ),
+            agg AS (
+              SELECT
+                  joueur,
+                  guilde,
+                  MIN(rank)        AS meilleur_rank,
+                  MAX(dmg)         AS dmg,
+                  MAX(date_wb)     AS date_,
+                  MAX(visibility)  AS visibility
+              FROM data
+              GROUP BY joueur, guilde
+            ),
+            anonym AS (
+              SELECT
+                CASE
+                  WHEN visibility = 1 AND joueur <> :pseudo THEN '***'
+                  WHEN visibility = 4 AND joueur <> :pseudo AND guilde <> :guilde THEN '***'
+                  ELSE joueur
+                END AS joueur,
+                meilleur_rank,
+                dmg,
+                to_char(date_, 'DD/MM/YYYY') AS date,
+                guilde
+              FROM agg
+            ),
+            filtered AS (
+              SELECT *
+              FROM anonym
+              WHERE (NOT :filter_guilde) OR (guilde = :guilde)
+            )
+            SELECT joueur, meilleur_rank, date, guilde, dmg
+            FROM filtered
+            ORDER BY meilleur_rank ASC;
+            """
+            expected_cols = ["joueur", "meilleur_rank", "date", "guilde", "dmg"]
 
+        params = {
+            "pseudo": pseudo,
+            "guilde": guilde,
+            "filter_guilde": bool(filter_guilde),
+        }
+
+        raw = lire_bdd_perso(query, params=params)
+        df = to_dataframe_safe(raw)
+        # Sélection/ordre des colonnes attendues (évite toute colonne "parasite")
+        df = _enforce_columns(df, expected_cols)
+        return df
+
+    # Choix du classement (variables externes supposées définies: button_selector, dict_type, dict_list)
     choice_radio = button_selector(dict_type.keys())
+    classement_type = dict_type[dict_list[choice_radio]]
+
+    # Chargement
+    data = load_data_ladder(
+        classement_type,
+        st.session_state['pseudo'],
+        st.session_state['guilde'],
+        filtre_guilde_checked
+    ).T
 
 
-    classement = dict_type[dict_list[choice_radio]]
+    if data is None or data.empty:
+        st.warning(st.session_state.langue['no_data'])
+    else:
+        height_dataframe = 70 * data.shape[0]
+        st.dataframe(data, height=height_dataframe, use_container_width=True)
 
-    if classement == 'arene':
-        data['date'] = pd.to_datetime(data['date'], format="%d/%m/%Y")
-        data_pvp = data.groupby(['joueur', 'guilde']).max()
-        data_pvp['date'] = data_pvp['date'].dt.strftime('%d/%m/%Y')   
-
-        data_pvp['score'] = round((data_pvp['win'] / (data_pvp['win'] + data_pvp['lose']))*100,1)
-        mise_en_forme_classement(data_pvp, autres_var=['win', 'lose'])
-        
-    elif classement == 'WB':
-        #on met la bonne colonne date
-        data.drop(['date'], axis=1, inplace=True)
-        data.rename(columns={'date_wb': 'date'}, inplace=True)
-               
-        data['date'] = pd.to_datetime(data['date'], format="%d/%m/%Y")
-        data_pvp = data.groupby(['joueur', 'guilde']).agg({'rank': 'min', 'DMG': 'max', 'date': 'max', 'visibility' : 'max'})
-        data_pvp['date'] = data_pvp['date'].dt.strftime('%d/%m/%Y') 
-        data_pvp.rename(columns={'rank': 'meilleur rank'}, inplace=True) 
-        
-        mise_en_forme_classement(data_pvp, 'meilleur rank', autres_var=['DMG'], ascending=True)
         
 
     

@@ -15,4 +15,4 @@ coef_set_spd = {'Violent': 3,
 
 
 liste_substat_arte = ['DMG SUPP', 'REDUCTION', 'DMG SUR', 'HP PERDUS', 'CRIT DMG']
-order = ['EAU', 'FEU', 'VENT', 'LUMIERE', 'TENEBRE', 'ATTACK', 'DEFENSE', 'HP', 'SUPPORT']
+order = ['EAU', 'FEU', 'VENT', 'LUMIERE', 'TENEBRE', 'INTANGIBLE', 'ATTACK', 'DEFENSE', 'HP', 'SUPPORT']

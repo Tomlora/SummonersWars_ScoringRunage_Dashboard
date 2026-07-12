@@ -1,6 +1,6 @@
 
 import streamlit as st
-from fonctions.visualisation import filter_dataframe
+from fonctions.visualisation import filter_dataframe, load_pygwalker
 import pandas as pd
 import plotly_express as px
 import plotly.graph_objects as go
@@ -14,6 +14,7 @@ from streamlit_extras.row import row
 css()
 
 from streamlit_extras.button_selector import button_selector
+from streamlit_extras.colored_header import colored_header
 
 
 
@@ -165,7 +166,16 @@ def stats_runage():
             st.dataframe(df_efficience[df_efficience['efficiency_max_lgd'] >= 100][colonnes_to_show])
                 
         st.plotly_chart(fig, use_container_width=True)
-        
+
+        colored_header(
+            label=st.session_state.langue['analyse_poussee'],
+            description="",
+            color_name="blue-70",
+        )     
+
+        if st.checkbox(st.session_state.langue["construire_tcd"]): 
+            pyg = load_pygwalker(df_efficience[colonnes_to_show])   
+            pyg.explorer()
         
     with tab_pts:
     

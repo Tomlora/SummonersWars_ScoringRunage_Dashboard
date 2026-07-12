@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 from fonctions.streamlit_filter_tree import condition_tree, config_from_dataframe
 from streamlit_extras.add_vertical_space import add_vertical_space
+from pygwalker.api.streamlit import StreamlitRenderer
 
 from pandas.api.types import (
     is_categorical_dtype,
@@ -13,6 +14,9 @@ from pandas.api.types import (
 
 import streamlit as st
 
+
+def load_pygwalker(df, config=''):
+    return StreamlitRenderer(df, spec=config, kernel_computation=True)
 
 
 
@@ -105,7 +109,7 @@ def transformation_stats_visu(nom_table, joueur, distinct: bool = False, score='
     return df_actuel
 
 
-def plotline_evol_rune_visu(df, color='Set'):
+def plotline_evol_rune_visu(df, color='Set', text=None):
     """Crée un graphique montrant l'évolution des scorings.
 
     Parameters
@@ -120,7 +124,7 @@ def plotline_evol_rune_visu(df, color='Set'):
     Figure plotly
         Graphique montrant l'évolution du score en fonction de la date
     """
-    fig = px.line(df, x="date", y="Nombre", color=color, markers=True)
+    fig = px.line(df, x="date", y="Nombre", color=color, markers=True, text=text)
 
     fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
     fig.update_yaxes(showgrid=False)

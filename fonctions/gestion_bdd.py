@@ -299,3 +299,8 @@ def get_number_row(table):
     data = conn.execute(sql)
     data = data.mappings().all()
     return data[0]['count']
+
+
+
+def rollback():
+    conn.rollback()

@@ -3,6 +3,8 @@ from params.coef import coef_set, coef_set_spd
 import streamlit as st
 # from st_pages import Page, Section, show_pages, add_indentation
 from streamlit_extras.switch_page_button import switch_page
+from sqlalchemy.exc import OperationalError, PendingRollbackError
+from fonctions.gestion_bdd import rollback
 
 
 st.set_page_config(layout="wide")
@@ -11,6 +13,7 @@ st.set_page_config(layout="wide")
 pd.options.mode.chained_assignment = None  # default='warn'
 
 # set ++ importance
+
 
 
 
@@ -34,7 +37,7 @@ def main_page():
    
                         pages = {'Accueil' : [
                         st.Page('pages_streamlit/upload.py', title='Upload JSON', icon='📁'),
-                        st.Page('pages_streamlit/update.py', title='Version 09/01/25', icon='🔈'),
+                        st.Page('pages_streamlit/update.py', title='Version 03/05/26', icon='🔈'),
                         st.Page('pages_streamlit/timeline_summon.py', title='Invocation', icon='👻')],
                         # Section(name='Scoring', icon=':bar_chart:'),
                         "Scoring" : [
@@ -60,7 +63,7 @@ def main_page():
                         st.Page('pages_streamlit/objectif_rune.py', title='Objectif Efficience', icon='💪'),
                         st.Page('pages_streamlit/upgrade_runes.py', title='Upgrade', icon='⬆️'),
                         st.Page('pages_streamlit/todolist.py', title='ToDoList', icon='📋'),
-                        st.Page('pages_streamlit/build.py', title='Créer un build', icon='🔨'),
+                        # st.Page('pages_streamlit/build.py', title='Créer un build', icon='🔨'),
                         st.Page('pages_streamlit/calculator.py', title='Calculateur efficience', icon='🔢'),
                         st.Page('pages_streamlit/optimisation_spd.py', title='Best Speed', icon='💻')],
                         # Section(name='Artefacts', icon=':gem:'),
@@ -87,7 +90,7 @@ def main_page():
                             
                             pages = {'Accueil' : [
                             st.Page('pages_streamlit/upload.py', title='Upload JSON', icon='📁'),
-                            st.Page('pages_streamlit/update.py', title='Version 09/01/25', icon='🔈')],
+                            st.Page('pages_streamlit/update.py', title='Version 03/05/26', icon='🔈')],
                             "Runages" : [
                             st.Page('pages_streamlit/calculator.py', title='Calculateur efficience', icon='🔢'),
                             ],
@@ -105,5 +108,10 @@ def main_page():
 
                         pg.run()
 
-
-main_page()
+try:
+    main_page()
+except OperationalError as e:
+        st.text('Oops, une erreur est survenue. Veuillez réessayer plus tard.')
+except PendingRollbackError as e:
+        st.text('Oops, une erreur est survenue. Veuillez réessayer plus tard.')
+        rollback()

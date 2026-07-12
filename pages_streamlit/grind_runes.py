@@ -4,19 +4,25 @@ import numpy as np
 import ast
 import streamlit as st
 from io import BytesIO
-from fonctions.visualisation import filter_dataframe
+from fonctions.visualisation import filter_dataframe, load_pygwalker
 from fonctions.runes import Rune, CRAFT_TYPE_MAP, COM2US_QUALITY_MAP
 # fix plotly express et Visual Studio Code
 import plotly.io as pio
 pio.renderers.default = "notebook_connected"
 
+from streamlit_extras.colored_header import colored_header
+
+
 from fonctions.visuel import css
+
 css()
 
 
 
 # Supprime les Future Warnings sur les copies
 pd.options.mode.chained_assignment = None  # default='warn'
+
+
 
 
 
@@ -375,6 +381,112 @@ def optimisation_rune():
             
     st.download_button(st.session_state.langue['download_excel'], data_xlsx, file_name=f'optimisation runes {st.session_state["pseudo"]}.xlsx',
                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    
+
+    colored_header(
+            label=st.session_state.langue['analyse_poussee'],
+            description="",
+            color_name="blue-70",
+        )    
+    if st.checkbox(st.session_state.langue['construire_tcd']):
+        vis_spec = r"""{"config":[{"config":{"defaultAggregated":true,"geoms":["auto"],"coordSystem":"generic","limit":-1,"timezoneDisplayOffset":0},
+        "encodings":{"dimensions":
+        [{"fid":"Set rune","name":"Set rune","basename":"Set rune","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"Id_rune","name":"Id_rune","basename":"Id_rune","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"Slot","name":"Slot","basename":"Slot","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"Equipé","name":"Equipé","basename":"Equipé","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"qualité","name":"qualité","basename":"qualité","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"qualité_original","name":"qualité_original","basename":"qualité_original","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"Stat principal","name":"Stat principal","basename":"Stat principal","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"Valeur stat principal","name":"Valeur stat principal","basename":"Valeur stat principal","semanticType":"quantitative","analyticType":"dimension","offset":0},
+        {"fid":"innate_type","name":"innate_type","basename":"innate_type","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"Gemmé 1 ?","name":"Gemmé 1 ?","basename":"Gemmé 1 ?","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"Gemmé 2 ?","name":"Gemmé 2 ?","basename":"Gemmé 2 ?","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"Gemmé 3 ?","name":"Gemmé 3 ?","basename":"Gemmé 3 ?","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"Gemmé 4 ?","name":"Gemmé 4 ?","basename":"Gemmé 4 ?","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"indicateurs_level","name":"indicateurs_level","basename":"indicateurs_level","semanticType":"quantitative","analyticType":"dimension","offset":0},
+        {"fid":"Commentaires","name":"Commentaires","basename":"Commentaires","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"Grind_lgd","name":"Grind_lgd","basename":"Grind_lgd","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"Grind_hero","name":"Grind_hero","basename":"Grind_hero","semanticType":"nominal","analyticType":"dimension","offset":0},
+        {"fid":"gw_mea_key_fid","name":"Measure names","analyticType":"dimension","semanticType":"nominal"}],
+        "measures":[
+        
+
+        {"fid":"Efficience","name":"Efficience","basename":"Efficience","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"innate_value","name":"innate_value","basename":"innate_value","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Substat valeur 1","name":"Substat valeur 1","basename":"Substat valeur 1","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Valeur meule 1","name":"Valeur meule 1","basename":"Valeur meule 1","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Substat valeur 2","name":"Substat valeur 2","basename":"Substat valeur 2","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Valeur meule 2","name":"Valeur meule 2","basename":"Valeur meule 2","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Substat valeur 3","name":"Substat valeur 3","basename":"Substat valeur 3","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Valeur meule 3","name":"Valeur meule 3","basename":"Valeur meule 3","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Substat valeur 4","name":"Substat valeur 4","basename":"Substat valeur 4","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Valeur meule 4","name":"Valeur meule 4","basename":"Valeur meule 4","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Substat 1 max","name":"Substat 1 max","basename":"Substat 1 max","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Substat 2 max","name":"Substat 2 max","basename":"Substat 2 max","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Substat 3 max","name":"Substat 3 max","basename":"Substat 3 max","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Substat 4 max","name":"Substat 4 max","basename":"Substat 4 max","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Meule 1 lgd Max","name":"Meule 1 lgd Max","basename":"Meule 1 lgd Max","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Meule 1 hero Max","name":"Meule 1 hero Max","basename":"Meule 1 hero Max","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Meule 2 lgd Max","name":"Meule 2 lgd Max","basename":"Meule 2 lgd Max","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Meule 2 hero Max","name":"Meule 2 hero Max","basename":"Meule 2 hero Max","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Meule 3 lgd Max","name":"Meule 3 lgd Max","basename":"Meule 3 lgd Max","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Meule 3 hero Max","name":"Meule 3 hero Max","basename":"Meule 3 hero Max","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Meule 4 lgd Max","name":"Meule 4 lgd Max","basename":"Meule 4 lgd Max","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Meule 4 hero Max","name":"Meule 4 hero Max","basename":"Meule 4 hero Max","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"first_sub_value_total_max_lgd","name":"first_sub_value_total_max_lgd","basename":"first_sub_value_total_max_lgd","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"second_sub_value_total_max_lgd","name":"second_sub_value_total_max_lgd","basename":"second_sub_value_total_max_lgd","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"third_sub_value_total_max_lgd","name":"third_sub_value_total_max_lgd","basename":"third_sub_value_total_max_lgd","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"fourth_sub_value_total_max_lgd","name":"fourth_sub_value_total_max_lgd","basename":"fourth_sub_value_total_max_lgd","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"first_sub_value_total_max_hero","name":"first_sub_value_total_max_hero","basename":"first_sub_value_total_max_hero","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"second_sub_value_total_max_hero","name":"second_sub_value_total_max_hero","basename":"second_sub_value_total_max_hero","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"third_sub_value_total_max_hero","name":"third_sub_value_total_max_hero","basename":"third_sub_value_total_max_hero","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"fourth_sub_value_total_max_hero","name":"fourth_sub_value_total_max_hero","basename":"fourth_sub_value_total_max_hero","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Efficience_max_lgd","name":"Efficience_max_lgd","basename":"Efficience_max_lgd","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"Efficience_max_hero","name":"Efficience_max_hero","basename":"Efficience_max_hero","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"potentiel_max_lgd","name":"potentiel_max_lgd","basename":"potentiel_max_lgd","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"potentiel_max_hero","name":"potentiel_max_hero","basename":"potentiel_max_hero","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"amelioration_first_grind_lgd_value","name":"amelioration_first_grind_lgd_value","basename":"amelioration_first_grind_lgd_value","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"amelioration_first_grind_hero_value","name":"amelioration_first_grind_hero_value","basename":"amelioration_first_grind_hero_value","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"amelioration_second_grind_lgd_value","name":"amelioration_second_grind_lgd_value","basename":"amelioration_second_grind_lgd_value","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"amelioration_second_grind_hero_value","name":"amelioration_second_grind_hero_value","basename":"amelioration_second_grind_hero_value","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"amelioration_third_grind_lgd_value","name":"amelioration_third_grind_lgd_value","basename":"amelioration_third_grind_lgd_value","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"amelioration_third_grind_hero_value","name":"amelioration_third_grind_hero_value","basename":"amelioration_third_grind_hero_value","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"amelioration_fourth_grind_lgd_value","name":"amelioration_fourth_grind_lgd_value","basename":"amelioration_fourth_grind_lgd_value","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"amelioration_fourth_grind_hero_value","name":"amelioration_fourth_grind_hero_value","basename":"amelioration_fourth_grind_hero_value","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"ACC","name":"ACC","basename":"ACC","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"ATQ","name":"ATQ","basename":"ATQ","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"ATQ%","name":"ATQ%","basename":"ATQ%","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"CRIT","name":"CRIT","basename":"CRIT","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"DCC","name":"DCC","basename":"DCC","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"DEF","name":"DEF","basename":"DEF","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"DEF%","name":"DEF%","basename":"DEF%","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"HP","name":"HP","basename":"HP","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"HP%","name":"HP%","basename":"HP%","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"RES","name":"RES","basename":"RES","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"SPD","name":"SPD","basename":"SPD","analyticType":"measure","semanticType":"quantitative","aggName":"sum","offset":0},
+        {"fid":"amelioration_fourth_grind_hero_ameliorable?","name":"amelioration_fourth_grind_hero_ameliorable?","basename":"amelioration_fourth_grind_hero_ameliorable?","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"amelioration_fourth_grind_lgd_ameliorable?","name":"amelioration_fourth_grind_lgd_ameliorable?","basename":"amelioration_fourth_grind_lgd_ameliorable?","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"amelioration_third_grind_hero_ameliorable?","name":"amelioration_third_grind_hero_ameliorable?","basename":"amelioration_third_grind_hero_ameliorable?","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"amelioration_third_grind_lgd_ameliorable?","name":"amelioration_third_grind_lgd_ameliorable?","basename":"amelioration_third_grind_lgd_ameliorable?","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"amelioration_second_grind_hero_ameliorable?","name":"amelioration_second_grind_hero_ameliorable?","basename":"amelioration_second_grind_hero_ameliorable?","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"amelioration_second_grind_lgd_ameliorable?","name":"amelioration_second_grind_lgd_ameliorable?","basename":"amelioration_second_grind_lgd_ameliorable?","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"amelioration_first_grind_hero_ameliorable?","name":"amelioration_first_grind_hero_ameliorable?","basename":"amelioration_first_grind_hero_ameliorable?","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"amelioration_first_grind_lgd_ameliorable?","name":"amelioration_first_grind_lgd_ameliorable?","basename":"amelioration_first_grind_lgd_ameliorable?","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"fourth_gemme_max_hero","name":"fourth_gemme_max_hero","basename":"fourth_gemme_max_hero","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"third_gemme_max_hero","name":"third_gemme_max_hero","basename":"third_gemme_max_hero","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"second_gemme_max_hero","name":"second_gemme_max_hero","basename":"second_gemme_max_hero","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"first_gemme_max_hero","name":"first_gemme_max_hero","basename":"first_gemme_max_hero","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"fourth_gemme_max_lgd","name":"fourth_gemme_max_lgd","basename":"fourth_gemme_max_lgd","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"third_gemme_max_lgd","name":"third_gemme_max_lgd","basename":"third_gemme_max_lgd","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"second_gemme_max_lgd","name":"second_gemme_max_lgd","basename":"second_gemme_max_lgd","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"first_gemme_max_lgd","name":"first_gemme_max_lgd","basename":"first_gemme_max_lgd","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"innate_value_max","name":"innate_value_max","basename":"innate_value_max","semanticType":"quantitative","analyticType":"measure","offset":0},
+        {"fid":"gw_count_fid","name":"Row count","analyticType":"measure","semanticType":"quantitative","aggName":"sum","computed":true,
+        "expression":{"op":"one","params":[],"as":"gw_count_fid"}},{"fid":"gw_mea_val_fid","name":"Measure values","analyticType":"measure","semanticType":"quantitative","aggName":"sum"}],"rows":[],"columns":[],"color":[],"opacity":[],"size":[],"shape":[],"radius":[],"theta":[],"longitude":[],"latitude":[],"geoId":[],"details":[],"filters":[],"text":[]},"layout":{"showActions":false,"showTableSummary":false,"stack":"stack","interactiveScale":false,"zeroScale":true,"size":{"mode":"auto","width":320,"height":200},"format":{},"geoKey":"name","resolve":{"x":false,"y":false,"color":false,"opacity":false,"shape":false,"size":false}},"visId":"gw_ETxn","name":"Chart 1"}],"chart_map":{},"workflow_list":[{"workflow":[{"type":"view","query":[{"op":"raw","fields":[]}]}]}],"version":"0.4.9.13"}"""
+
+        pig = load_pygwalker(data, vis_spec)
+        pig.explorer()
     
     
 

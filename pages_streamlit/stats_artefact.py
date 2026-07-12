@@ -80,7 +80,10 @@ def grind_arte():
         
         fig.update_traces(textposition='inside', textinfo='percent+value+label')
             
-        st.plotly_chart(fig, use_container_width=True)    
+        st.plotly_chart(fig, use_container_width=True)   
+
+        
+
             
     
     

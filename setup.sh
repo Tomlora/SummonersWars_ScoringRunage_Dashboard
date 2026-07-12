@@ -12,3 +12,4 @@ secondaryBackgroundColor = '#0083B9'\n\
 textColor = '#FFFFFF'\n\
 font = 'sans serif'\n\
 " > ~/.streamlit/config.toml
+

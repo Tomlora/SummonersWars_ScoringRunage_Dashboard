@@ -200,7 +200,7 @@ def general_page():
                                            names=st.session_state.data_avg.index,
                                            values='Nombre runes',
                                            color=st.session_state.data_avg.index,
-                                           title='Count runes')
+                                           title='Comptage de Runes')
                         
                         st.plotly_chart(fig_count)
                             

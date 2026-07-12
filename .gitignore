@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environnements virtuels
+.venv/
+venv/
+env/
+
+# Variables et secrets
+.env
+.streamlit/secrets.toml
+
+# Outils
+.vscode/
+.idea/
+
+# Système
+.DS_Store
+Thumbs.db

@@ -1,187 +1,116 @@
+from collections import defaultdict
+
+import pandas as pd
 import streamlit as st
-from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
+
+from fonctions.visuel import load_lottieurl, css
+
+try:
+    # Chemin conseillé si gestion_bdd.py est dans le package fonctions/
+    from fonctions.gestion_bdd import lire_bdd_perso
+except ImportError:
+    # Fallback utile si gestion_bdd.py est au même niveau que cette page
+    from gestion_bdd import lire_bdd_perso
 
 
 try:
-    st.set_page_config(layout='wide')
-except:
+    st.set_page_config(layout="wide")
+except Exception:
     pass
-
 
 css()
 
+def format_update_content(content) -> str:
+    """Convertit les retours à la ligne stockés en base en Markdown compatible Streamlit."""
+    if content is None:
+        return ""
+
+    content = str(content)
+
+    # Cas fréquent depuis PostgreSQL : les caractères sont stockés littéralement comme \n
+    # au lieu d'être de vrais retours à la ligne.
+    content = content.replace("\\r\\n", "\n")
+    content = content.replace("\\n", "\n")
+    content = content.replace("\r\n", "\n")
+
+    # Dans st.info, un saut Markdown fiable s'écrit avec deux espaces avant le retour ligne.
+    content = content.replace("\n\n", "  \n")
+    content = content.replace("\n", "  \n")
+
+    return content
 
 
+@st.cache_data(ttl=300, show_spinner=False)
+def load_updates() -> pd.DataFrame:
+    """Charge les mises à jour depuis PostgreSQL via gestion_bdd.lire_bdd_perso.
 
-st.subheader('Mise à jour')
+    Attention : lire_bdd_perso transpose automatiquement le DataFrame.
+    On le transpose donc une seconde fois pour retrouver une ligne par mise à jour.
+    """
+    query = """
+        SELECT
+            id,
+            version_date,
+            year,
+            content,
+            expanded
+        FROM app_updates
+        WHERE is_active = TRUE
+        ORDER BY year DESC, version_date DESC, id DESC
+    """
 
-col1, col2, col3 = st.columns([0.4,0.2,0.4])
+    df = lire_bdd_perso(query, index_col="id")
+
+    # gestion_bdd.lire_bdd_perso fait déjà df.transpose().
+    # Ici, on revient au format attendu par la page : 1 ligne = 1 update.
+    df = df.transpose().reset_index()
+
+    # Selon la version de pandas / le nom de l'index, la colonne peut s'appeler index ou id.
+    if "index" in df.columns and "id" not in df.columns:
+        df = df.rename(columns={"index": "id"})
+
+    if not df.empty:
+        df["version_date"] = pd.to_datetime(df["version_date"])
+        df["year"] = df["year"].astype(int)
+        df["expanded"] = df["expanded"].astype(bool)
+
+    return df
+
+
+st.subheader("Mise à jour")
+
+col1, col2, col3 = st.columns([0.4, 0.2, 0.4])
 with col2:
-    img = load_lottieurl('https://assets7.lottiefiles.com/private_files/lf30_rzhdjuoe.json')
+    img = load_lottieurl("https://assets7.lottiefiles.com/private_files/lf30_rzhdjuoe.json")
     st_lottie(img, height=200, width=200)
 
+try:
+    updates_df = load_updates()
+except Exception as exc:
+    st.error("Impossible de charger les mises à jour depuis PostgreSQL.")
+    st.exception(exc)
+    st.stop()
 
-tab2025, tab2024, tab2023 = st.tabs(['2025', '2024', '2023'])
+if updates_df.empty:
+    st.info("Aucune mise à jour à afficher.")
+else:
+    updates_by_year = defaultdict(list)
 
-with tab2025:
-    with st.expander('Version 09/01/2024', expanded=True):
-        st.info("- Ajout des nouveaux monstres de la collab Kimetsu no Yaiba")     
+    for update in updates_df.to_dict("records"):
+        updates_by_year[int(update["year"])].append(update)
 
+    years = sorted(updates_by_year.keys(), reverse=True)
+    tabs = st.tabs([str(year) for year in years])
 
-with tab2024:
+    for tab, year in zip(tabs, years):
+        with tab:
+            for update in updates_by_year[year]:
+                version_date = pd.to_datetime(update["version_date"]).strftime("%d/%m/%Y")
+                with st.expander(
+                    f"Version {version_date}",
+                    expanded=bool(update.get("expanded", True)),
+                ):
+                    st.info(format_update_content(update["content"]))
 
-    with st.expander('Version 11/12/2024', expanded=True):
-        st.info("- Ajout des nouveaux monstres") 
-
-    with st.expander('Version 02/12/2024', expanded=True):
-        st.info("- Ajout d'un mode pour les comptes early game") 
-
-    with st.expander('Version 01/11/2024', expanded=True):
-        st.info("- Ajout des classements scoring Com2us") 
-
-    with st.expander('Version 30/10/2024', expanded=True):
-        st.info("- Ajout des scoring Com2us") 
-
-    with st.expander('Version 16/10/2024', expanded=True):
-        st.info("- Ajout des guerriers Drakan et des Harpies 2A") 
-
-    with st.expander('Version 12/10/2024', expanded=True):
-        st.info("- Ajout de la page Invocation \n\n"+
-                "- Menu dynamique") 
-
-    with st.expander('Version 11/10/2024', expanded=True):
-        st.info("- Ajout de la page Objectif Efficience (Runages)") 
-
-    with st.expander('Version 09/10/2024', expanded=True):
-        st.info("- Changements visuels pour apporter plus de flexibilité à l'avenir") 
-
-    with st.expander('Version 06/10/2024', expanded=True):
-        st.info("- Ajout des meules/gemmes légendaires manquantes dans Optimisation") 
-    
-    with st.expander('Version 30/07/2024', expanded=True):
-        st.info("- Ajout colab JJK") 
-
-    with st.expander('Version 15/04/2024', expanded=True):
-        st.info("- Ajout des Cyborg et Hackeurs") 
-    
-    with st.expander('Version 14/04/2024', expanded=True):
-        st.info("- Ajout d' une nouvelle fonctionnalité pour les runes : Best Speed") 
-    
-    with st.expander('Version 13/04/2024', expanded=True):
-        st.info("- Ajout d'un tableau Détail dans les Statistiques (Runages) \n\n"+
-                "- Amélioration des visuels de l'onglet Evolution") 
-    
-    with st.expander('Version 10/03/2024', expanded=True):
-        st.info("- Amelioration générale des performances \n\n"+
-                "- Retrait de l'onglet SpeedTune : SWGT ayant apporté un outil disponible à tous et bien meilleur") 
-        
-        
-    with st.expander('Version 03/02/2024', expanded=True):
-        st.info("- Correction d'un bug d'upload sur MacOS") 
-
-    with st.expander('Version 31/01/2024', expanded=True):
-        st.info("- Ajout des monstres Assassin Creed") 
-        
-        
-    with st.expander('Version 29/01/2024', expanded=False):
-        st.info("- Les filtres ne sont plus cachés") 
-
-    with st.expander('Version 12/01/2024', expanded=False):
-        st.info("- Correction des stats améliorables des runes antiques dans l'onglet Optimisation") 
-
-    with st.expander('Version 07/01/2024', expanded=False):
-        st.info("- Ajout SpeedTuning") 
-            
-    with st.expander('Version 06/01/2024', expanded=False):
-        st.info(" Bonne année :) ! \n\n"+
-                "- Amélioration de l'onglet Donjon avec plus de stats") 
-
-with tab2023:
-    with st.expander('Version 28/12/2023', expanded=False):
-        st.info("- Meilleur process pour filtrer les données") 
-
-    with st.expander('Version 16/12/2023', expanded=False):
-        st.info("- Ajout des Anges \n\n"+
-                "- Les pages Artefacts (Detail) et Optimisation Runes sont plus rapides") 
-        
-        
-    with st.expander('Version 08/12/2023', expanded=False):
-        st.info("- Ajout des Artefacts Intangible (sowwy !) \n\n")   
-        
-        
-    with st.expander('Version 29/11/2023', expanded=False):
-        st.info("- Ajout d'une page Objectifs dans les Artefacts\n\n")   
-
-    with st.expander('Version 20/10/2023', expanded=False):
-        st.info("- Possibilité de télécharger les tableaux Artefacts dans General\n\n"+
-                "- Correction des Artefacts dmg supp hp qui étaient arrondis à l'entier supérieur\n\n"+
-                "- Correction d'une erreur qui pouvait ignorer des artefacts dans la vue Artefact dans General\n\n"+
-                "- Detail par Slot dans Statistiques (Top 10 stats)")   
-
-    with st.expander('Version 30/09/2023', expanded=False):
-        st.info("- Ajout des nouveaux monstres \n\n"+
-                "- Correction des tableaux Artefacts qui n'étaient plus en couleur \n\n"+
-                "- Correction de bugs")   
-        
-        
-    with st.expander('Version 30/08/2023', expanded=False):
-        st.info("- Ajout d'un tag Reap paramétrable dans Optimisation")   
-        
-    with st.expander('Version 29/08/2023', expanded=False):
-        st.info("- Ajout d'un calculateur de DMG Lushen  \n\n"+
-                "- Ajout d'une ToDoList téléchargeable ou sauvegardable sur ses runes") 
-        
-    with st.expander('Version 20/08/2023', expanded=False):
-        st.info("- English Version ") 
-
-    with st.expander('Version 09/08/2023', expanded=False):
-        st.info("- Détail des stats artefacts dans l'onglet General ") 
-        
-    with st.expander('Version 27/07/2023', expanded=False):
-        st.info("- Ajout du classement par rune dans Statistiques (Runes)")      
-        
-    with st.expander('Version 18/07/2023', expanded=False):
-        st.info("- Ajout du scoring qualité\n\n"+
-                "- Amélioration de la stabilité de l'app :+1:\n\n"+
-                "- Amélioration de certains filtres \n\n"+
-                "- Ajout de la qualité et qualité originelle des runes dans les différents onglets")   
-        
-    with st.expander('Version 14/07/2023', expanded=False):
-        st.info("- Amélioration de l'onglet Evolution\n\n"+
-                "- Amélioration de la lisibilité de l'onglet Creer un build")   
-            
-    with st.expander('Version 08/07/2023', expanded=False):
-        st.info("- Amélioration de l'onglet Inventaire Artefact")   
-        
-    with st.expander('Version 01/07/2023', expanded=False):
-        st.info("- Ajout des Pages Upgrade (Rune + Artefact)\n\n"+
-                "- Amélioration de la lisibilité des tableaux dans Optimisation de Runes\n\n"+
-                "- Ajout de l'onglet Monstres et des Pages Donjon/Raid")    
-        
-    with st.expander('Version 30/06/2023', expanded=False):
-        st.info("- Ajout des nouveaux sets \n\n"+
-                "- Ajout des nouveaux bonus d'artefacts\n\n"+
-                "- Ajout des nouveaux monstres\n\n"+
-                "- Amélioration de l'onglet Inventaire d'Artefact\n\n"+
-                "- Refonte de l'onglet Statistiques pour Runes et Artefacts")        
-        
-    with st.expander('Version 29/06/2023', expanded=False):
-        st.info("- Ajout de la courbe d'efficience des runes et artefacts dans Statistiques")
-        
-    with st.expander('Version 25/06/2023', expanded=False):
-        st.info("- Amélioration visuelle des tableaux \n\n"+
-                "- Correction d'une erreur dans le calcul du score général \n\n"+
-                "- Nouvelles statistiques de runes dans Statistiques")    
-
-    with st.expander('Version 10/06/2023', expanded=False):
-        st.info("- Ajout des ladder Arene et World Boss \n\n"+
-                "- Ajout du nombre d'utilisateurs, scores, guildes")
-        
-    with st.expander('Version 13/05/2023', expanded=False):
-        st.info("- Ajout du calcul des dmg additionnels Artefact \n\n"+
-                "- Ajout de Where2Use pour les artefacts")
-    
-
-
-st.caption('Made by Tomlora :sunglasses:')
+st.caption("Made by Tomlora :sunglasses:")

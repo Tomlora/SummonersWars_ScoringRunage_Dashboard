@@ -212,7 +212,7 @@ def palier_page():
                 def date():  
                     with st.popover(st.session_state.langue["select_date_to_show"]):
                         st.session_state.options_select = st.multiselect(
-                            f'', options_date, options_date, key='evol_date3')
+                            f'', options_date, options_date, key='evol_date3', help=st.session_state.langue['config_reporting_help'])
 
                         
                 date()        
