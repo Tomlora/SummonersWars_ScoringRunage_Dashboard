@@ -58,11 +58,9 @@ EXPORT_RENAME = {
 
 
 def _substat_values(data_class: Any, stats: list[str]) -> pd.DataFrame:
-    """Return cached total and applied-grind values for requested substats."""
     source = data_class.data_grind
     source_id = id(source)
     cache = getattr(data_class, "_optimisation_substat_cache", None)
-
     if (
         getattr(data_class, "_optimisation_substat_source_id", None) != source_id
         or not isinstance(cache, pd.DataFrame)
@@ -77,22 +75,17 @@ def _substat_values(data_class: Any, stats: list[str]) -> pd.DataFrame:
         grind_column = f"{stat}__grind"
         if total_column in cache.columns and grind_column in cache.columns:
             continue
-
         base_values = pd.Series(0, index=source.index, dtype="int32")
         grind_values = pd.Series(0, index=source.index, dtype="int32")
-
         for position in SUBSTAT_POSITIONS:
             name_column = f"{position}_sub"
             base_column = f"{position}_sub_value"
             grind_source_column = f"{position}_sub_grinded_value"
             if name_column not in source.columns or base_column not in source.columns:
                 continue
-
-            names = source[name_column].astype(str)
-            mask = names.eq(stat)
+            mask = source[name_column].astype(str).eq(stat)
             if not mask.any():
                 continue
-
             base = pd.to_numeric(source[base_column], errors="coerce").fillna(0)
             grind = (
                 pd.to_numeric(source[grind_source_column], errors="coerce").fillna(0)
@@ -101,7 +94,6 @@ def _substat_values(data_class: Any, stats: list[str]) -> pd.DataFrame:
             )
             base_values = base_values.add(base.where(mask, 0).astype("int32"), fill_value=0)
             grind_values = grind_values.add(grind.where(mask, 0).astype("int32"), fill_value=0)
-
         cache[grind_column] = grind_values.astype("int32")
         cache[total_column] = (base_values + grind_values).astype("int32")
 
@@ -113,11 +105,9 @@ def _format_total_with_grind(total: Any, grind: Any, *, percent: bool) -> str:
     total_value = int(total or 0)
     grind_value = int(grind or 0)
     suffix = " %" if percent else ""
-    return (
-        f"{total_value}{suffix} (+{grind_value}{suffix})"
-        if grind_value
-        else f"{total_value}{suffix}"
-    )
+    if grind_value:
+        return f"{total_value}{suffix} (+{grind_value}{suffix})"
+    return f"{total_value}{suffix}"
 
 
 def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
@@ -142,7 +132,6 @@ def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
     selected_stats: list[str] = []
     minimums: dict[str, int] = {}
     display_mode = tr("Total", "Total")
-
     with st.expander(tr("Filtres et colonnes", "Filters and columns"), expanded=True):
         c1, c2, c3, c4 = st.columns([1.4, 1.2, 1.1, 1])
         sets = c1.multiselect(
@@ -167,7 +156,6 @@ def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
             value=False,
             key="optimisation_filter_equipped",
         )
-
         max_gain = max(float(view["Gain potentiel"].max()), 1.0) if not view.empty else 1.0
         min_gain = st.slider(
             tr("Gain potentiel minimum", "Minimum potential gain"),
@@ -177,7 +165,6 @@ def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
             0.5,
             key="optimisation_filter_gain",
         )
-
         if st.toggle(
             tr("Afficher les sous-statistiques", "Show substats"),
             value=False,
@@ -214,8 +201,8 @@ def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
             )
             if filtered_stats:
                 controls = st.columns(min(4, len(filtered_stats)))
-                for pos, stat in enumerate(filtered_stats):
-                    with controls[pos % len(controls)]:
+                for position, stat in enumerate(filtered_stats):
+                    with controls[position % len(controls)]:
                         minimums[stat] = int(
                             st.number_input(
                                 f"{stat} minimum",
@@ -294,7 +281,6 @@ def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
     else:
         for stat in selected_stats:
             config[stat] = st.column_config.TextColumn(stat, width="small")
-
     st.dataframe(
         shown.loc[:, columns],
         width="stretch",
@@ -302,7 +288,6 @@ def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
         hide_index=True,
         column_config=config,
     )
-
     csv = filtered.loc[:, [column for column in columns if column in filtered.columns]].to_csv(index=False).encode("utf-8-sig")
     st.download_button(
         tr("Exporter les recommandations filtrées", "Export filtered recommendations"),
@@ -315,11 +300,9 @@ def _recommendations(namespace: dict[str, Any], view: pd.DataFrame) -> None:
 
 
 def _wide_substats(data_class: Any, frame: pd.DataFrame) -> pd.DataFrame:
-    """Add base, applied grind and total columns for every supported substat."""
     details = _substat_values(data_class, SUBSTATS).reindex(frame.index)
     output = frame.copy()
     source = data_class.data_grind.reindex(frame.index)
-
     for stat in SUBSTATS:
         base_values = pd.Series(0, index=frame.index, dtype="int32")
         for position in SUBSTAT_POSITIONS:
@@ -330,7 +313,6 @@ def _wide_substats(data_class: Any, frame: pd.DataFrame) -> pd.DataFrame:
             mask = source[name_column].astype(str).eq(stat)
             values = pd.to_numeric(source[value_column], errors="coerce").fillna(0)
             base_values = base_values.add(values.where(mask, 0).astype("int32"), fill_value=0)
-
         output[f"{stat} base"] = base_values.astype("int32")
         output[f"{stat} meule"] = details[f"{stat}__grind"].fillna(0).astype("int32")
         output[f"{stat} total"] = details[f"{stat}__total"].fillna(0).astype("int32")
@@ -352,13 +334,11 @@ def _excel_safe(frame: pd.DataFrame, *, index_name: str | None = None) -> pd.Dat
 def _worksheet_table(writer: pd.ExcelWriter, sheet_name: str, frame: pd.DataFrame) -> None:
     worksheet = writer.sheets[sheet_name]
     worksheet.freeze_panes(1, 1)
-
     sample = frame.head(100)
     for index, column in enumerate(frame.columns):
         values = sample[column].astype(str) if column in sample else pd.Series(dtype=str)
         width = min(38, max(12, len(str(column)) + 2, int(values.str.len().max() or 0) + 2))
         worksheet.set_column(index, index, width)
-
     if not frame.empty and len(frame.columns) > 0:
         worksheet.add_table(
             0,
@@ -373,25 +353,20 @@ def _worksheet_table(writer: pd.ExcelWriter, sheet_name: str, frame: pd.DataFram
 
 
 def _build_detailed_workbook(data_class: Any, inventory: pd.DataFrame) -> bytes:
-    """Recreate the historical multi-sheet workbook only on explicit request."""
     if not hasattr(data_class, "df_rune") or not hasattr(data_class, "df_count"):
         data_class.count_meules_manquantes()
         data_class.count_rune_with_potentiel_left()
 
-    complete_wide = _wide_substats(data_class, data_class.data_grind)
-    complete = _excel_safe(complete_wide, index_name="Id_rune")
-
+    complete = _excel_safe(_wide_substats(data_class, data_class.data_grind), index_name="Id_rune")
     summary_source = data_class.data_short.copy()
     summary_details = _substat_values(data_class, SUBSTATS).reindex(summary_source.index)
     for stat in SUBSTATS:
         summary_source[f"{stat} meule"] = summary_details[f"{stat}__grind"]
         summary_source[f"{stat} total"] = summary_details[f"{stat}__total"]
     summary = _excel_safe(summary_source, index_name="Id_rune")
-
     by_set = _excel_safe(getattr(data_class, "df_rune", pd.DataFrame()), index_name="Set")
     by_property = _excel_safe(getattr(data_class, "df_count", pd.DataFrame()), index_name="Set")
     inventory_export = _excel_safe(inventory)
-
     guide = pd.DataFrame(
         {
             "Feuille": [
@@ -410,7 +385,6 @@ def _build_detailed_workbook(data_class: Any, inventory: pd.DataFrame) -> bytes:
             ],
         }
     )
-
     sheets = {
         "Guide": guide,
         "Par rune et monstre": summary,
@@ -419,7 +393,6 @@ def _build_detailed_workbook(data_class: Any, inventory: pd.DataFrame) -> bytes:
         "Par set et propriete": by_property,
         "Inventaire": inventory_export,
     }
-
     output = BytesIO()
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         for sheet_name, frame in sheets.items():
@@ -444,13 +417,11 @@ def _render_detailed_export(namespace: dict[str, Any], data_class: Any) -> None:
         ),
         icon="📗",
     )
-
     source_id = id(data_class.data_grind)
     export_state = st.session_state.get("_optimisation_detailed_export")
     if not isinstance(export_state, dict) or export_state.get("source_id") != source_id:
         export_state = None
         st.session_state.pop("_optimisation_detailed_export", None)
-
     if st.button(
         tr("Préparer le classeur détaillé", "Prepare detailed workbook"),
         width="stretch",
@@ -463,7 +434,6 @@ def _render_detailed_export(namespace: dict[str, Any], data_class: Any) -> None:
             workbook = _build_detailed_workbook(data_class, inventory)
             export_state = {"source_id": source_id, "data": workbook}
             st.session_state["_optimisation_detailed_export"] = export_state
-
     if export_state:
         workbook = export_state["data"]
         size_mb = len(workbook) / (1024 * 1024)
@@ -505,7 +475,6 @@ def _run() -> None:
         source, separator, _ = source.rpartition("\noptimisation_page()")
         if not separator:
             raise RuntimeError("Impossible de charger la page d'optimisation.")
-
         namespace: dict[str, Any] = {
             "__file__": str(page_path),
             "__name__": "__grind_runes_theme_safe__",
