@@ -63,6 +63,8 @@ class _StreamlitExplorerFallback:
 
 
 def _safe_pygwalker_loader(original_loader):
+    """Return PyGWalker when possible, otherwise a non-crashing explorer."""
+
     def load(frame: pd.DataFrame, config: str = ""):
         try:
             return original_loader(frame, config)
