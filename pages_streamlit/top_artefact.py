@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from fonctions.visuel import css
 from params.coef import coef_set, order
-from fonctions.artefact import visualisation_top_arte
+from fonctions.artefact_visualisation import visualisation_top_arte
 from io import BytesIO
 
 
@@ -162,6 +162,7 @@ if 'submitted' in st.session_state:
 
 else:
     st.switch_page("pages_streamlit/upload.py")
+    
     
     
 st.caption('Made by Tomlora :sunglasses:')
