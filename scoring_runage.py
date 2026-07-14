@@ -7,7 +7,38 @@ from sqlalchemy.exc import OperationalError, PendingRollbackError
 from fonctions.gestion_bdd import rollback
 
 
-st.set_page_config(layout="wide")
+st.set_page_config(
+    page_title="Summoners War · Scoring & Runage",
+    page_icon="⚔️",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        "About": "Dashboard communautaire d'analyse des runes et artéfacts Summoners War.",
+    },
+)
+
+
+# Les pages historiques continuent d'appeler leurs anciens chemins avec
+# st.switch_page. Le routeur central les traduit vers les nouvelles pages
+# thématiques, notamment après la fin de l'upload JSON.
+if not hasattr(st, "_sw_original_switch_page"):
+    st._sw_original_switch_page = st.switch_page
+
+
+def _switch_page_with_theme_aliases(page):
+    aliases = {
+        "pages_streamlit/general.py": "pages_streamlit/general_theme.py",
+        "pages_streamlit/evolution.py": "pages_streamlit/evolution_theme.py",
+        "pages_streamlit/ladder.py": "pages_streamlit/ladder_theme.py",
+        "pages_streamlit/grind_runes.py": "pages_streamlit/grind_runes_theme_compat.py",
+        "pages_streamlit/build.py": "pages_streamlit/build_manager_safe.py",
+    }
+    target = aliases.get(str(page), page)
+    return st._sw_original_switch_page(target)
+
+
+st.switch_page = _switch_page_with_theme_aliases
+
 
 # Supprime les Future Warnings sur les copies
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -37,12 +68,12 @@ def main_page():
    
                         pages = {'Accueil' : [
                         st.Page('pages_streamlit/upload.py', title='Upload JSON', icon='📁'),
-                        st.Page('pages_streamlit/update.py', title='Version 03/05/26', icon='🔈'),
+                        st.Page('pages_streamlit/update.py', title='Version 14/07/26', icon='🔈'),
                         st.Page('pages_streamlit/timeline_summon.py', title='Invocation', icon='👻')],
                         # Section(name='Scoring', icon=':bar_chart:'),
                         "Scoring" : [
-                        st.Page('pages_streamlit/general.py', title='General', icon='📚'),
-                        st.Page('pages_streamlit/evolution.py', title='Evolution', icon='📈'),
+                        st.Page('pages_streamlit/general_theme.py', title='General', icon='📚'),
+                        st.Page('pages_streamlit/evolution_theme.py', title='Evolution', icon='📈'),
                         st.Page('pages_streamlit/comparaison.py', title='Comparaison', icon='💹')],
                         # Section(name='Live', icon=':japanese_ogre:'),
                         "Live" : [
@@ -52,18 +83,18 @@ def main_page():
                         # Page('pages_streamlit/timelapse.py', 'Timelapse', ':bookmark_tabs:'), 
                         # Section(name='Classement', icon=':trophy:'),
                         "Classement" : [
-                        st.Page('pages_streamlit/ladder.py', title='Scoring', icon='🥇'),
+                        st.Page('pages_streamlit/ladder_theme.py', title='Scoring', icon='🥇'),
                         st.Page('pages_streamlit/ladder_value.py', title='Rune', icon='🏆'),
                         st.Page('pages_streamlit/ladder_arte.py', title='Artefact', icon='🏆'), 
                         st.Page('pages_streamlit/ladder_others.py', title='Ladder PvP | WB', icon='🏆')],
                         # Section(name='Runages', icon=':crossed_swords:'),
                         "Runages" : [
-                        st.Page('pages_streamlit/grind_runes.py', title='Optimisation', icon='🔍'),
+                        st.Page('pages_streamlit/grind_runes_theme_compat.py', title='Optimisation', icon='🔍'),
                         st.Page('pages_streamlit/stats_runes.py', title='Statistiques', icon='📊'),
                         st.Page('pages_streamlit/objectif_rune.py', title='Objectif Efficience', icon='💪'),
                         st.Page('pages_streamlit/upgrade_runes.py', title='Upgrade', icon='⬆️'),
                         st.Page('pages_streamlit/todolist.py', title='ToDoList', icon='📋'),
-                        # st.Page('pages_streamlit/build.py', title='Créer un build', icon='🔨'),
+                        st.Page('pages_streamlit/build_manager_safe.py', title='Builds', icon='🔨'),
                         st.Page('pages_streamlit/calculator.py', title='Calculateur efficience', icon='🔢'),
                         st.Page('pages_streamlit/optimisation_spd.py', title='Best Speed', icon='💻')],
                         # Section(name='Artefacts', icon=':gem:'),
@@ -90,7 +121,7 @@ def main_page():
                             
                             pages = {'Accueil' : [
                             st.Page('pages_streamlit/upload.py', title='Upload JSON', icon='📁'),
-                            st.Page('pages_streamlit/update.py', title='Version 03/05/26', icon='🔈')],
+                            st.Page('pages_streamlit/update.py', title='Version 14/07/26', icon='🔈')],
                             "Runages" : [
                             st.Page('pages_streamlit/calculator.py', title='Calculateur efficience', icon='🔢'),
                             ],
@@ -104,7 +135,7 @@ def main_page():
 
                         
                                 
-                        pg = st.navigation(pages)    
+                        pg = st.navigation(pages, position="sidebar", expanded=False)    
 
                         pg.run()
 
