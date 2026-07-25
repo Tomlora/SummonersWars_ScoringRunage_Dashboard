@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -120,20 +121,63 @@ def _worksheet_table(writer: pd.ExcelWriter, sheet_name: str, frame: pd.DataFram
         )
 
 
+@st.cache_data(show_spinner=False)
+def _recommendations_workbook(frame: pd.DataFrame) -> bytes:
+    """Build the lightweight filtered recommendations workbook once per dataset."""
+    export = frame.copy()
+    for column in export.select_dtypes(include="category").columns:
+        export[column] = export[column].astype("object")
+
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+        sheet_name = "Recommandations"
+        export.to_excel(writer, sheet_name=sheet_name, index=False)
+        _worksheet_table(writer, sheet_name, export)
+    return output.getvalue()
+
+
+def _replace_csv_export(source: str) -> str:
+    """Replace the compact CSV export in the safe page with an Excel export."""
+    old_export = '''    csv = filtered.loc[:, [column for column in columns if column in filtered.columns]].to_csv(index=False).encode("utf-8-sig")
+    st.download_button(
+        tr("Exporter les recommandations filtrées", "Export filtered recommendations"),
+        csv,
+        file_name=f"optimisation_runes_{st.session_state.get('pseudo', 'compte')}.csv",
+        mime="text/csv",
+        width="stretch",
+        key="optimisation_export_filtered",
+    )'''
+    new_export = '''    recommendation_export = filtered.loc[:, [column for column in columns if column in filtered.columns]].copy()
+    xlsx = _recommendations_workbook(recommendation_export)
+    st.download_button(
+        tr("Exporter les recommandations filtrées (Excel)", "Export filtered recommendations (Excel)"),
+        xlsx,
+        file_name=f"optimisation_runes_{st.session_state.get('pseudo', 'compte')}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        width="stretch",
+        key="optimisation_export_filtered",
+    )'''
+    if old_export not in source:
+        raise RuntimeError("Le bloc d'export des recommandations n'a pas été trouvé.")
+    return source.replace(old_export, new_export, 1)
+
+
 def _run_optimisation_page() -> None:
     page_path = Path(__file__).with_name("grind_runes_theme_safe.py")
     source = page_path.read_text(encoding="utf-8")
     source, separator, _ = source.rpartition("\n_run()")
     if not separator:
         raise RuntimeError("Impossible de charger l'adaptateur Optimisation.")
+    source = _replace_csv_export(source)
 
     namespace: dict[str, Any] = {
         "__file__": str(page_path),
         "__name__": "__grind_runes_theme_compat__",
+        "_recommendations_workbook": _recommendations_workbook,
     }
     exec(compile(source, str(page_path), "exec"), namespace)
 
-    # Replace only the two failing integration points. All calculations and
+    # Replace only the failing integration points. All calculations and
     # page behaviour remain implemented by grind_runes_theme_safe.py.
     namespace["_worksheet_table"] = _worksheet_table
 
