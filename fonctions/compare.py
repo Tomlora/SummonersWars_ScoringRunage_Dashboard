@@ -8,12 +8,16 @@ from fonctions.gestion_bdd import lire_bdd_perso
 from fonctions.visuel import THEME, apply_plotly_theme
 
 
+@st.cache_data(ttl=300, show_spinner=False)
+def comparison_population():
+    # Filter history on the server and share the same population across metrics/guilds.
+    return lire_bdd_perso('WITH ranked AS (\n        SELECT id_joueur,date,score_general,score_arte,score_spd,\n               ROW_NUMBER() OVER (PARTITION BY id_joueur\n                  ORDER BY substr(date,7,4)||substr(date,4,2)||substr(date,1,2) DESC,\n                           score_general DESC,score_arte DESC) AS position\n        FROM sw_score\n    ) SELECT u.id,u.joueur,u.guilde_id,s.date,s.score_general,s.score_arte,s.score_spd\n      FROM ranked s JOIN sw_user u ON u.id=s.id_joueur WHERE s.position=1',index_col=None).T
+
+
 @st.cache_data(ttl="1h")
 def comparaison(guilde_id, score="score_general"):
     """Return global and guild comparison indicators for a score."""
-    from fonctions.analysis import select_snapshots
-    data = lire_bdd_perso('SELECT u.id, u.joueur, u.guilde_id, s.date, s.score_general, s.score_arte, s.score_spd FROM sw_user u JOIN sw_score s ON u.id=s.id_joueur', index_col=None).T
-    data = select_snapshots(data, score, 'latest')
+    data = comparison_population()
     def indicators(frame):
         frame = frame.set_index('id').copy()
         frame['rank'] = frame[score].rank(ascending=False, method='min')

@@ -194,9 +194,6 @@ def palier_page():
             col1, _, col2 = st.columns([40,5, 60])
 
             with col2:
-                img = load_lottieurl(
-                    'https://assets10.lottiefiles.com/packages/lf20_sfiiilbf.json')
-                if img: st_lottie(img, width=40, height=40)
                 
                 
                 
