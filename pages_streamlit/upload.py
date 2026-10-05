@@ -1,639 +1,78 @@
-    
-import pandas as pd
-
-import streamlit as st
 import json
-from datetime import datetime, timedelta
-from fonctions.visuel import load_lottieurl, css, load_logo
-from streamlit_lottie import st_lottie
-from params.coef import coef_set, coef_set_spd, liste_substat_arte
-from fonctions.gestion_bdd import sauvegarde_bdd, update_info_compte, get_user, requete_perso_bdd, cancel, lire_bdd_perso, lire_bdd
-from fonctions.runes import Rune
-from fonctions.artefact import Artefact
+import logging
+from pathlib import Path
+from os import environ
 
-from sqlalchemy.exc import InternalError, OperationalError
-from dateutil import tz
-import gc
-# from memory_profiler import profile
-# from streamlit_profiler import Profiler
+import pandas as pd
+import streamlit as st
+from sqlalchemy.exc import SQLAlchemyError
 
-
-
-try:
-    st.set_page_config(layout='wide')
-except:
-    pass
-
+from fonctions.gestion_bdd import lire_bdd
+from fonctions.import_service import validate_export, analyse_export, persist_analysis, publish_analysis, InvalidExport
+from fonctions.visuel import css, page_header
 
 css()
-
-
-# @st.cache_data
-def show_lottie(img, height=300 , width=300):
-    st_lottie(img, height=height, width=width)
-
-@st.cache_data
-def chargement_params():
-    category_selected = ['Violent', 'Seal', 'Will', 'Destroy', 'Despair', 'Intangible']
-    category_value = ", ".join(category_selected)
-
-    category_selected_spd = ['Violent', 'Seal', 'Will', 'Destroy', 'Despair', 'Swift', 'Intangible']
-    category_value_spd = ", ".join(category_selected_spd)
-    
-    return category_selected,category_selected_spd, coef_set, coef_set_spd
-
-st.session_state.category_selected, st.session_state.category_selected_spd, st.session_state.coef_set, st.session_state.coef_set_spd = chargement_params()
-
-@st.cache_data(ttl=timedelta(minutes=30))
-def nb_data():
-    timezone=tz.gettz('Europe/Paris')
-    heure_update = datetime.now(timezone)
-    heure = heure_update.strftime("%H:%M")
-    # nb_user = get_number_row("sw_user")
-    # nb_guilde = get_number_row("sw_guilde")
-    # nb_score = get_number_row("sw_score")
-    df_count = lire_bdd_perso('SELECT * from sw.count_rows', index_col='table').T
-    
-    nb_user = df_count.loc['sw_user'].values[0]
-    nb_guilde = df_count.loc['sw_guilde'].values[0]
-    nb_score = df_count.loc['sw_score'].values[0]
-    
-    return nb_user, nb_guilde, nb_score, heure
-
-@st.cache_data(ttl=timedelta(minutes=30))
-def date_du_jour():
-    currentMonth = str(datetime.now().month)
-    currentYear = str(datetime.now().year)
-    currentDay = str(datetime.now().day)
-    return f'{currentDay}/{currentMonth}/{currentYear}'
-
-
-# on charge swarfarm
-@st.cache_data(show_spinner=False)
-def load_swarfarm():
-    swarfarm = lire_bdd('sw_ref_monsters').T
-    swarfarm[['element', 'archetype']] = swarfarm[['element', 'archetype']].astype('category')
-    return swarfarm
-
-
-def format_sql(df):
-    df['id'] = st.session_state['id_joueur']
-    df['date'] = date_du_jour()
-    
-    return df
-
-if 'submitted' not in st.session_state:
-    st.session_state.submitted = False
-
-
-
-# def upload_json(category_selected, coef_set, category_selected_spd, coef_set_spd):
-
-
-try:
-    nb_user, nb_guilde, nb_score, heure = nb_data()
-except InternalError as e:
-    print(e)
-    cancel()
-    st.warning('Erreur')
-    st.session_state['submitted'] = False
-
-except OperationalError as e:
-    print(e)
-    cancel()
-    st.warning('Erreur')
-    st.session_state['submitted'] = False
-
-@st.cache_data
-def translation(langue):
-    if langue == 'Français':
-        return json.load(open('langue/fr.json', encoding='utf-8'))
-    elif langue == 'English':
-        return json.load(open('langue/en.json', encoding='utf-8'))
-
-                
-def upload_sw():
-   
-
-    col1, col2, col3 = st.columns([0.25,0.50,0.25])
-    with col2:
-
-        load_logo()
-        
-        st.session_state.translations_selected = st.radio('Langue', ['Français', 'English'], index=0, key='translations', horizontal=True, help='En cours... / Incoming...')
-    
-        st.session_state.langue = translation(st.session_state.translations_selected)
-        with st.form('Data du compte'):
-            st.file_uploader(st.session_state.langue['uploader_fichier'],
-                            type=['json'],
-                            help='Json SW Exporter',
-                            key='file')
-            
-        
-            st.session_state['submitted'] = st.form_submit_button(st.session_state.langue['calcul_upload'])
-            
-            st.info(body=st.session_state.langue['telechargement_wait'], icon="🚨")
-            st.warning(body=st.session_state.langue['mode_appli'],
-                       icon="⚠️")
-            st.info(body=st.session_state.langue['warning_telechargement'], icon='☕')
-            st.info(body=st.session_state.langue['warning_choice'], icon='🔒')
-            
-            st.markdown(f':blue[{heure}] : :green[{nb_user}] {st.session_state.langue["utilisateurs"]} | :violet[{nb_guilde}] {st.session_state.langue["guildes"]} | :orange[{nb_score}] {st.session_state.langue["scores"]}')
-
-
-    if not st.session_state.submitted:
-        col1, col2, col3 = st.columns(3)
-        with col2:
-            img = load_lottieurl('https://assets5.lottiefiles.com/packages/lf20_ABViugg18Y.json')
-            show_lottie(img)
-
-    if st.session_state['file'] is not None and st.session_state.submitted:
-        
-        # current, peak = tracemalloc.get_traced_memory()
-    
-        # print(current / (1024*1024))
-        # print(peak / (1024 * 1024))
-        
-        def telechargement_json():
-            st.session_state.swarfarm = load_swarfarm()
-            
-            
-            with st.status(st.session_state.langue['loading_json']) as status:
-                try:
-
-                    
-                    st.session_state.data_json = json.load(st.session_state.file)
-                    st.session_state.file.close()
-                    st.session_state.pop('file')
-                    
-                    status.update(label='Fichier validé !', state='complete')
-                    
-
-                    
-                    # infos du compte
-                    try:
-                        st.session_state.pseudo = st.session_state.data_json['wizard_info']['wizard_name']
-                        st.session_state.compteid = st.session_state.data_json['wizard_info']['wizard_id']
-                        st.session_state.lang = st.session_state.data_json['wizard_info']['wizard_last_country']
-                        st.session_state.mana = st.session_state.data_json['wizard_info']['wizard_mana']
-                        
-                        st.session_state.arena_win = st.session_state.data_json['pvp_info']['arena_win']
-                        st.session_state.arena_lose = st.session_state.data_json['pvp_info']['arena_lose']
-                        st.session_state.rank_wb = st.session_state.data_json['my_worldboss_best_ranking']['ranking']
-                        st.session_state.dmg_wb = st.session_state.data_json['my_worldboss_best_ranking']['accumulate_damage']
-                        
-                    except KeyError: # fichier pas au bon format
-                        st.warning(st.session_state.langue['error_incompatible'])
-                        st.session_state.submitted = False
-                        exit()
-                    
-                    
-                    try:
-                        st.session_state.guildeid = st.session_state.data_json['guild']['guild_info']['guild_id']
-                        st.session_state.guilde = st.session_state.data_json['guild']['guild_info']['name']
-                    except TypeError: # pas de guilde
-                        st.session_state.guildeid = 0
-                        st.session_state.guilde = 'Aucune' 
-                        
-                    status.update(label='Chargement des informations principales terminé !', state='complete')
-                        
-                    # Base monsters
-                        
-                    data_mobs = pd.DataFrame.from_dict(
-                            st.session_state['data_json'], orient="index").transpose()
-                    
-                    data_mobs = data_mobs['unit_list']
-
-                        # On va boucler et retenir ce qui nous intéresse..
-                    list_mobs = []
-
-                    for monstre in data_mobs[0]:
-                        unit = monstre['unit_id']
-                        master_id = monstre['unit_master_id']
-                        stars = monstre['class']
-                        level = monstre['unit_level']
-                        date = str(monstre['create_time'])
-
-                        list_mobs.append([unit, master_id, stars, level,
-                                          monstre['atk'], monstre['def'], monstre['spd'], monstre['resist'], monstre['accuracy'],
-                                        monstre['critical_rate'], monstre['critical_damage'], date])
-                        
-                        for i in range(6):  # itération sur les runes de 1 à 6
-                            
-                            if len(monstre['runes']) > i:
-                                if isinstance(monstre['runes'], dict):
-                                    # transformer chaque item du dict en une liste:
-                                    monstre['runes'] = [monstre['runes'][k] for k in monstre['runes']]
-                                    
-
-                                list_mobs[-1].append(monstre['runes'][i]['rune_id'])
-
-                            else:  # s'il n'a pas de rune dans le slot, on met 0
-                                list_mobs[-1].append(0)
-
-                            # On met ça en dataframe
-                    st.session_state.df_mobs = pd.DataFrame(list_mobs, columns=['id_unit', 'id_monstre', '*', 'level',
-                                                                                'atk', 'def', 'spd',
-                                                                                'resist', 'accuracy', 'CRIT', 'DCC', 'Date_invocation',
-                                                                                'Rune1', 'Rune2', 'Rune3', 'Rune4', 'Rune5', 'Rune6'])
-                    
-                        
-                    # swarfarm
-
-                    swarfarm = st.session_state.swarfarm[[
-                                'com2us_id', 'name']].set_index('com2us_id')
-                    st.session_state.df_mobs['name_monstre'] = st.session_state.df_mobs['id_monstre'].map(
-                                swarfarm.to_dict(orient="dict")['name'])
-                    
-
-                    # On peut faire le mapping...
-
-                    df_identification = st.session_state.df_mobs[['id_unit', 'name_monstre']].set_index('id_unit')
-                    
-                    st.session_state.identification_monsters = df_identification.to_dict(orient="dict")['name_monstre']
-                    
-                    status.update(label='Les monstres sont chargés !', state='complete')      
-                    
-                    
-                    status.update(label="Les runes sont entrain d'être analysés..", state='running')     
-                    
-                    # On peut désormais s'occuper des runes
-                    
-                    data_rune = Rune(st.session_state.data_json, st.session_state.identification_monsters)
-                        
-                    st.session_state.data_rune = data_rune
-                    
-
-                    st.session_state.set_rune = list(data_rune.set_to_show.values())
-                    st.session_state.set_rune.sort()
-                    
-                    status.update(label='Les runes sont terminés !', state='complete')  
-                    
-                    status.update(label="Les artefacts sont entrain d'être analysés...", state='running')  
-                    
-                    # Artefact
-            
-                    st.session_state.data_arte = Artefact(st.session_state.data_json, st.session_state.identification_monsters)
-                    
-                    # st.session_state.data_grind = data_rune.data.copy()
-                    st.session_state.data_avg = data_rune.calcul_efficiency_describe()
-                    
-                    status.update(label='Les artefacts sont terminés!', state='complete')  
-                    
-                    status.update(label='Calcul des scores...', state='running')  
-
-                        # --------------------- calcul score rune
-
-                    tcd_value, st.session_state.score = data_rune.scoring_rune(
-                            st.session_state.category_selected, coef_set)
-                        
-                    st.session_state.tcd_detail_score = data_rune.tcd_df_efficiency
-
-
-                        # ---------------------- calcul score rune com2us
-                    
-                    st.session_state.df_scoring_com2us_summary = data_rune.scoring_com2us()
-                        
-
-                        # -------------------------- calcul score spd rune
-
-                    st.session_state.tcd_spd, st.session_state.score_spd = data_rune.scoring_spd(
-                            st.session_state.category_selected_spd, coef_set_spd)
-
-
-                        # calcul score arte
-
-                    st.session_state.tcd_arte, st.session_state.score_arte = st.session_state.data_arte.scoring_arte()
-                    
-
-
-                        
-                        # calcul max value rune
-                        
-                    st.session_state.df_max = data_rune.calcul_value_max() # TODO : Reduire le temps de calcul
-                    
-                    st.session_state.df_max_slot = data_rune.calcul_value_max_per_slot()
-                    
-
-
-
-                        # -------------------------- on enregistre
-                    try:
-                        st.session_state.id_joueur, st.session_state.visibility, guilde_id, st.session_state.rank = get_user(
-                                st.session_state['compteid'], type='id')
-                        
-                        requete_perso_bdd('''INSERT INTO sw_guilde(guilde, guilde_id) VALUES (:guilde, :guilde_id)
-                                                ON CONFLICT (guilde_id)
-                                                DO NOTHING;''',
-                                                {'guilde': st.session_state['guilde'],
-                                                'guilde_id': st.session_state['guildeid']})
-                    except IndexError:
-                        try:
-                            st.session_state.id_joueur, st.session_state.visibility, guilde_id, st.session_state.rank  = get_user(
-                                    st.session_state['pseudo'], id_compte=st.session_state['compteid'])
-                        except IndexError:  # le joueur n'existe pas ou est dans l'ancien système
-                            requete_perso_bdd('''INSERT INTO sw_user(joueur, visibility, guilde_id, joueur_id) VALUES (:joueur, 0, :guilde_id, :joueur_id);
-                                                INSERT INTO sw_guilde(guilde, guilde_id) VALUES (:guilde, :guilde_id)
-                                                ON CONFLICT (guilde_id)
-                                                DO NOTHING;''',
-                                                {'joueur': st.session_state['pseudo'],
-                                                'guilde': st.session_state['guilde'],
-                                                'guilde_id': st.session_state['guildeid'],
-                                                'joueur_id': st.session_state['compteid']})
-
-                            st.session_state.id_joueur, st.session_state.visibility, guilde_id, st.session_state.rank  = get_user(
-                                    st.session_state['pseudo'])
-                            
-                    try:
-                        requete_perso_bdd('''UPDATE sw_user SET lang = :lang WHERE joueur_id = :joueur_id;''',
-                                        {'lang': st.session_state['lang'], 'joueur_id': st.session_state['compteid']})
-                    except:
-                        cancel()
-
-                    # Enregistrement SQL
-
-                    # Scoring general 
-                    tcd_value = format_sql(tcd_value)
-
-                        
-                    st.session_state.tcd = tcd_value.copy()
-
-                    if not 80 in tcd_value.columns :
-
-                        sauvegarde_bdd(tcd_value, 'sw', 'append')
-                    
-                    else:
-                        sauvegarde_bdd(tcd_value.drop(columns=[80, 90]), 'sw', 'append')
-
-                    # Scoring scoring com2us
-
-                    tcd_value_com2us = format_sql(st.session_state.df_scoring_com2us_summary)
-
-                    sauvegarde_bdd(tcd_value_com2us, 'sw_scoring_com2us', 'append')
-                    
-                    del tcd_value, tcd_value_com2us
-                    
-                    # Qualité des runes
-                    
-                    data_rune.count_quality()
-                    
-                    st.session_state.df_quality = st.session_state.data_rune.data_qual
-                    st.session_state.df_quality_per_slot = st.session_state.data_rune.data_qual_per_slot
-
-                    # Score qualité runes
-                    
-                    st.session_state.df_scoring_quality, st.session_state.score_qual = data_rune.score_quality(coef_set_spd)
-                    
-                    # Meilleures speeds
-                
-                    
-                    vio_broken = data_rune.optimisation_max_speed('Violent', None)
-                    vio_will = data_rune.optimisation_max_speed('Violent', 'Will')
-                    swift_broken = data_rune.optimisation_max_speed('Swift', None)
-                    swift_will = data_rune.optimisation_max_speed('Swift', 'Will')
-                    despair_broken = data_rune.optimisation_max_speed('Despair', None)
-                    despair_will = data_rune.optimisation_max_speed('Despair', 'Will')
-
-                    
-                    requete_perso_bdd('''INSERT INTO sw.sw_score(score_general, date, id_joueur, score_spd, score_arte, mana, score_qual,
-                                      spd_vio_broken, spd_vio_will, spd_swift_will, spd_swift_broken, spd_despair_will, spd_despair_broken)
-                    VALUES (:score_general, :date, :id_joueur, :score_spd, :score_arte, :mana, :score_qual,
-                    :spd_vio_broken, :spd_vio_will, :spd_swift_will, :spd_swift_broken, :spd_despair_will, :spd_despair_broken);''',
-                    {'id_joueur' : int(st.session_state['id_joueur']),
-                    'date' : date_du_jour(),
-                    'score_general' : int(st.session_state['score']),
-                    'score_spd' : int(st.session_state['score_spd']),
-                    'score_arte' : int(st.session_state['score_arte']),
-                    'mana' : int(st.session_state['mana']),
-                    'score_qual' : int(st.session_state['score_qual']),
-                    'spd_vio_broken' : int(vio_broken[1]),
-                    'spd_vio_will' : int(vio_will[1]),
-                    'spd_swift_will' : int(swift_will[1]),
-                    'spd_swift_broken' : int(swift_broken[1]),
-                    'spd_despair_will' : int(despair_will[1]),
-                    'spd_despair_broken' : int(despair_broken[1])})
-                    
-                    del vio_broken, vio_will, swift_broken, swift_will, despair_broken, despair_will
-                    
-                    df_scoring_quality_to_save = st.session_state.df_scoring_quality.copy()
-                    
-                    df_scoring_quality_to_save = format_sql(df_scoring_quality_to_save)
-                    
-                    # df_scoring_quality_to_save['id'] = st.session_state['id_joueur']
-                    # df_scoring_quality_to_save['date'] = date_du_jour()
-                    
-                    sauvegarde_bdd(df_scoring_quality_to_save, 'sw_score_qual', 'append')
-                    
-                    del df_scoring_quality_to_save
-
-                        
-                        # scoring detail
-                        
-                    tcd_detail_score_save = st.session_state.tcd_detail_score.copy()
-                    
-                    tcd_detail_score_save = format_sql(tcd_detail_score_save)
-                        
-                    # tcd_detail_score_save['id'] = st.session_state['id_joueur']
-                    # tcd_detail_score_save['date'] = date_du_jour()
-                        
-                        # on veut éviter les doublons donc :  
-                        
-                    requete_perso_bdd('''DELETE from sw_detail
-                                        WHERE id = :id_joueur AND date = :date''', dict_params={'id_joueur' : st.session_state['id_joueur'],
-                                                                                                    'date' : date_du_jour()})
-                    
-                    tcd_detail_score_save['moyenne'] = st.session_state.data_avg['moyenne']
-                    tcd_detail_score_save['max'] = st.session_state.data_avg['max']
-                    tcd_detail_score_save['mediane'] = st.session_state.data_avg['mediane']
-                    tcd_detail_score_save['nb'] = st.session_state.data_avg['Nombre runes']
-                    
-                    tcd_detail_score_save.loc['Total', 'moyenne'] = st.session_state.data_avg['moyenne'].mean()  
-                    tcd_detail_score_save.loc['Total', 'max'] = st.session_state.data_avg['max'].mean() 
-                    tcd_detail_score_save.loc['Total', 'mediane'] = st.session_state.data_avg['mediane'].mean() 
-                    tcd_detail_score_save.loc['Total', 'nb'] = st.session_state.data_avg['Nombre runes'].sum()
-                    
-
-                    if not 80 in tcd_detail_score_save.columns:
-                        sauvegarde_bdd(tcd_detail_score_save, 'sw_detail', 'append')
-                    else:
-                        sauvegarde_bdd(tcd_detail_score_save.drop(columns=[80, 90]), 'sw_detail', 'append')
-
-
-
-                    
-                    
-                    del tcd_detail_score_save
-                    
-                        
-                        # Scoring speed
-                    tcd_spd_save : pd.DataFrame = st.session_state.tcd_spd.copy()
-                    
-                    tcd_spd_save = format_sql(tcd_spd_save)
-
-                    if not '12-24' in tcd_spd_save.columns:
-
-                        sauvegarde_bdd(tcd_spd_save, 'sw_spd', 'append')
-                    
-                    else:
-                        sauvegarde_bdd(tcd_spd_save.drop(columns=['12-24']), 'sw_spd', 'append')
-           
-                    
-
-                    del tcd_spd_save
-
-                    
-                        # Scoring arte
-                        
-                    tcd_arte_save : pd.DataFrame = st.session_state.tcd_arte.copy()
-                    
-                    tcd_arte_save = format_sql(tcd_arte_save)
-                    
-                    status.update(label='On y est presque ... :) ', state='running')  
-                        
-
-                        
-                    sauvegarde_bdd(tcd_arte_save, 'sw_arte', 'append')
-                    
-                    st.session_state.data_arte.calcul_value_max()
-                    
-                    arte_max_save : pd.DataFrame = st.session_state.data_arte.df_max.copy()
-                
-                    
-                    arte_max_save = format_sql(arte_max_save)
-                    
-
-                    
-                    # on supprime les anciennes données
-                    requete_perso_bdd('''DELETE FROM sw_arte_max WHERE "id" = :id''', dict_params={'id' : st.session_state['id_joueur']})
-                    
-                    sauvegarde_bdd(arte_max_save, 'sw_arte_max', 'append')
-                    
-                    del arte_max_save
-                    
-                    # count arte
-
-                    
-                    count2 = []
-                    count3 = []
-                    count4 = []
-
-                    for substat in liste_substat_arte:
-                        df, count_sub2 = st.session_state.data_arte.count_substat(substat, 2)
-                        count2.append(count_sub2)
-                        df, count_sub3 = st.session_state.data_arte.count_substat(substat, 3)
-                        count3.append(count_sub3)
-                        df, count_sub4 = st.session_state.data_arte.count_substat(substat, 4)
-                        count4.append(count_sub4)
-                    
-                    st.session_state.arte_count = pd.DataFrame([liste_substat_arte, count2, count3, count4], index=['substat', 'count2', 'count3', 'count4']).T
-                    
-                    arte_count = st.session_state.arte_count.copy()
-
-                    
-                    arte_count = format_sql(arte_count)
-
-                    
-                    del df, count_sub2, count_sub3, count_sub4, count2, count3, count4
-                    
-                    df_top = st.session_state.data_arte.top()
-                    
-                    df_top.fillna(0, inplace=True)              
-                    
-                    df_top['id'] = st.session_state['id_joueur']
-                    
-                    requete_perso_bdd('''DELETE from sw_arte_top
-                                        WHERE id = :id_joueur''', dict_params={'id_joueur' : st.session_state['id_joueur']})
-                    
-                    sauvegarde_bdd(df_top.drop('main_type', axis=1), 'sw_arte_top', 'append', index=False)
-                    
-                    del df_top
-
-                    # on veut éviter les doublons donc :  
-                        
-                    requete_perso_bdd('''DELETE from sw_arte_substats
-                                        WHERE id = :id_joueur AND date = :date''', dict_params={'id_joueur' : st.session_state['id_joueur'],
-                                                                                                    'date' : date_du_jour()})
-
-                    sauvegarde_bdd(arte_count, 'sw_arte_substats', 'append', index=False)
-                
-                        # Scoring max_value
-                        
-                    df_max = st.session_state.df_max.copy()
-                    
-                    df_max = format_sql(df_max)
-                                                
-                    # on supprime les anciennes données
-                    requete_perso_bdd('''DELETE FROM sw_max WHERE "id" = :id''', dict_params={'id' : st.session_state['id_joueur']})
-                        
-                    #     # on met à jour
-                    sauvegarde_bdd(df_max, 'sw_max', 'append')
-                    
-                    del df_max
-                    
-
-                    # MAJ guilde
-                    
-                    
-                    update_info_compte(st.session_state['pseudo'], st.session_state['guildeid'],
-                                        st.session_state['compteid'])  # on update le compte
-                    
-
-
-                    # Maintenant, on a besoin d'identifier les id.
-                    # Pour cela, on va utiliser l'api de swarfarm
-
-                                        
-                    del df_identification, data_mobs
-                    
-                    # PVP / World Boss
-                    
-                    requete_perso_bdd('''INSERT INTO sw.sw_pvp(id_joueur, win, lose, date)
-                    VALUES (:id_joueur, :win, :lose, :date);
-                    INSERT INTO sw.sw_wb(id_joueur, rank, damage, date)
-                    VALUES (:id_joueur, :rank, :damage, :date);''',
-                    {'id_joueur' : int(st.session_state['id_joueur']),
-                    'date' : date_du_jour(),
-                    'win' : int(st.session_state['arena_win']),
-                    'lose' : int(st.session_state['arena_lose']),
-                    'rank' : int(st.session_state['rank_wb']),
-                    'damage' : int(st.session_state['dmg_wb'])})
-                    
-                    # Tout est bon, on peut passer à la suite !
-
-
-
-                    status.update(label='Complet !', state='complete', expanded=False)  
-                    st.write('Tu peux désormais aller sur les autres onglets disponibles')
-
-                    st.session_state['submitted'] = True
-                    
-                    
-                    
-                    
-                    gc.collect()
-                        
-                    # On passe à la page suivante    
-                    st.switch_page("pages_streamlit/general.py")
-
-
-                
-            # Gestions des erreurs    
-                except InternalError as e:
-                    print(e)
-                    cancel()
-                    st.warning('Erreur')
-                    st.session_state['submitted'] = False
-
-                except OperationalError as e:
-                    print(e)
-                    cancel()
-                    st.warning('Erreur')
-                    st.session_state['submitted'] = False
-            
-        telechargement_json()
-        
-# p = Profiler()
-# p.start()          
-upload_sw()    
-# p.stop()
-st.caption('Made by Tomlora :sunglasses:')
+language = st.radio('Langue / Language', ['Français','English'], key='translations_selected', horizontal=True)
+english = language == 'English'
+def tr(fr, en):
+    return en if english else fr
+st.session_state.langue = json.loads(Path('langue/en.json' if english else 'langue/fr.json').read_text(encoding='utf-8'))
+page_header(tr('Analyser mon compte', 'Analyse my account'), tr('Importez votre export Summoners War pour identifier les améliorations utiles.', 'Import your Summoners War export to find useful upgrades.'), icon='📁')
+with st.expander(tr('Comment obtenir le JSON ?', 'How do I get the JSON?')):
+    st.markdown(tr('Exportez votre compte avec [SW Exporter](https://github.com/Xzandro/sw-exporter), puis déposez le fichier JSON ci-dessous. Vérifiez le compte dans l’aperçu avant de lancer l’analyse.', 'Export your account with [SW Exporter](https://github.com/Xzandro/sw-exporter), then upload the JSON below. Check the account preview before analysing.'))
+    st.caption(tr('Le fichier sert à calculer vos statistiques. La sauvegarde de l’historique est optionnelle. La visibilité d’un nouveau compte est privée.', 'The file is used to calculate your statistics. Saving history is optional. New accounts are private.'))
+    demo = Path('examples/demo.json').read_bytes()
+    st.download_button(tr('Télécharger un exemple fictif', 'Download a fictional example'), demo, file_name='sw-demo.json', mime='application/json', on_click='ignore')
+
+uploaded = st.file_uploader(tr('Export JSON', 'JSON export'), type=['json'], key='upload_file')
+use_demo = st.checkbox(tr('Essayer avec le compte fictif', 'Try the fictional account'), key='demo_mode')
+raw = demo if use_demo else uploaded.getvalue() if uploaded is not None else None
+if st.session_state.get('analysis_ready'):
+    st.success(tr('Dernière analyse disponible : ', 'Last analysis available: ') + st.session_state.pseudo)
+    if st.button(tr('Ouvrir les résultats', 'Open results'), type='primary'):
+        st.switch_page('pages_streamlit/general.py')
+    if st.session_state.get('import_notice'):
+        st.caption(st.session_state.import_notice)
+if raw is not None:
+    try:
+        data = validate_export(raw)
+    except InvalidExport as error:
+        st.error(str(error))
+        st.info(tr('Choisissez un export SW Exporter complet. Votre dernière analyse reste disponible.', 'Choose a complete SW Exporter export. Your last successful analysis remains available.'))
+        st.stop()
+    rune_count = len(data['runes']) + sum(len(u['runes']) for u in data['unit_list'])
+    artifact_count = len(data['artifacts']) + sum(len(u['artifacts']) for u in data['unit_list'])
+    a,b,c = st.columns(3)
+    a.metric(tr('Compte', 'Account'), data['wizard_info']['wizard_name'])
+    b.metric(tr('Runes', 'Runes'), rune_count)
+    c.metric(tr('Artéfacts', 'Artifacts'), artifact_count)
+    configured = bool(environ.get('API_SQL'))
+    save = st.checkbox(tr('Sauvegarder dans mon historique', 'Save to my history'), value=configured and not use_demo, disabled=not configured or use_demo, key='save_import')
+    if not configured:
+        st.caption(tr('Mode local : l’analyse fonctionne sans base de données.', 'Local mode: analysis works without a database.'))
+    if st.button(tr('Analyser ce fichier', 'Analyse this file'), key='upload_submit', type='primary'):
+        with st.status(tr('Analyse en cours…', 'Analysing…'), expanded=True) as status:
+            try:
+                reference = lire_bdd('sw_ref_monsters').T if configured and not use_demo and save else pd.DataFrame()
+                result = analyse_export(data, reference, progress=status.write)
+                if save and configured and not use_demo:
+                    status.write(tr('Sauvegarde de l’historique', 'Saving history'))
+                    metadata, inserted = persist_analysis(result)
+                    notice = tr('Historique sauvegardé.', 'History saved.') if inserted else tr('Ce fichier avait déjà été enregistré : aucun doublon créé.', 'This file was already saved: no duplicate created.')
+                else:
+                    from datetime import datetime
+                    from zoneinfo import ZoneInfo
+                    metadata = dict(id_joueur=None, visibility=0, rank=0, report_date=datetime.now(ZoneInfo('Europe/Paris')).strftime('%d/%m/%Y'))
+                    notice = tr('Analyse locale, sans enregistrement.', 'Local analysis, not saved.')
+                publish_analysis(st.session_state, result, metadata)
+                st.session_state.import_notice = notice
+                if save and configured and not use_demo:
+                    st.cache_data.clear()
+                status.update(label=tr('Analyse terminée', 'Analysis complete'), state='complete', expanded=False)
+            except (SQLAlchemyError, ValueError, KeyError, TypeError, IndexError, RuntimeError) as error:
+                logging.getLogger(__name__).error('Import failed (%s)', type(error).__name__)
+                status.update(label=tr('Analyse interrompue', 'Analysis interrupted'), state='error')
+                st.error(tr('L’import n’a pas pu aboutir. Votre dernière analyse est conservée. Vérifiez le fichier et la connexion à la base avant de réessayer.', 'Import failed. Your last successful analysis is preserved. Check the file and database connection before retrying.'))
+                st.caption(tr('Type d’erreur : ', 'Error type: ') + type(error).__name__)
+            else:
+                st.rerun()

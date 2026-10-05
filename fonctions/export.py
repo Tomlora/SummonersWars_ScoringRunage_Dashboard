@@ -7,7 +7,7 @@ def export_excel(data, name_index, sheet_name):
     # https://xlsxwriter.readthedocs.io/working_with_pandas.html
 
     # Pour travailler avec xlswriter et pendas et faire des tableaux, il faut reset l'index
-    data.reset_index(inplace=True)
+    data = data.reset_index()
     data.rename(columns={'index': name_index}, inplace=True)
 
     writer = pd.ExcelWriter(output, engine='xlsxwriter')
@@ -34,9 +34,12 @@ def export_excel(data, name_index, sheet_name):
         worksheet.add_table(0, 0, max_row, max_col-1,
                             {'columns': column_settings})
 
-    tableau(data, worksheet1)
+    if not data.empty:
+        tableau(data, worksheet1)
+    else:
+        worksheet1.write_row(0, 0, [str(c) for c in data.columns])
 
-    writer.save()
+    writer.close()
 
     processed_data = output.getvalue()
 

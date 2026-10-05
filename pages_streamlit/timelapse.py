@@ -2,7 +2,7 @@ from fonctions.gestion_bdd import lire_bdd_perso
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
-import plotly_express as px
+import plotly.express as px
 from datetime import datetime, timedelta
 from fonctions.visualisation import filter_dataframe
 

@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 from fonctions.visuel import css
 from fonctions.gestion_bdd import lire_bdd_perso
-from streamlit_extras.no_default_selectbox import selectbox
+from fonctions.widgets import selectbox
 from streamlit_extras.add_vertical_space import add_vertical_space
 from streamlit_extras.metric_cards import style_metric_cards
 from math import floor
@@ -12,13 +12,12 @@ style_metric_cards(background_color='#03152A', border_color='#0083B9', border_le
 
 @st.cache_data()
 def load_monsters():
-    df_mob = lire_bdd_perso('''SELECT name, speed, image_filename from sw_ref_monsters
+    df_mob = lire_bdd_perso('''SELECT name, sw_ref_monsters_stats.speed AS speed, image_filename from sw_ref_monsters
                                     INNER JOIN sw_ref_monsters_stats on sw_ref_monsters.id = sw_ref_monsters_stats.id
                                     WHERE sw_ref_monsters.awaken_level = 1 and sw_ref_monsters.natural_stars >= 3''' , index_col='name').T  
         
-    df_mob['url'] = df_mob.apply(
-                            lambda x:  f'https://swarfarm.com/static/herders/images/monsters/{x["image_filename"]}', axis=1)
-        
+    df_mob['url'] = 'https://swarfarm.com/static/herders/images/monsters/' + df_mob['image_filename']
+
     return df_mob
 
 def opti_speed():
@@ -29,11 +28,11 @@ def opti_speed():
     
     st.session_state.df_mob_optimisation = load_monsters()
     
-    set_4= ['Violent', 'Will', 'Despair', 'Swift', 'Fatal','Rage', 'Vampire']
+    set_4= ['Violent', 'Despair', 'Swift', 'Fatal','Rage', 'Vampire']
     
     set_2 = ['Will', 'Destroy', 'Blade', 'Endure', 'Energy', 'Focus', 'Guard', 'Nemesis', 'Shield', 'Revenge', 'Tolerance']
     
-    speed_slot2 = st.checkbox('Speed en Slot 2', True)
+    speed_slot2 = st.checkbox('Principale SPD en slot 2 / SPD main in slot 2', True, help='Valeurs actuelles du JSON, sans projection à +15 / Current JSON values, no +15 projection')
     
     # set 1
     
@@ -47,6 +46,9 @@ def opti_speed():
     
         st.session_state.optimisation = df_speed.optimisation_max_speed(set1, set2, speed_slot2)
         
+        if st.session_state.optimisation[1] is None:
+            st.info('Aucune combinaison compatible / No compatible build')
+            return
         col1, col2 = st.columns(2)
         
         with col1:
@@ -56,6 +58,9 @@ def opti_speed():
             st.metric('Speed Max', st.session_state.optimisation[1])
         
     
+        if st.session_state.df_mob_optimisation.empty:
+            st.info('Référentiel des monstres indisponible / Monster reference unavailable.')
+            return
         st.subheader('Sur un monstre')
         
 

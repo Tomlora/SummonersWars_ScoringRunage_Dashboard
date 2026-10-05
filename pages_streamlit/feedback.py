@@ -26,7 +26,7 @@ feedback = st.text_area("Écrivez votre feedback ici")
 
 
 if st.button("Envoyer"):
-    requete_perso_bdd('''INSERT INTO sw.sw_feedback(
+    requete_perso_bdd('''INSERT INTO sw_feedback(
                         type, text)
                         VALUES (:type, :text); ''', 
                     dict_params={'type':type, 'text':feedback})

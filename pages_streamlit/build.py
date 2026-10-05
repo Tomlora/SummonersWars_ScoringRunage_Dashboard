@@ -55,8 +55,7 @@ def build():
             columns=rename_column, inplace=True)
         st.session_state.data_rune.data_build['Equipé'] = st.session_state.data_rune.data_build['Equipé'].astype(
             'str')
-        st.session_state.data_rune.data_build['Equipé'].replace(
-            {'0': st.session_state.langue['Inventaire']}, inplace=True)
+        st.session_state.data_rune.data_build['Equipé'] = st.session_state.data_rune.data_build['Equipé'].replace({'0': st.session_state.langue['Inventaire']})
         
         st.session_state.data_rune.data_build[['Set rune', 'Stat principal', 'innate_type']] = st.session_state.data_rune.data_build[['Set rune', 'Stat principal', 'innate_type']].astype('category')
         
@@ -494,7 +493,7 @@ def build():
                                      and nom_build = '{build_name}' ''', index_col='id_build').transpose()
 
         if df_checking.empty:
-            requete_perso_bdd('''INSERT INTO sw.sw_build(
+            requete_perso_bdd('''INSERT INTO sw_build(
                                 id, monstre, nom_build, rune1, rune2, rune3, rune4, rune5, rune6)
                                 VALUES (:id, :monstre, :nom_build, :rune1, :rune2, :rune3, :rune4, :rune5, :rune6); ''',
                               {'id': st.session_state.id_joueur, 'monstre': monster_selected.lower(),

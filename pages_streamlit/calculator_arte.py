@@ -30,18 +30,18 @@ def stats(n):
 
     with column1:
         stats_selected = st.selectbox(
-            f'Substat {n}', options=max_sub_by_proc(4, st.session_state.translations_selected).keys(), key=f'substat_arte{n}')
+            f'Substat {n}', options=max_sub_by_proc(4, st.session_state.translations_selected).keys(), key=f'calc_arte_substat_arte{n}')
 
     with column2:
         proc = st.number_input(
-            f'Proc Substat {n}', min_value=0, max_value=4, format='%i', key=f'proc_arte{n}')
+            f'Proc Substat {n}', min_value=0, max_value=4, format='%i', key=f'calc_arte_proc_arte{n}')
 
     with column3:
         if stats_selected == 'DMG SUPP EN FONCTION DES HP': # float
-            value = st.number_input(f'Valeur de base', min_value=0, key=f'value_arte{n}')
+            value = st.number_input(f'Valeur de base', min_value=0, key=f'calc_arte_value_arte{n}')
         else:
             value = st.number_input(
-                f'Valeur de base', format='%i', min_value=0, key=f'value_arte{n}')
+                f'Valeur de base', format='%i', min_value=0, key=f'calc_arte_value_arte{n}')
 
     with column5:
         max_stats = max_sub_by_proc(proc, st.session_state.translations_selected)[stats_selected]

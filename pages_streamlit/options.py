@@ -1,63 +1,40 @@
-import pandas as pd
 import streamlit as st
-from fonctions.gestion_bdd import lire_bdd, supprimer_data, supprimer_data_all
-
-
-from fonctions.visuel import css
+from fonctions.gestion_bdd import lire_bdd_perso, supprimer_data, supprimer_data_all
+from fonctions.visuel import css, page_header
 css()
-
-
-
-def params():
-    # On lit la BDD
-    df_actuel = lire_bdd('sw_score')
-    df_actuel = df_actuel.transpose()
-    df_actuel.reset_index(inplace=True)
-
-
-    df_actuel = df_actuel[df_actuel['id_joueur'] == st.session_state['id_joueur']]
-    df_actuel.drop(['id_joueur'], axis=1, inplace=True)
-
-    # Datetime
-    df_actuel['datetime'] = pd.to_datetime(
-        df_actuel['date'], format='%d/%m/%Y')
-    df_actuel.sort_values(by=['datetime'], inplace=True)
-
-    # Liste des dates
-    liste_date = df_actuel['date'].unique().tolist()
-
-    with st.form('Supprimer des données'):
-        st.subheader(st.session_state.langue['delete_one_save'])
-        date_retenu = st.selectbox('Date', liste_date)
-        validation_suppression = st.form_submit_button(
-            st.session_state.langue['valider'])
-
-    if validation_suppression:
-        supprimer_data(st.session_state['id_joueur'], date_retenu)
-        st.success(':v:')
-
-    with st.form('Supprimer toutes mes données'):
-        st.subheader(st.session_state.langue['delete_all'])
-        validation_suppression_definitive = st.form_submit_button(
-            st.session_state.langue['supprimer'])
-
-    if validation_suppression_definitive:
-
-        supprimer_data_all(st.session_state['id_joueur'])
-        st.success(':v:')
-
-
-
-if 'submitted' in st.session_state:
-    if st.session_state.submitted:    
-        st.title('Options')
-        params()
-    
+en=st.session_state.get('translations_selected')=='English'
+def tr(fr,english): return english if en else fr
+page_header(tr('Mes données','My data'),icon='📱')
+user=st.session_state.get('id_joueur')
+if user is None:
+    st.info(tr('Analyse locale : aucun historique enregistré.','Local analysis: no saved history.'))
+    st.stop()
+dates=lire_bdd_perso('SELECT DISTINCT date FROM sw_score WHERE id_joueur=:id',index_col=None,params={'id':user}).T
+with st.form('delete_snapshot'):
+    date=st.selectbox(tr('Relevé à supprimer','Snapshot to delete'),dates['date'].tolist())
+    confirm=st.checkbox(tr('Je confirme la suppression de ce relevé.','I confirm deletion of this snapshot.'))
+    delete=st.form_submit_button(tr('Supprimer le relevé','Delete snapshot'),disabled=dates.empty)
+if delete:
+    if not confirm:
+        st.warning(tr('Confirmez la suppression.','Confirm deletion first.'))
     else:
-        st.switch_page("pages_streamlit/upload.py")
-
-else:
-    st.switch_page("pages_streamlit/upload.py")
-    
-    
-st.caption('Made by Tomlora :sunglasses:')
+        supprimer_data(user,date)
+        st.cache_data.clear()
+        st.success(tr('Relevé supprimé.','Snapshot deleted.'))
+        if date==st.session_state.get('report_date'):
+            st.session_state.analysis_ready=False
+            st.session_state.submitted=False
+            st.switch_page('pages_streamlit/upload.py')
+with st.form('delete_account'):
+    st.warning(tr('Supprimer tous les relevés, objectifs, builds et tâches de ce compte.','Delete all snapshots, goals, builds and tasks for this account.'))
+    name=st.text_input(tr('Saisissez le nom du compte pour confirmer','Type the account name to confirm'))
+    delete_all=st.form_submit_button(tr('Supprimer toutes mes données','Delete all my data'))
+if delete_all:
+    if name!=st.session_state.pseudo:
+        st.warning(tr('Le nom ne correspond pas au compte.','The name does not match this account.'))
+    else:
+        supprimer_data_all(user)
+        st.cache_data.clear()
+        for key in list(st.session_state):
+            del st.session_state[key]
+        st.switch_page('pages_streamlit/upload.py')

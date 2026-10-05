@@ -1,10 +1,9 @@
 from fonctions.gestion_bdd import lire_bdd_perso, cleaning_only_guilde
 import pandas as pd
 import streamlit as st
-from streamlit_extras.switch_page_button import switch_page
 from params.coef import coef_set, coef_set_spd
 from datetime import timedelta
-from streamlit_extras.button_selector import button_selector
+from fonctions.widgets import button_selector
 import json 
 from streamlit_timeline import timeline
 
@@ -18,7 +17,10 @@ css()
 
 def timeline_page():
 
-    df_mobs = st.session_state.df_mobs_name_all
+    df_mobs = st.session_state.df_mobs_name_all.copy()
+    if df_mobs.empty or 'element_number' not in df_mobs:
+        st.info('Aucune donnée d’invocation disponible / No summon data available.')
+        return
 
     options = ['LD 5nat', '5nat']
     button_select = button_selector(options)

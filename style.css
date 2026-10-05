@@ -1,4 +1,19 @@
-/* General */
-
-footer {visibility: hidden;}
-
+:root {
+  --sw-background: #07111f; --sw-surface: #101f33; --sw-border: #304057;
+  --sw-text: #f4f7fb; --sw-muted: #aebed2; --sw-primary: #49a4ff;
+  --sw-gold: #e7b85c; --sw-success: #45ce91;
+}
+.sw-page-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin:0 0 1.6rem; padding:1.3rem 1.5rem; background:var(--sw-surface); border:1px solid var(--sw-border); border-radius:1rem; }
+.sw-page-header__title { margin:0; padding:0; font-size:clamp(1.7rem,4vw,2.5rem); overflow-wrap:anywhere; }
+.sw-page-header__subtitle, .sw-section-header p { color:var(--sw-muted); margin:.5rem 0 0; }
+.sw-page-header__eyebrow { color:var(--sw-primary); font-size:.85rem; margin-bottom:.4rem; }
+.sw-page-header__icon { font-size:2.5rem; }
+.sw-section-header { margin:1.5rem 0 .8rem; }
+.sw-section-header h2 { font-size:1.35rem; padding:0; }
+[data-testid="stMetric"] { border:1px solid var(--sw-border); border-radius:.75rem; padding:.8rem 1rem; background:var(--sw-surface); }
+[data-testid="stMetricValue"] { font-variant-numeric:tabular-nums; }
+@media (max-width:640px) {
+ .sw-page-header { padding:1rem; }
+ .sw-page-header__icon { display:none; }
+ [data-testid="stMetric"] { padding:.6rem; }
+}

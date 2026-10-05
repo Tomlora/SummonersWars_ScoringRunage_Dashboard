@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 import plotly.graph_objects as go
-import plotly_express as px
+import plotly.express as px
 import pandas as pd
 from datetime import timedelta
 

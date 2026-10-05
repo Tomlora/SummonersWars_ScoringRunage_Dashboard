@@ -1,10 +1,10 @@
 
 import streamlit as st
 import pandas as pd
-from streamlit_extras.no_default_selectbox import selectbox
+from fonctions.widgets import selectbox
 
 from fonctions.visuel import css
-import plotly_express as px
+import plotly.express as px
 import re
 
 css()

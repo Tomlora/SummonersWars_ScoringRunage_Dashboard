@@ -84,7 +84,6 @@ def load_lottieurl(url: str):
     return response.json()
 
 
-@st.cache_resource
 def css() -> None:
     """Load the shared CSS and configure a consistent Plotly theme."""
     _register_plotly_template()
@@ -136,18 +135,11 @@ def page_header(
         f'<div class="sw-page-header__icon">{escape(icon)}</div>' if icon else ""
     )
     st.markdown(
-        f"""
-        <div class="sw-page-header">
-            <div>
-                {eyebrow_html}
-                <h1 class="sw-page-header__title">{escape(title)}</h1>
-                {subtitle_html}
-            </div>
-            {icon_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
+        f'<div class="sw-page-header"><div>{eyebrow_html}'
+        f'<h1 class="sw-page-header__title">{escape(title)}</h1>'
+        f'{subtitle_html}</div>{icon_html}</div>', unsafe_allow_html=True,
     )
+
 
 
 def section_header(title: str, subtitle: Optional[str] = None) -> None:

@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from streamlit_extras.add_vertical_space import add_vertical_space
-from streamlit_extras.no_default_selectbox import selectbox
+from fonctions.widgets import selectbox
 from fonctions.visualisation import filter_dataframe
 from fonctions.gestion_bdd import lire_bdd
 
@@ -10,6 +10,11 @@ from fonctions.visuel import css
 
 
 css()
+from os import environ
+if not environ.get('API_SQL'):
+    st.info('La base de références est nécessaire pour cette page / This page requires the reference database.')
+    st.stop()
+
 
 
 

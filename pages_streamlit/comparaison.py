@@ -27,7 +27,7 @@ def _render_scope(
     best_score: int,
     population_df,
 ):
-    rank = _safe_rank(population_df, st.session_state["pseudo"])
+    rank = _safe_rank(population_df, st.session_state["id_joueur"])
     percentile = score_percentile(population_df, score_column, player_score)
 
     col_players, col_average, col_best, col_rank = st.columns(4)
@@ -45,7 +45,7 @@ def _render_scope(
     col_rank.metric(
         st.session_state.langue["Classement"],
         f"#{rank}" if rank is not None else "Non-noté",
-        f"Top {max(0, 100 - percentile):.0f} %" if population_size else None,
+        f"{percentile:.0f} % de scores inférieurs" if population_size else None,
         delta_color="off",
     )
 

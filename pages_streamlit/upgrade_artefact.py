@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 from fonctions.artefact import dict_arte_effect_english, dataframe_replace_to_english, max_sub_by_proc
-from streamlit_extras.no_default_selectbox import selectbox
+from fonctions.widgets import selectbox
 
 
 from fonctions.visuel import css

@@ -11,54 +11,25 @@ from fonctions.visuel import THEME, apply_plotly_theme
 @st.cache_data(ttl="1h")
 def comparaison(guilde_id, score="score_general"):
     """Return global and guild comparison indicators for a score."""
-    df_actuel = lire_bdd_perso(
-        "SELECT * from sw_user, sw_score WHERE sw_user.id = sw_score.id_joueur"
-    )
-    df_actuel = df_actuel.transpose()
-    df_actuel.reset_index(inplace=True)
-    df_actuel.drop(["id"], axis=1, inplace=True)
-    df_actuel = df_actuel[df_actuel[score] != 0]
-
-    df_max = df_actuel.groupby("joueur").max()
-    df_max["rank"] = df_max[score].rank(ascending=False, method="min")
-
-    size_general = len(df_max)
-    avg_score_general = int(round(df_max[score].mean(), 0))
-    max_general = int(df_max[score].max())
-
-    df_guilde = df_actuel[df_actuel["guilde_id"] == guilde_id]
-    df_guilde_max = df_guilde.groupby("joueur").max()
-    size_guilde = len(df_guilde_max)
-
-    if df_guilde_max.empty:
-        avg_score_guilde = 0
-        max_guilde = 0
-        df_guilde_max["rank"] = pd.Series(dtype="float64")
-    else:
-        avg_score_guilde = int(round(df_guilde_max[score].mean(), 0))
-        max_guilde = int(df_guilde_max[score].max())
-        df_guilde_max["rank"] = df_guilde_max[score].rank(
-            ascending=False, method="min"
-        )
-
-    return (
-        size_general,
-        avg_score_general,
-        max_general,
-        size_guilde,
-        avg_score_guilde,
-        max_guilde,
-        df_max,
-        df_guilde_max,
-    )
+    from fonctions.analysis import select_snapshots
+    data = lire_bdd_perso('SELECT u.id, u.joueur, u.guilde_id, s.date, s.score_general, s.score_arte, s.score_spd FROM sw_user u JOIN sw_score s ON u.id=s.id_joueur', index_col=None).T
+    data = select_snapshots(data, score, 'latest')
+    def indicators(frame):
+        frame = frame.set_index('id').copy()
+        frame['rank'] = frame[score].rank(ascending=False, method='min')
+        return (len(frame), int(round(frame[score].mean())) if len(frame) else 0,
+                int(frame[score].max()) if len(frame) else 0, frame)
+    size, average, best, general = indicators(data)
+    gsize, gavg, gbest, guild = indicators(data[data.guilde_id == guilde_id])
+    return size, average, best, gsize, gavg, gbest, general, guild
 
 
 def score_percentile(df: pd.DataFrame, score: str, value: int) -> float:
-    """Return the percentage of the population whose score is lower or equal."""
-    values = pd.to_numeric(df.get(score), errors="coerce").dropna()
+    """Return the percentage of the population whose score is strictly lower."""
+    values = pd.to_numeric(df.get(score, pd.Series(dtype=float)), errors="coerce").dropna()
     if values.empty:
         return 0.0
-    return float((values <= value).mean() * 100)
+    return float((values < value).mean() * 100)
 
 
 def comparaison_rune_graph(
@@ -69,7 +40,7 @@ def comparaison_rune_graph(
 ):
     """Create a readable score distribution with the current player highlighted."""
     player_score = int(st.session_state[score_joueur])
-    values = pd.to_numeric(df.get(score), errors="coerce").dropna()
+    values = pd.to_numeric(df.get(score, pd.Series(dtype=float)), errors="coerce").dropna()
 
     fig = go.Figure()
     fig.add_trace(
