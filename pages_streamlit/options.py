@@ -1,3 +1,5 @@
+from fonctions.access import require_saved_page
+require_saved_page()
 import streamlit as st
 from fonctions.gestion_bdd import lire_bdd_perso, supprimer_data, supprimer_data_all
 from fonctions.visuel import css, page_header

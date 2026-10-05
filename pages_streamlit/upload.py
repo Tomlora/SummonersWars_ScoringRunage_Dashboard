@@ -47,7 +47,11 @@ if raw is not None:
     b.metric(tr('Runes', 'Runes'), rune_count)
     c.metric(tr('Artéfacts', 'Artifacts'), artifact_count)
     configured = bool(environ.get('API_SQL'))
-    save = st.checkbox(tr('Sauvegarder dans mon historique', 'Save to my history'), value=configured and not use_demo, disabled=not configured or use_demo, key='save_import')
+    from fonctions.access import can_access
+    authorized = configured and not use_demo and can_access(data['wizard_info']['wizard_id'])
+    save = st.checkbox(tr('Sauvegarder dans mon historique', 'Save to my history'), value=authorized, disabled=not authorized, key='save_import') and authorized
+    if configured and not use_demo and not authorized:
+        st.info(tr('L’analyse locale reste disponible. Pour enregistrer, connectez-vous et demandez à l’administrateur de rattacher ce compte à votre identité.', 'Local analysis is available. To save, sign in and ask the administrator to link this account to your identity.'))
     if not configured:
         st.caption(tr('Mode local : l’analyse fonctionne sans base de données.', 'Local mode: analysis works without a database.'))
     if st.button(tr('Analyser ce fichier', 'Analyse this file'), key='upload_submit', type='primary'):
@@ -69,7 +73,7 @@ if raw is not None:
                 if save and configured and not use_demo:
                     st.cache_data.clear()
                 status.update(label=tr('Analyse terminée', 'Analysis complete'), state='complete', expanded=False)
-            except (SQLAlchemyError, ValueError, KeyError, TypeError, IndexError, RuntimeError) as error:
+            except (SQLAlchemyError, ValueError, KeyError, TypeError, IndexError, RuntimeError, PermissionError) as error:
                 logging.getLogger(__name__).error('Import failed (%s)', type(error).__name__)
                 status.update(label=tr('Analyse interrompue', 'Analysis interrupted'), state='error')
                 st.error(tr('L’import n’a pas pu aboutir. Votre dernière analyse est conservée. Vérifiez le fichier et la connexion à la base avant de réessayer.', 'Import failed. Your last successful analysis is preserved. Check the file and database connection before retrying.'))

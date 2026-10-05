@@ -65,11 +65,24 @@ def lire_bdd_perso(requests, format='df', index_col='joueur', params=None):
 def sauvegarde_bdd(df, nom_table, methode_save='replace', dtype=None, index=True):
     if not isinstance(df, pd.DataFrame):
         df = pd.DataFrame(df).T
+    from fonctions.access import require_user
+    for column in ('id', 'id_joueur'):
+        if column in df:
+            for user_id in df[column].dropna().unique():
+                require_user(user_id)
     with transaction() as conn:
         df.to_sql(nom_table, con=conn, if_exists=methode_save, index=index, method='multi', chunksize=500, dtype=dtype)
 
 
 def requete_perso_bdd(request, dict_params):
+    from fonctions.access import require_user, require_account
+    # Legacy page writes bind the internal owner as id/user_id/id_joueur.
+    if 'sw_guilde' not in request and 'INSERT INTO sw_user' not in request:
+        for key in ('id', 'user_id', 'id_joueur', 'joueur'):
+            if key in dict_params and 'sw_' in request:
+                require_user(dict_params[key])
+    if 'account' in dict_params:
+        require_account(dict_params['account'])
     with transaction() as conn:
         # Existing callers submit fixed multi-statement SQL with bound parameters.
         for statement in str(request).split(';'):
@@ -89,14 +102,19 @@ HISTORY_TABLES = {
     'sw_arte_substats': 'id', 'sw_imports': 'id_joueur',
 }
 ACCOUNT_TABLES = {'sw_arte_top': 'id', 'sw_build': 'id', 'sw_monsters': 'id',
-                  'sw_objectifs_arte': 'id', 'sw_objectifs_rune': 'id', 'sw_todolist': 'id_joueur'}
+                  'sw_objectifs_arte': 'id', 'sw_objectifs_rune': 'id', 'sw_todolist': 'id_joueur',
+                  'sw_workspace': 'id_joueur'}
 
 
-def _delete_account_rows(joueur, date=None):
+def _delete_account_rows(joueur, date=None, keep_rune_snapshots=False):
+    from fonctions.access import require_user
+    require_user(joueur)
     with transaction() as conn:
         inspector = inspect(conn)
         available = set(inspector.get_table_names())
         tables = dict(HISTORY_TABLES)
+        if not keep_rune_snapshots:
+            tables['sw_rune_snapshots'] = 'id_joueur'
         if date is None:
             tables.update(ACCOUNT_TABLES)
             tables['sw_user'] = 'id'  # parent last
@@ -114,8 +132,8 @@ def _delete_account_rows(joueur, date=None):
             conn.execute(text(f'DELETE FROM {_identifier(table)} WHERE {_identifier(column)} = :id{condition}'), {'id': int(joueur), 'date': date})
 
 
-def supprimer_data(joueur, date):
-    _delete_account_rows(joueur, date)
+def supprimer_data(joueur, date, keep_rune_snapshots=False):
+    _delete_account_rows(joueur, date, keep_rune_snapshots)
 
 
 def supprimer_data_all(joueur):
@@ -127,13 +145,15 @@ def update_info_compte(joueur, guildeid, compteid):
 
 
 def get_user(joueur, type='name_user', id_compte=0):
+    from fonctions.access import require_account
+    require_account(joueur if type == 'id' else id_compte)
     column = 'joueur_id' if type == 'id' else 'joueur'
     with transaction() as conn:
         row = conn.execute(text(f'SELECT id, guilde_id, visibility, joueur_id, rank FROM sw_user WHERE {column}=:player'), {'player': joueur}).mappings().first()
         if row is None or (type == 'name_user' and id_compte and row['joueur_id'] not in (0, id_compte)):
             raise IndexError('Unknown account')
-        if row['joueur_id'] == 0 and type == 'name_user':
-            conn.execute(text('UPDATE sw_user SET joueur_id=:account WHERE id=:id'), {'account': id_compte, 'id': row['id']})
+        if row['joueur_id'] == 0:
+            raise IndexError('Legacy account needs administrator binding')
         return row['id'], row['visibility'], row['guilde_id'], row['rank']
 
 

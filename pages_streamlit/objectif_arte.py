@@ -1,3 +1,5 @@
+from fonctions.access import require_saved_page
+require_saved_page()
 import streamlit as st
 import pandas as pd
 from fonctions.visuel import load_lottieurl, css
@@ -22,16 +24,9 @@ def objectif():
     
 
     
-    def download_params(id_compte):
-        df_params = lire_bdd_perso(f'''SELECT * from sw_objectifs_arte WHERE id = {id_compte} ''', index_col='id').T
-        
-        if df_params.empty:
-            return [10, 10, 10, 10, 10, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, True]
-        else:
-            return df_params.iloc[0].tolist()
-            
-    liste_params = download_params(st.session_state.id_joueur)
-    
+    from fonctions.goals import artifact_goals
+    params = artifact_goals(st.session_state.id_joueur)
+
     def checkbox_stat(dict_params, value, defaut1, defaut2, defaut3):
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -46,18 +41,18 @@ def objectif():
         
     param_objectifs = {}
     with st.expander('Paramètres'):
-        param_objectifs['REDUCTION'] = st.slider(f'{st.session_state.langue["objectif"]} Reduction', 10, 30, liste_params[0])
-        param_objectifs = checkbox_stat(param_objectifs, 'REDUCTION', liste_params[5], liste_params[6], liste_params[7])
-        param_objectifs['DMG ELEM'] = st.slider(f'{st.session_state.langue["objectif"]} DMG ELEM', 10, 30, liste_params[1])
-        param_objectifs = checkbox_stat(param_objectifs, 'DMG ELEM', liste_params[8], liste_params[9], liste_params[10])
-        param_objectifs['CRIT DMG'] = st.slider(f'{st.session_state.langue["objectif"]} CRIT DMG', 10, 30, liste_params[2])
-        param_objectifs = checkbox_stat(param_objectifs, 'CRIT DMG', liste_params[11], liste_params[12], liste_params[13])
-        param_objectifs['PRECISION'] = st.slider(f'{st.session_state.langue["objectif"]} PRECISION', 10, 30, liste_params[3])
-        param_objectifs = checkbox_stat(param_objectifs, 'PRECISION', liste_params[14], liste_params[15], liste_params[16])
-        param_objectifs['SOIN'] = st.slider(f'{st.session_state.langue["objectif"]} SOIN', 10, 30, liste_params[4])
-        param_objectifs = checkbox_stat(param_objectifs, 'SOIN', liste_params[17], liste_params[18], liste_params[19])
-        param_objectifs['SPD'] = st.slider(f'{st.session_state.langue["objectif"]} SPD', 10, 60, liste_params[4])
-        param_objectifs = checkbox_stat(param_objectifs, 'SPD', liste_params[17], liste_params[18], liste_params[19])
+        param_objectifs['REDUCTION'] = st.slider(f'{st.session_state.langue["objectif"]} Reduction', 10, 30, params['reduction'])
+        param_objectifs = checkbox_stat(param_objectifs, 'REDUCTION', params['reduction_hp'], params['reduction_atk'], params['reduction_def'])
+        param_objectifs['DMG ELEM'] = st.slider(f'{st.session_state.langue["objectif"]} DMG ELEM', 10, 30, params['dmg_elem'])
+        param_objectifs = checkbox_stat(param_objectifs, 'DMG ELEM', params['dmg_elem_hp'], params['dmg_elem_atk'], params['dmg_elem_def'])
+        param_objectifs['CRIT DMG'] = st.slider(f'{st.session_state.langue["objectif"]} CRIT DMG', 10, 30, params['crit_dmg'])
+        param_objectifs = checkbox_stat(param_objectifs, 'CRIT DMG', params['crit_dmg_hp'], params['crit_dmg_atk'], params['crit_dmg_def'])
+        param_objectifs['PRECISION'] = st.slider(f'{st.session_state.langue["objectif"]} PRECISION', 10, 30, params['precision'])
+        param_objectifs = checkbox_stat(param_objectifs, 'PRECISION', params['precision_hp'], params['precision_atk'], params['precision_def'])
+        param_objectifs['SOIN'] = st.slider(f'{st.session_state.langue["objectif"]} SOIN', 10, 30, params['soin'])
+        param_objectifs = checkbox_stat(param_objectifs, 'SOIN', params['soin_hp'], params['soin_atk'], params['soin_def'])
+        param_objectifs['SPD'] = st.slider(f'{st.session_state.langue["objectif"]} SPD', 10, 60, params['spd'])
+        param_objectifs = checkbox_stat(param_objectifs, 'SPD', params['spd_hp'], params['spd_atk'], params['spd_def'])
 
     
         if st.button(st.session_state.langue['sauvegarder']):

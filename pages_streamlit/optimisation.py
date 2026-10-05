@@ -156,25 +156,25 @@ def _recommendation_dataframe(data_class: Any) -> pd.DataFrame:
     for comment, legendary, hero in zip(comments, grind_lgd, grind_hero):
         lowered = comment.lower()
         if "reapp" in lowered:
-            action = _tr("Réappraisal", "Reappraisal")
+            action = 'reappraisal'
         elif "gem" in lowered or "gemm" in lowered:
-            action = _tr("Gemmer", "Gem")
+            action = 'gem'
         elif _truthy(legendary):
-            action = _tr("Meule légendaire", "Legendary grind")
+            action = 'legendary_grind'
         elif _truthy(hero):
-            action = _tr("Meule héroïque", "Hero grind")
+            action = 'hero_grind'
         else:
-            action = _tr("À examiner", "Review")
+            action = 'review'
         actions.append(action)
         clean_comment = " · ".join(part.strip() for part in comment.splitlines() if part.strip())
-        recommendations.append(clean_comment or action)
+        recommendations.append(clean_comment or action_label(action))
 
     view["Action"] = actions
     view["Recommandation"] = recommendations
     view["Priorité"] = pd.cut(
         view["Gain potentiel"],
         bins=[-float("inf"), 5, 10, float("inf")], right=False,
-        labels=[_tr("🟡 Faible", "🟡 Low"), _tr("🟠 Moyenne", "🟠 Medium"), _tr("🔴 Haute", "🔴 High")],
+        labels=['low','medium','high'],
     ).astype(str)
     from fonctions.improvements import grind_opportunities
     opportunities = getattr(data_class, '_stock_opportunities', None)
@@ -464,6 +464,8 @@ def _format_total_with_grind(total: Any, grind: Any, *, percent: bool) -> str:
 
 
 def _render_recommendations(view: pd.DataFrame) -> None:
+    from fonctions.workspace import active_locks
+    view=view.loc[~view.index.isin(active_locks())].copy()
     tr = _tr
     section_header(
         tr("À améliorer", "Upgrade recommendations"),
@@ -473,7 +475,7 @@ def _render_recommendations(view: pd.DataFrame) -> None:
         ),
     )
     data_class = st.session_state.data_rune
-    high = tr("🔴 Haute", "🔴 High")
+    high = 'high'
 
     k1, k2, k3, k4 = st.columns(4)
     k1.metric(tr("Runes analysées", "Runes analysed"), f"{len(view):,}".replace(",", " "))
@@ -488,6 +490,10 @@ def _render_recommendations(view: pd.DataFrame) -> None:
     minimums: dict[str, int] = {}
     display_mode = tr("Total", "Total")
     with st.expander(tr("Filtres et colonnes", "Filters and columns"), expanded=True):
+        available_sets=set(view['Set'].dropna())
+        for key, options in [('optimisation_filter_sets',available_sets),('optimisation_displayed_substats',set(SUBSTATS))]:
+            if key in st.session_state:
+                st.session_state[key]=[v for v in st.session_state[key] if v in options]
         c1, c2, c3, c4 = st.columns([1.4, 1.2, 1.1, 1])
         sets = c1.multiselect(
             tr("Sets", "Sets"),
@@ -497,13 +503,15 @@ def _render_recommendations(view: pd.DataFrame) -> None:
         )
         actions = c2.multiselect(
             tr("Actions", "Actions"),
-            sorted(view["Action"].dropna().unique()),
+            ['reappraisal','gem','legendary_grind','hero_grind','review'],
+            format_func={code:action_label(code) for code in ['reappraisal','gem','legendary_grind','hero_grind','review']}.get,
             placeholder=tr("Toutes les actions", "All actions"),
             key="optimisation_filter_actions",
         )
         priority = c3.selectbox(
             tr("Priorité", "Priority"),
-            [tr("Toutes", "All"), high, tr("🟠 Moyenne", "🟠 Medium"), tr("🟡 Faible", "🟡 Low")],
+            ['all', 'high', 'medium', 'low'],
+            format_func={code:priority_label(code) for code in ['all','high','medium','low']}.get,
             key="optimisation_filter_priority",
         )
         equipped = c4.toggle(
@@ -512,6 +520,8 @@ def _render_recommendations(view: pd.DataFrame) -> None:
             key="optimisation_filter_equipped",
         )
         max_gain = max(float(view["Gain potentiel"].max()), 1.0) if not view.empty else 1.0
+        if 'optimisation_filter_gain' in st.session_state:
+            st.session_state.optimisation_filter_gain=min(float(st.session_state.optimisation_filter_gain),float(round(max_gain,1)))
         min_gain = st.slider(
             tr("Gain potentiel minimum", "Minimum potential gain"),
             0.0,
@@ -531,20 +541,23 @@ def _render_recommendations(view: pd.DataFrame) -> None:
         ):
             display_mode = st.segmented_control(
                 tr("Affichage des valeurs", "Value display"),
-                [tr("Total", "Total"), tr("Total + meule", "Total + grind")],
-                default=tr("Total", "Total"),
+                ["total", "with_grind"],
+                format_func={"total":"Total", "with_grind":tr("Total + meule", "Total + grind")}.get,
+                default="total",
                 key="optimisation_substat_display_mode",
                 help=tr(
                     "Le second mode affiche par exemple 49 % (+7 %) : total 49, dont 7 apportés par la meule.",
                     "The second mode displays, for example, 49% (+7%): total 49, including 7 from the grind.",
                 ),
-            ) or tr("Total", "Total")
+            ) or "total"
             selected_stats = st.multiselect(
                 tr("Sous-statistiques affichées", "Displayed substats"),
                 SUBSTATS,
                 default=SUBSTATS,
                 key="optimisation_displayed_substats",
             )
+            if 'optimisation_filtered_substats' in st.session_state:
+                st.session_state.optimisation_filtered_substats=[v for v in st.session_state.optimisation_filtered_substats if v in selected_stats]
             filtered_stats = st.multiselect(
                 tr("Sous-statistiques à filtrer", "Substats to filter"),
                 selected_stats,
@@ -574,7 +587,7 @@ def _render_recommendations(view: pd.DataFrame) -> None:
         for stat in selected_stats:
             total_column = f"{stat}__total"
             grind_column = f"{stat}__grind"
-            if display_mode == tr("Total + meule", "Total + grind"):
+            if display_mode == "with_grind":
                 view[stat] = [
                     _format_total_with_grind(total, grind, percent=stat in PERCENT_SUBSTATS)
                     for total, grind in zip(view[total_column], view[grind_column])
@@ -590,7 +603,7 @@ def _render_recommendations(view: pd.DataFrame) -> None:
         filtered = filtered[filtered["Set"].isin(sets)]
     if actions:
         filtered = filtered[filtered["Action"].isin(actions)]
-    if priority != tr("Toutes", "All"):
+    if priority != 'all':
         filtered = filtered[filtered["Priorité"] == priority]
     if equipped:
         filtered = filtered[filtered["is_equipped"]]
@@ -607,6 +620,9 @@ def _render_recommendations(view: pd.DataFrame) -> None:
     page_count = max(1, (len(filtered) + limit - 1) // limit)
     st.session_state['optimisation_page'] = min(int(st.session_state.get('optimisation_page', 1)), page_count)
     page = st.number_input("Page", 1, page_count, key="optimisation_page")
+    filtered=filtered.copy()
+    filtered['Action']=filtered['Action'].map(action_label)
+    filtered['Priorité']=filtered['Priorité'].map(priority_label)
     shown = filtered.iloc[(page-1)*limit:page*limit]
     if filtered.empty:
         st.info(tr("Aucune rune ne correspond aux filtres. Réduisez le gain minimum ou réinitialisez les filtres.", "No runes match. Lower the minimum gain or reset the filters."))
@@ -842,9 +858,23 @@ def _recommendations_workbook(frame: pd.DataFrame) -> bytes:
 
 
 
+def action_label(code):
+    return {'reappraisal':_tr('Réappraisal','Reappraisal'), 'gem':_tr('Gemmer','Gem'),
+            'legendary_grind':_tr('Meule légendaire','Legendary grind'),
+            'hero_grind':_tr('Meule héroïque','Hero grind'),'review':_tr('À examiner','Review')}.get(code,code)
+
+
+def priority_label(code):
+    return {'all':_tr('Toutes','All'),'high':_tr('🔴 Haute','🔴 High'),
+            'medium':_tr('🟠 Moyenne','🟠 Medium'),'low':_tr('🟡 Faible','🟡 Low')}.get(code,code)
+
+
 def preset_tools():
-    keys = ["optimisation_filter_sets", "optimisation_filter_actions", "optimisation_filter_priority", "optimisation_filter_equipped", "optimisation_filter_gain"]
+    from fonctions.workspace import PREFIXES, current_settings, save_current
+    current_settings()
+    keys = [key for key in st.session_state if key.startswith(PREFIXES)]
     def reset():
+        current_settings()['filters']={}
         for key in list(st.session_state):
             if key.startswith(("optimisation_filter", "optimisation_min_", "optimisation_display", "optimisation_substat", "optimisation_show_")) or key == "optimisation_page":
                 del st.session_state[key]
@@ -852,8 +882,10 @@ def preset_tools():
     with st.expander(_tr("Mes filtres enregistrés", "My saved filters")):
         presets=st.session_state.setdefault('saved_filter_presets', {})
         name=st.text_input(_tr("Nom du filtre (ex. RTA rapide, Siège)", "Filter name (e.g. Fast RTA, Siege)"),key='preset_name')
-        if st.button(_tr("Enregistrer pour cette session", "Save for this session")) and name.strip():
+        if st.button(_tr("Enregistrer le filtre", "Save filter")) and name.strip():
             presets[name.strip()]={key:st.session_state[key] for key in keys if key in st.session_state}
+            save_current()
+            st.success(_tr('Filtre enregistré.','Filter saved.'))
         if presets:
             choice=st.selectbox(_tr("Charger un filtre", "Load a filter"),list(presets),key='preset_choice')
             if st.button(_tr("Appliquer", "Apply")):

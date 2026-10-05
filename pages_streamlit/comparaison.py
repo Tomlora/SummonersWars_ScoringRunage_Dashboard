@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from fonctions.access import require_saved_page
+require_saved_page()
+
 import streamlit as st
 
 from fonctions.compare import comparaison, comparaison_rune_graph, score_percentile

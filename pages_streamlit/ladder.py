@@ -1,3 +1,5 @@
+from fonctions.access import require_saved_page
+require_saved_page()
 import pandas as pd
 import streamlit as st
 from fonctions.gestion_bdd import lire_bdd_perso

@@ -1,4 +1,4 @@
-streamlit==1.65.0
+streamlit[auth]==1.65.0
 pandas==3.0.1
 numpy==2.3.5
 plotly>=6.3,<7

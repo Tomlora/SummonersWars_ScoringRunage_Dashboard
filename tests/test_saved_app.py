@@ -35,7 +35,7 @@ def test_saved_pages(engine,export,monkeypatch):
     for key,value in state.items():at.session_state[key]=value
     at.session_state['translations_selected']='Français'
     at.run()
-    for page in ['evolution','comparaison','ladder','ladder_value','ladder_arte','ladder_others','objectif_rune','objectif_arte','build_manager','optimisation_spd','options','visibility']:
+    for page in ['evolution','comparaison','ladder','ladder_value','ladder_arte','ladder_others','objectif_rune','objectif_arte','build_manager','optimisation_spd','options','visibility','planning','import_changes']:
         at.switch_page('pages_streamlit/'+page+'.py').run()
         assert not at.exception,(page,[e.message for e in at.exception])
         assert not at.error,(page,[e.value for e in at.error])
@@ -46,3 +46,21 @@ def test_saved_pages(engine,export,monkeypatch):
         if page=='optimisation_spd':
             at.selectbox[0].set_value('Swift').run()
             assert not at.exception,[e.message for e in at.exception]
+        if page=='objectif_arte':
+            next(s for s in at.slider if s.label.endswith(' SOIN')).set_value(20).run()
+            next(s for s in at.slider if s.label.endswith(' SPD')).set_value(45).run()
+            at.checkbox(key='SPD_HP').uncheck().run()
+            at.button[0].click().run()
+            assert not at.exception
+            at.switch_page('pages_streamlit/general.py').run()
+            at.switch_page('pages_streamlit/objectif_arte.py').run()
+            assert next(s for s in at.slider if s.label.endswith(' SOIN')).value==20
+            assert next(s for s in at.slider if s.label.endswith(' SPD')).value==45
+            assert not at.checkbox(key='SPD_HP').value
+            assert at.checkbox(key='SOIN_HP').value
+    # A second same-day import is selectable and shows the changed rune.
+    export['runes'][0]['sec_eff'][0][1]+=1
+    persist_analysis(analyse_export(validate_export(export),reference),'05/10/2026')
+    at.switch_page('pages_streamlit/import_changes.py').run()
+    assert not at.exception
+    assert len(at.dataframe[0].value)==1

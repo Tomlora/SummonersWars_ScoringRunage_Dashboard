@@ -1,3 +1,5 @@
+from fonctions.access import require_saved_page
+require_saved_page()
 from fonctions.gestion_bdd import lire_bdd_perso, cleaning_only_guilde
 import pandas as pd
 import streamlit as st

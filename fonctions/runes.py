@@ -704,23 +704,14 @@ class Rune():
         # self.data_grind['third_gemme_max_lgd'] = self.data_grind['third_sub'].map(self.gemme_max_lgd)
         # self.data_grind['fourth_gemme_max_lgd'] = self.data_grind['fourth_sub'].map(self.gemme_max_lgd)
         
-        def mapping_gemme(loc, mapping_lgd, mapping_hero):
-        
-            # self.data_grind['qualité'] == 'ANTIQUE'
-            self.data_grind.loc[loc, 'first_gemme_max_lgd'] = self.data_grind.loc[loc, 'first_sub'].map(mapping_lgd)
-            self.data_grind.loc[loc, 'second_gemme_max_lgd'] = self.data_grind.loc[loc, 'second_sub'].map(mapping_lgd)
-            self.data_grind.loc[loc, 'third_gemme_max_lgd'] = self.data_grind.loc[loc, 'third_sub'].map(mapping_lgd)
-            self.data_grind.loc[loc, 'fourth_gemme_max_lgd'] = self.data_grind.loc[loc, 'fourth_sub'].map(mapping_lgd)
-            
-            self.data_grind.loc[loc, 'first_gemme_max_hero'] = self.data_grind.loc[loc, 'first_sub'].map(mapping_hero)
-            self.data_grind.loc[loc, 'second_gemme_max_hero'] = self.data_grind.loc[loc, 'second_sub'].map(mapping_hero)
-            self.data_grind.loc[loc, 'third_gemme_max_hero'] = self.data_grind.loc[loc, 'third_sub'].map(mapping_hero)
-            self.data_grind.loc[loc, 'fourth_gemme_max_hero'] = self.data_grind.loc[loc, 'fourth_sub'].map(mapping_hero)
-            
-            return self.data_grind
-        
-        self.data_grind = mapping_gemme(self.data_grind['qualité'].str.contains('ANTIQUE'), self.gemme_max_lgd_antique, self.gemme_max_hero_antique)
-        self.data_grind = mapping_gemme(~self.data_grind['qualité'].str.contains('ANTIQUE'), self.gemme_max_lgd, self.gemme_max_hero)
+        ancient = self.data_grind['qualité'].str.contains('ANTIQUE')
+        for position in ('first', 'second', 'third', 'fourth'):
+            for quality, normal, antique in (
+                ('lgd', self.gemme_max_lgd, self.gemme_max_lgd_antique),
+                ('hero', self.gemme_max_hero, self.gemme_max_hero_antique),
+            ):
+                stats = self.data_grind[f'{position}_sub']
+                self.data_grind[f'{position}_gemme_max_{quality}'] = stats.map(normal).where(~ancient, stats.map(antique))
 
         # self.data_grind['first_gemme_max_hero'] = self.data_grind['first_sub'].map(self.gemme_max_hero)
         # self.data_grind['second_gemme_max_hero'] = self.data_grind['second_sub'].map(self.gemme_max_hero)

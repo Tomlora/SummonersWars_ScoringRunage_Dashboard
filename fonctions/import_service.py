@@ -26,6 +26,8 @@ def validate_export(raw):
         data = json.loads(raw) if isinstance(raw, (bytes, str)) else deepcopy(raw)
         if not isinstance(data, dict):
             raise ValueError('Expected an object')
+        from fonctions.validation import validate_values, validate_inventory
+        validate_values(data)
         wizard = data['wizard_info']
         if not isinstance(wizard['wizard_name'], str) or not wizard['wizard_name'].strip():
             raise ValueError('wizard_name')
@@ -75,6 +77,7 @@ def validate_export(raw):
                     raise ValueError(key)
             if len(arte['pri_effect']) < 2 or len(arte['sec_effects']) < min(arte['level']//3, 4):
                 raise ValueError('artifact effects')
+        validate_inventory(data, runes, artifacts)
         return data
     except (KeyError, TypeError, ValueError, IndexError, UnicodeError) as error:
         raise InvalidExport('Export JSON incompatible / incompatible JSON export: ' + str(error)) from error
@@ -148,6 +151,8 @@ def analyse_export(data, reference, progress=lambda message: None):
 
 
 def persist_analysis(result, date=None):
+    from fonctions.access import require_account
+    require_account(result['compteid'])
     date = date or datetime.now(ZoneInfo('Europe/Paris')).strftime('%d/%m/%Y')
     with transaction() as conn:
         if conn.dialect.name == 'postgresql':
@@ -157,19 +162,19 @@ def persist_analysis(result, date=None):
         try:
             user = get_user(result['compteid'], type='id')
         except IndexError:
-            try:
-                user = get_user(result['pseudo'], id_compte=result['compteid'])
-            except IndexError:
-                requete_perso_bdd('INSERT INTO sw_user(joueur,visibility,guilde_id,joueur_id) VALUES (:name,0,:guild,:account)', {'name':result['pseudo'],'guild':result['guildeid'],'account':result['compteid']})
-                user = get_user(result['compteid'], type='id')
+            # A name is not proof of ownership of a legacy account.
+            requete_perso_bdd('INSERT INTO sw_user(joueur,visibility,guilde_id,joueur_id) VALUES (:name,0,:guild,:account)', {'name':result['pseudo'],'guild':result['guildeid'],'account':result['compteid']})
+            user = get_user(result['compteid'], type='id')
         user_id, visibility, _, rank = user
         params = {'id': int(user_id), 'sha': result['import_hash'], 'version': SCORING_VERSION}
         previous = conn.execute(text('SELECT date FROM sw_imports WHERE id_joueur=:id AND payload_sha=:sha AND scoring_version=:version'), params).scalar()
         metadata = dict(id_joueur=user_id, visibility=visibility, rank=rank, report_date=previous or date)
         if previous:
+            from fonctions.snapshots import save_snapshot
+            save_snapshot(conn,user_id,result,previous)
             return metadata, False
         # One complete snapshot per account/day, preserving earlier days.
-        supprimer_data(user_id, date)
+        supprimer_data(user_id, date, keep_rune_snapshots=True)
         def save(frame, table, index=True, latest=False):
             data = frame.copy()
             data['id'], data['date'] = user_id, date
@@ -214,12 +219,17 @@ def persist_analysis(result, date=None):
         update_info_compte(result['pseudo'],result['guildeid'],result['compteid'])
         requete_perso_bdd('UPDATE sw_user SET lang=:lang WHERE id=:id', {'id':user_id,'lang':result['lang']})
         conn.execute(text('INSERT INTO sw_imports(id_joueur,payload_sha,scoring_version,date) VALUES (:id,:sha,:version,:date)'), {**params,'date':date})
+        from fonctions.snapshots import save_snapshot
+        save_snapshot(conn, user_id, result, date)
     return metadata, True
 
 
 def publish_analysis(state, result, metadata):
     # Clear widget/cached views only after the new import committed successfully.
-    preferences = {k:state[k] for k in ('translations_selected','translations','langue','saved_filter_presets') if k in state}
+    preferences = {k:state[k] for k in ('translations_selected','translations','langue') if k in state}
+    if state.get('compteid') == result['compteid']:
+        from fonctions.workspace import PREFIXES
+        preferences.update({k:state[k] for k in state if k in ('_workspace','saved_filter_presets') or k.startswith(PREFIXES)})
     for key in list(state):
         if key not in {'upload_file','upload_submit'}:
             del state[key]

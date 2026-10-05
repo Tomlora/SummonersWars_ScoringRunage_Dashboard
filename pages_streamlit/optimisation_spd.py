@@ -1,3 +1,5 @@
+from fonctions.access import require_saved_page
+require_saved_page()
 import pandas as pd
 import streamlit as st
 from fonctions.visuel import css
@@ -44,7 +46,10 @@ def opti_speed():
     
     if set1 != None:
     
-        st.session_state.optimisation = df_speed.optimisation_max_speed(set1, set2, speed_slot2)
+        from fonctions.analysis import fastest_build
+        from fonctions.workspace import active_locks
+        candidates=df_speed.data_set.loc[~df_speed.data_set.index.isin(active_locks())]
+        st.session_state.optimisation = fastest_build(candidates,set1,set2,speed_slot2)
         
         if st.session_state.optimisation[1] is None:
             st.info('Aucune combinaison compatible / No compatible build')
