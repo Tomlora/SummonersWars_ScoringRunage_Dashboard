@@ -2,6 +2,7 @@ import json
 import streamlit as st
 from fonctions.workspace import current_settings, save_current, settings, saved_builds, active_locks
 from fonctions.planning import grind_plan, constrained_build, SearchLimit
+from fonctions.rune_visual import rune_label, rune_identity
 
 english=st.session_state.get('translations_selected')=='English'
 def tr(fr,en): return en if english else fr
@@ -9,7 +10,7 @@ def tr(fr,en): return en if english else fr
 def craft_labels(kind,code):
     return {
         'Type':{2:tr('Meule','Grind'),4:tr('Meule immémoriale','Immemorial grind'),6:tr('Meule antique','Ancient grind')}[kind],
-        'Set':tr('Universelle','Universal') if kind==4 else runes.set.get(code//10000,str(code//10000)),
+        tr('Set de la meule','Grind set'):tr('Universelle','Universal') if kind==4 else runes.set.get(code//10000,str(code//10000)),
         'Stat':runes.property.get((code//100)%100,str((code//100)%100)),
         tr('Qualité','Quality'):{4:tr('Héroïque','Hero'),5:tr('Légendaire','Legendary')}.get(code%100,str(code%100)),
     }
@@ -21,9 +22,10 @@ user_id=st.session_state.get('id_joueur')
 builds=saved_builds(user_id) if user_id is not None else []
 
 with st.expander(tr('Protéger mes équipes','Protect my teams'),expanded=True):
-    st.caption(tr('Les runes verrouillées sont exclues des recommandations, du plan de meules et des recherches de builds. Les verrous de monstres suivent leurs runes au prochain import.', 'Locked runes are excluded from recommendations, grind plans and build searches. Monster locks follow their runes on the next import.'))
+    st.caption(tr('Protégez les runes que vous souhaitez garder en place. Elles ne seront pas proposées dans les améliorations ni dans les builds. Protéger un monstre protège aussi les runes qu’il portera lors des prochains imports.', 'Locked runes are excluded from recommendations, grind plans and build searches. Monster locks follow their runes on the next import.'))
     ids=sorted(set(int(v) for v in runes.data.index)|set(value['locked_runes']))
-    value['locked_runes']=st.multiselect(tr('Runes verrouillées','Locked runes'),ids,default=value['locked_runes'],format_func=str,key='locks_runes')
+    rune_labels={i:rune_label(runes,i) for i in ids}
+    value['locked_runes']=st.multiselect(tr('Runes protégées','Protected runes'),ids,default=value['locked_runes'],format_func=rune_labels.get,key='locks_runes')
     monsters={int(u['unit_id']):st.session_state.identification_monsters.get(u['unit_id'],str(u['unit_id'])) for u in st.session_state.data_json['unit_list']}
     value['locked_monsters']=st.multiselect(tr('Monstres protégés','Protected monsters'),sorted(monsters.keys()|set(value['locked_monsters'])),default=value['locked_monsters'],format_func=lambda i:f'{monsters.get(i,"Absent")} · #{i}',key='locks_monsters')
     labels={int(b['id_build']):f"{b['monstre']} · {b['nom_build']}" for b in builds}
@@ -34,21 +36,21 @@ with st.expander(tr('Protéger mes équipes','Protect my teams'),expanded=True):
 locks=active_locks()
 st.caption(tr(f'{len(locks)} runes protégées.', f'{len(locks)} protected runes.'))
 
-stock_tab,build_tab,prefs_tab=st.tabs([tr('Stock de meules','Grind stock'),tr('Build sur critères','Build criteria'),tr('Préférences','Preferences')])
+stock_tab,build_tab,prefs_tab=st.tabs([tr('Stock de meules','Grind stock'),tr('Trouver un build','Build criteria'),tr('Préférences','Preferences')])
 with stock_tab:
     if 'plan_sets' in st.session_state:
         st.session_state.plan_sets=[s for s in st.session_state.plan_sets if s in set(runes.data.rune_set)]
-    sets=st.multiselect(tr('Sets prioritaires (vide = tous)','Priority sets (empty = all)'),sorted(runes.data.rune_set.unique()),key='plan_sets')
-    st.caption(tr('Allocation par gain d’efficience décroissant, une meule par statistique. Chaque quantité est réservée une seule fois. Les gains sont des maxima aléatoires, sans garantie de résultat ni d’optimalité globale. Les gemmes sont exclues. Rien n’est consommé dans le jeu.', 'Greedy allocation by efficiency gain, one grind per stat. Each item is reserved once. Gains are random-roll maxima, with no guaranteed outcome or global optimum. Gems are excluded. Nothing is consumed in game.'))
+    sets=st.multiselect(tr('Sets à améliorer (tous si aucun choix)','Priority sets (empty = all)'),sorted(runes.data.rune_set.unique()),key='plan_sets')
+    st.caption(tr('Le plan utilise les meules de votre stock en donnant la priorité aux gains d’efficience les plus élevés. Les gains affichés supposent les meilleurs jets possibles ; le résultat peut donc être plus faible. Ce plan ne garantit pas la meilleure combinaison globale et ne consomme rien dans le jeu. Les gemmes ne sont pas prises en compte.', 'Greedy allocation by efficiency gain, one grind per stat. Each item is reserved once. Gains are random-roll maxima, with no guaranteed outcome or global optimum. Gems are excluded. Nothing is consumed in game.'))
     plan,remaining=grind_plan(runes,st.session_state.data_json['rune_craft_item_list'],locks,sets)
     a,b=st.columns(2)
     a.metric(tr('Meules réservées','Reserved grinds'),len(plan))
     b.metric(tr('Gain total maximal (points d’efficience)','Maximum total efficiency points'),round(plan.max_gain.sum(),2))
     if plan.empty:
-        st.info(tr('Aucune amélioration compatible avec le stock et les verrous.', 'No upgrade matches your stock and locks.'))
+        st.info(tr('Aucune amélioration possible avec vos meules et les runes non protégées.', 'No upgrade matches your stock and locks.'))
     else:
         import pandas as pd
-        shown=pd.DataFrame([{'Rune':row.id_rune,**craft_labels(row.craft_type,row.craft_type_id),
+        shown=pd.DataFrame([{**rune_identity(runes,row.id_rune),**craft_labels(row.craft_type,row.craft_type_id),
               tr('Meule actuelle','Current grind'):row.current_grind,
               tr('Meule maximale','Maximum grind'):row.max_grind,
               tr('Gain max.','Max gain'):round(row.max_gain,2)} for row in plan.itertuples()])
@@ -63,12 +65,11 @@ with stock_tab:
             st.dataframe(pd.DataFrame([{**craft_labels(kind,code),tr('Restant','Remaining'):amount} for (kind,code),amount in sorted(remaining.items())]),hide_index=True,width='stretch')
 
 with build_tab:
-    st.caption(tr('Maximise la vitesse apportée par six runes de niveau ≥12, avec leurs valeurs actuelles. Les seuils SPD et ACC portent sur les statistiques des runes, principales et innées incluses, avant statistiques du monstre, bonus de set, bâtiments et leader.', 'Maximizes speed from six level ≥12 runes using current values. SPD and ACC minima cover rune stats, including main and innate stats, before monster stats, set bonuses, buildings and leader skills.'))
+    st.caption(tr('Trouvez les six runes les plus rapides pour les sets choisis, parmi vos runes +12 et plus. La vitesse inclut les statistiques principales et innées, mais pas la vitesse du monstre ni les bonus de set, bâtiments ou leader.', 'Find your fastest six runes for the selected sets, using runes at +12 or higher. Speed includes main and innate stats, but excludes monster speed and set, building or leader bonuses.'))
     primary=st.selectbox(tr('Set de 4','Four-piece set'),['Swift','Violent','Despair','Fatal','Rage','Vampire'],key='plan_primary')
     secondary=st.selectbox(tr('Set de 2','Two-piece set'),['any','Will','Focus','Energy','Guard','Blade','Endure','Nemesis','Shield','Revenge','Destroy','Tolerance'],format_func=lambda x:tr('Libre','Any') if x=='any' else x,key='plan_secondary')
-    a,b=st.columns(2)
-    speed=a.number_input(tr('SPD minimale des runes','Minimum rune SPD'),min_value=0,max_value=400,step=1,key='plan_speed')
-    accuracy=b.number_input(tr('ACC minimale des runes (%)','Minimum rune ACC (%)'),min_value=0,max_value=300,step=1,key='plan_accuracy')
+    speed=st.number_input(tr('Vitesse minimale apportée par les runes','Minimum speed from runes'),min_value=0,max_value=400,step=1,key='plan_speed')
+    accuracy=0
     slot2=st.checkbox(tr('Principale SPD en slot 2','SPD main in slot 2'),value=True,key='plan_slot2')
     signature=(st.session_state.import_hash,primary,secondary,speed,accuracy,slot2,tuple(sorted(locks)))
     if st.button(tr('Rechercher le build','Search build'),type='primary'):
@@ -86,16 +87,17 @@ with build_tab:
     elif cached:
         build=cached[1]
         if build.empty:
-            st.info(tr('Aucun build ne satisfait ces critères et verrous.', 'No build satisfies these criteria and locks.'))
+            st.info(tr('Aucun build ne correspond à vos critères parmi les runes non protégées.', 'No build satisfies these criteria and locks.'))
         else:
-            st.dataframe(build.assign(id_rune=build.id_rune.astype(str)).rename(columns={'id_rune':'Rune','rune_slot':'Slot','rune_set':'Set','spd':'SPD','acc':'ACC (%)'}),hide_index=True,width='stretch')
+            import pandas as pd
+            st.dataframe(pd.DataFrame([{**rune_identity(runes,row.id_rune),'SPD':row.spd,'ACC (%)':row.acc} for row in build.itertuples()]),hide_index=True,width='stretch')
             st.success(f"SPD +{build.spd.sum():g} · ACC +{build.acc.sum():g}%")
             with st.expander(tr('Examiner les runes du build','Inspect build runes')):
                 from fonctions.rune_card import rune_card
                 rune_card(runes,build.id_rune,'ui_build_rune')
 
 with prefs_tab:
-    st.caption(tr('Enregistrez les filtres, colonnes, critères et verrous. Les objectifs restent enregistrés depuis leurs pages. Sans historique enregistré, exportez les préférences pour les retrouver plus tard.', 'Save filters, columns, criteria and locks. Goals remain saved from their own pages. Without saved history, export preferences to restore them later.'))
+    st.caption(tr('Retrouvez vos filtres et vos runes protégées lors de votre prochaine visite. En mode local, exportez vos préférences pour les réutiliser plus tard. Les objectifs se sauvegardent sur leurs pages respectives.', 'Save filters, columns, criteria and locks. Goals remain saved from their own pages. Without saved history, export preferences to restore them later.'))
     if st.button(tr('Enregistrer mes préférences','Save my preferences')):
         save_current()
         st.success(tr('Préférences enregistrées.' if user_id else 'Préférences prêtes à exporter.', 'Preferences saved.' if user_id else 'Preferences ready to export.'))

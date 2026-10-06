@@ -6,6 +6,7 @@ from fonctions.journey import tr
 from fonctions.tasks import load_tasks, save_tasks
 from fonctions.export import export_excel
 from fonctions.rune_card import rune_card
+from fonctions.rune_visual import rune_label, rune_identity, stat_text, substats
 from fonctions.visuel import css, page_header
 css()
 page_header(tr('Mes tâches','My tasks'),tr('Préparez les modifications à effectuer dans le jeu.','Prepare the changes to make in game.'),icon='📋')
@@ -13,17 +14,19 @@ runes=st.session_state.data_rune
 notes=load_tasks(st.session_state.id_joueur)
 data=runes.data[['rune_set','rune_slot','rune_equiped','level','efficiency']].copy()
 data.index.name='id_rune'
+data['main_stat']=[stat_text(runes,row.main_type,row.main_value) for _,row in runes.data.iterrows()]
+data['substats']=[substats(runes,row) for _,row in runes.data.iterrows()]
 data['rune_equiped']=data.rune_equiped.replace({0:tr('Inventaire','Inventory'),'0':tr('Inventaire','Inventory')})
 for key,default in [('notes',''),('stat_to_replace',''),('stat_objectif',''),('fait',False)]:
     data[key]=notes[key].reindex(data.index).fillna(default)
 focus=st.session_state.get('ui_task_rune')
 if focus is not None:
-    st.info(tr('Rune sélectionnée : ','Selected rune: ')+str(focus))
+    st.info(tr('Rune sélectionnée : ','Selected rune: ')+rune_label(runes,focus))
     if st.button(tr('Afficher toutes les runes','Show all runes')):
         st.session_state.pop('ui_task_rune',None)
         st.rerun()
     data=data[data.index==focus]
-query=st.text_input(tr('Rechercher un monstre, un set ou un ID','Find a monster, set or ID'),key='ui_task_query')
+query=st.text_input(tr('Rechercher un monstre ou un set','Find a monster or set'),key='ui_task_query')
 if query:
     mask=data.rune_set.astype(str).str.contains(query,case=False,regex=False)|data.rune_equiped.astype(str).str.contains(query,case=False,regex=False)|data.index.astype(str).str.contains(query,regex=False)
     data=data[mask]
@@ -56,9 +59,10 @@ else:
     data=data.iloc[(page-1)*size:page*size]
     st.caption(tr('Enregistrez vos modifications avant de changer les filtres. Les tâches masquées sont conservées.','Save changes before changing filters. Hidden tasks are kept.'))
     with st.form('rune_tasks'):
-        edited=st.data_editor(data,width='stretch',height='content',disabled=['rune_set','rune_slot','rune_equiped','level','efficiency'],column_config={
+        edited=st.data_editor(data,width='stretch',height='content',hide_index=True,disabled=['rune_set','rune_slot','rune_equiped','level','efficiency','main_stat','substats'],column_config={
             '_index':st.column_config.NumberColumn(tr('ID rune','Rune ID'),format='%d',disabled=True),
             'rune_set':'Set','rune_slot':'Slot','rune_equiped':tr('Monstre','Monster'),'level':tr('Niveau','Level'),
+            'main_stat':tr('Principale','Main stat'),'substats':st.column_config.TextColumn(tr('Sous-statistiques','Substats'),width='large'),
             'efficiency':st.column_config.NumberColumn(tr('Efficience (%)','Efficiency (%)'),format='%.2f'),
             'notes':tr('Notes','Notes'),'stat_to_replace':tr('Statistique à remplacer','Stat to replace'),
             'stat_objectif':tr('Statistique souhaitée','Target stat'),'fait':tr('Terminé','Done')})
@@ -72,7 +76,8 @@ else:
         rune_card(runes,data.index,'ui_tasks_card',actions=False)
 if not notes.empty:
     st.subheader(tr('Toutes mes tâches enregistrées','All saved tasks'))
-    st.dataframe(notes.rename(columns={'notes':tr('Notes','Notes'),'stat_to_replace':tr('Statistique à remplacer','Stat to replace'),'stat_objectif':tr('Statistique souhaitée','Target stat'),'fait':tr('Terminé','Done')}),width='stretch')
+    saved_display=pd.DataFrame([{**rune_identity(runes,rune_id),**row.to_dict()} for rune_id,row in notes.iterrows()])
+    st.dataframe(saved_display.rename(columns={'notes':tr('Notes','Notes'),'stat_to_replace':tr('Statistique à remplacer','Stat to replace'),'stat_objectif':tr('Statistique souhaitée','Target stat'),'fait':tr('Terminé','Done')}),hide_index=True,width='stretch')
     if st.button(tr('Réinitialiser toutes mes tâches','Reset all my tasks')):
         st.session_state['_confirm_reset_tasks']=True
     if st.session_state.get('_confirm_reset_tasks'):

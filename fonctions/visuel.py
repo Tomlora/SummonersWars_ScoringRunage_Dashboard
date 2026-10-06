@@ -70,7 +70,18 @@ def _register_plotly_template() -> None:
                 },
             )
         )
-    pio.templates.default = template_name
+    light_name = template_name + '_light'
+    if light_name not in pio.templates:
+        light = go.layout.Template(pio.templates[template_name])
+        light.layout.font.color = '#172536'
+        light.layout.hoverlabel.bgcolor = '#f1f5fa'
+        light.layout.hoverlabel.font.color = '#172536'
+        for axis in (light.layout.xaxis, light.layout.yaxis):
+            axis.gridcolor = 'rgba(23,37,54,0.15)'
+            axis.linecolor = 'rgba(23,37,54,0.15)'
+            axis.title.font.color = '#526277'
+            axis.tickfont.color = '#526277'
+        pio.templates[light_name] = light
 
 
 @st.cache_data(ttl="6h", show_spinner=False)
@@ -101,7 +112,7 @@ def apply_plotly_theme(
 ) -> go.Figure:
     """Apply the dashboard layout to a Plotly figure created before ``css()``."""
     updates = {
-        "template": "summoners_war_dashboard",
+        "template": "summoners_war_dashboard_light" if st.context.theme.type == 'light' else "summoners_war_dashboard",
         "showlegend": show_legend,
         "hovermode": "closest",
     }

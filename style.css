@@ -1,6 +1,6 @@
 :root {
-  --sw-background: #07111f; --sw-surface: #101f33; --sw-border: #304057;
-  --sw-text: #f4f7fb; --sw-muted: #aebed2; --sw-primary: #49a4ff;
+  --sw-background: light-dark(#ffffff, #07111f); --sw-surface: light-dark(#f1f5fa, #101f33); --sw-border: light-dark(#c6d1df, #304057);
+  --sw-text: light-dark(#172536, #f4f7fb); --sw-muted: light-dark(#526277, #aebed2); --sw-primary: light-dark(#176bb3, #49a4ff);
   --sw-gold: #e7b85c; --sw-success: #45ce91;
 }
 .sw-page-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin:0 0 1.6rem; padding:1.3rem 1.5rem; background:var(--sw-surface); border:1px solid var(--sw-border); border-radius:1rem; }

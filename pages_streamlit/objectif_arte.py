@@ -6,7 +6,6 @@ from fonctions.visuel import load_lottieurl, css
 from fonctions.artefact import dataframe_replace_to_english, dict_arte_effect_english
 from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd
 import plotly.graph_objects as go
-from streamlit_extras.add_vertical_space import add_vertical_space
 import numpy as np
 
 
@@ -246,7 +245,7 @@ def objectif():
         df_final_t['Progression'] = np.round(df_final_t[0] / df_final_t[1] * 100,2)
         df_final_t['Type'] = np.where(df_final_t['index'].isin(['REDUCTION', 'DMG ELEM']), 'ELEMENT', 'ATTRIBUT')
         
-        add_vertical_space(7)
+        st.space(196)
         st.dataframe(df_final_t[['index', 'Progression']].sort_values(by='Progression', ascending=False),
                      use_container_width=True)
 
@@ -281,7 +280,7 @@ def objectif():
         st.plotly_chart(fig)
         
     with col4:
-        add_vertical_space(7)
+        st.space(196)
         st.dataframe(df_grp[['Type', 'Progression']].sort_values(by='Progression', ascending=False),
                      use_container_width=True)
                 

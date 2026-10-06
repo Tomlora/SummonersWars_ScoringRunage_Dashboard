@@ -2,9 +2,11 @@ from collections import defaultdict
 
 import pandas as pd
 import streamlit as st
+from sqlalchemy.exc import SQLAlchemyError
 from streamlit_lottie import st_lottie
 
 from fonctions.visuel import load_lottieurl, css
+from fonctions.journey import tr
 
 try:
     # Chemin conseillé si gestion_bdd.py est dans le package fonctions/
@@ -78,7 +80,7 @@ def load_updates() -> pd.DataFrame:
     return df
 
 
-st.subheader("Mise à jour")
+st.subheader(tr('Nouveautés', 'Updates'))
 
 col1, col2, col3 = st.columns([0.4, 0.2, 0.4])
 with col2:
@@ -87,9 +89,8 @@ with col2:
 
 try:
     updates_df = load_updates()
-except Exception as exc:
-    st.error("Impossible de charger les mises à jour depuis PostgreSQL.")
-    st.exception(exc)
+except (RuntimeError, pd.errors.DatabaseError, SQLAlchemyError):
+    st.info(tr('Les nouveautés sont momentanément indisponibles. Vous pouvez continuer à utiliser le dashboard.', 'Updates are currently unavailable. You can keep using the dashboard.'))
     st.stop()
 
 if updates_df.empty:

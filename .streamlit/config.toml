@@ -9,3 +9,15 @@ backgroundColor = '#07111f'
 secondaryBackgroundColor = '#101f33'
 textColor = '#f4f7fb'
 font = 'sans serif'
+
+[theme.dark]
+primaryColor = '#49a4ff'
+backgroundColor = '#07111f'
+secondaryBackgroundColor = '#101f33'
+textColor = '#f4f7fb'
+
+[theme.light]
+primaryColor = '#176bb3'
+backgroundColor = '#ffffff'
+secondaryBackgroundColor = '#f1f5fa'
+textColor = '#172536'

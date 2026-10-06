@@ -1,7 +1,6 @@
 import pandas as pd
 import streamlit as st
 from fonctions.gestion_bdd import lire_bdd_perso
-from streamlit_extras.metric_cards import style_metric_cards
 import numpy as np
 
 from fonctions.visuel import css
@@ -52,7 +51,7 @@ def calcule_tick(speed):
     return tickspeed
 
 def spdtuning():
-    style_metric_cards(background_color='#03152A', border_color='#0083B9', border_left_color='#0083B9', border_size_px=3, box_shadow=False)
+
     
     ranks = [
         (12, 130),

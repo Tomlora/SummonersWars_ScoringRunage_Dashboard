@@ -10,8 +10,11 @@ from fonctions.journey import tr, dated, period_rows, score_labels
 from sqlalchemy import inspect, text
 
 css()
-page_header(tr('Évolution','History'),tr('Suivez votre progression sur une période commune à tous les graphiques.','Track your progress over the same period in every chart.'),icon='📈')
+page_header(tr('Évolution','History'),tr('Retrouvez vos scores au fil des imports et comparez votre progression.','Track your progress over the same period in every chart.'),icon='📈')
 user=st.session_state.id_joueur
+from fonctions.history import deduplicate_scores
+if deduplicate_scores(user):
+    st.cache_data.clear()
 scores=lire_bdd_perso('SELECT date,score_general,score_spd,score_arte,score_qual FROM sw_score WHERE id_joueur=:id',index_col=None,params={'id':user}).T
 if scores.empty:
     st.info(tr('Aucun relevé disponible.','No reports available.'))
@@ -24,7 +27,7 @@ period=st.radio(tr('Période','Period'),list(periods),index=3,format_func=period
 end=dated(scores)._date.max()
 selected=period_rows(scores,None if period=='all' else int(period),end)
 st.caption(tr('Période se terminant au dernier relevé : ','Period ending at the latest report: ')+end.strftime('%d/%m/%Y'))
-options=selected.date.tolist()
+options=list(dict.fromkeys(selected.date))
 if 'ui_history_dates' in st.session_state:
     st.session_state.ui_history_dates=[d for d in st.session_state.ui_history_dates if d in options]
 with st.expander(tr('Choisir les relevés affichés','Choose displayed reports')):
@@ -44,11 +47,11 @@ first,last=selected.iloc[0],selected.iloc[-1]
 for col,(key,label) in zip(st.columns(4),labels.items()):
     delta=float(last[key])-float(first[key]) if len(selected)>1 and comparable else None
     col.metric(label,f'{last[key]:g} pts',None if delta is None else f'{delta:+g} pts')
-st.caption(tr('Progression absolue entre ','Absolute change between ')+f'{first.date} → {last.date} · {len(selected)} '+tr('relevés','reports'))
+st.caption(tr('Évolution du score entre ','Absolute change between ')+f'{first.date} → {last.date} · {len(selected)} '+tr('relevés','reports'))
 if len(selected)<2:
     st.info(tr('Deux relevés sont nécessaires pour mesurer une progression.','Two reports are needed to measure progress.'))
 elif not comparable:
-    st.warning(tr('Méthodes de calcul différentes ou inconnues : les écarts ne sont pas calculés. Les valeurs historiques restent affichées.','Scoring methods differ or are unknown: changes are not calculated. Historical values are still displayed.'))
+    st.warning(tr('Ces relevés ne peuvent pas être comparés : leur méthode de calcul est différente ou inconnue. Vous pouvez toujours consulter leurs scores.','Scoring methods differ or are unknown: changes are not calculated. Historical values are still displayed.'))
 st.dataframe(selected.iloc[::-1].rename(columns=labels).set_index('date'),width='stretch',height='content')
 
 def plot(frame,y,color=None,dash=None,unit=None,key=None):

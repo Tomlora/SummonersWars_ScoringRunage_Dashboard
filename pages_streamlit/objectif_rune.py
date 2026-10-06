@@ -4,11 +4,9 @@ require_saved_page()
 import streamlit as st
 import pandas as pd
 from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd
-from streamlit_extras.metric_cards import style_metric_cards
 from fonctions.visuel import css
 css()
 
-style_metric_cards(background_color='#03152A', border_color='#0083B9', border_left_color='#0083B9', border_size_px=10, box_shadow=False)
 
 def download_params(id_compte):
     df_params = lire_bdd_perso(f'''SELECT * from sw_objectifs_rune WHERE id = {id_compte} ''', index_col='id').T

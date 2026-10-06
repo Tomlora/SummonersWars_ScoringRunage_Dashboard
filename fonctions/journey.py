@@ -66,7 +66,7 @@ def show_import_summary(summary):
     if summary['previous_date']:
         st.caption(tr('Comparaison au relevé du ', 'Compared with the report dated ') + summary['previous_date'])
         if not summary['deltas']:
-            st.info(tr('Méthode précédente inconnue ou différente : écarts non calculés.', 'Previous scoring method unknown or different: changes are not calculated.'))
+            st.info(tr('Le relevé précédent utilise une autre méthode de calcul, ou une méthode inconnue. Les écarts ne sont donc pas affichés.', 'Previous scoring method unknown or different: changes are not calculated.'))
     else:
         st.caption(tr('Premier relevé disponible : les prochains imports permettront de mesurer la progression.', 'First available report: future imports will show progress.'))
     if summary['changes'] is not None:
@@ -74,7 +74,7 @@ def show_import_summary(summary):
         for col,(key,label) in zip(st.columns(4), zip(('added','improved','changed','removed'), names)):
             col.metric(label, summary['changes'][key])
     else:
-        st.caption(tr('Détail des anciennes runes indisponible pour cette comparaison.', 'Previous rune details unavailable for this comparison.'))
+        st.caption(tr('Le détail des runes du relevé précédent n’est pas disponible.', 'Previous rune details unavailable for this comparison.'))
 
 
 def deletion_preview(conn, user_id, date):
