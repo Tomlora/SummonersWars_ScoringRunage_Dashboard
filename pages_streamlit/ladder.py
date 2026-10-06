@@ -45,7 +45,7 @@ def classement():
         metric=st.radio(tr('Valeur','Value'),(['mean_SCORE','max_SCORE'] if kind=='com2us' else ['sum_SCORE','max_SCORE']),horizontal=True)
         data['score']=data[metric]
     data=select_snapshots(data,'score',mode)
-    from fonctions.leaderboards import visible_players
+    from fonctions.leaderboards import visible_players, ranking_table
     data=visible_players(data,st.session_state.id_joueur,st.session_state.guildeid)
     if st.toggle(tr('Ma guilde uniquement','My guild only')):
         data=data[data.guilde_id.eq(st.session_state.guildeid)]
@@ -55,6 +55,8 @@ def classement():
     limit=st.selectbox(tr('Lignes par page','Rows per page'),[25,50,100])
     number=st.number_input('Page',1,max(1,(len(data)+limit-1)//limit),1)
     st.caption(tr('Les anciens relevés conservent leur méthode de calcul.','Older snapshots retain their original scoring method.'))
-    st.dataframe(data.iloc[(number-1)*limit:number*limit][[tr('Rang','Rank'),'joueur','guilde','score','date']],hide_index=True,width='stretch',column_config={'score':st.column_config.ProgressColumn('Score',min_value=0,max_value=max(float(data.score.max()),1))})
+    ranking_table(data.iloc[(number-1)*limit:number*limit],
+                  [tr('Rang','Rank'),'joueur','guilde','score','date'],
+                  {'score':st.column_config.NumberColumn('Score', format='%.2f' if kind in ('com2us','com2us_global') else '%.0f')})
 
 if __name__=='__main__':classement()

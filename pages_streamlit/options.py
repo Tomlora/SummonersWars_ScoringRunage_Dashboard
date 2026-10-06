@@ -1,6 +1,7 @@
 from fonctions.access import require_saved_page
 require_saved_page()
 import streamlit as st
+import pandas as pd
 from fonctions.gestion_bdd import lire_bdd_perso, supprimer_data, supprimer_data_all
 from fonctions.visuel import css, page_header
 css()
@@ -12,6 +13,7 @@ if user is None:
     st.info(tr('Analyse locale : aucun historique enregistré.','Local analysis: no saved history.'))
     st.stop()
 dates=lire_bdd_perso('SELECT DISTINCT date FROM sw_score WHERE id_joueur=:id',index_col=None,params={'id':user}).T
+dates=dates.sort_values('date', key=lambda values: pd.to_datetime(values, format='mixed', dayfirst=True, errors='coerce'), ascending=False, na_position='last')
 with st.form('delete_snapshot'):
     date=st.selectbox(tr('Relevé à supprimer','Snapshot to delete'),dates['date'].tolist())
     confirm=st.checkbox(tr('Je confirme la suppression de ce relevé.','I confirm deletion of this snapshot.'))
