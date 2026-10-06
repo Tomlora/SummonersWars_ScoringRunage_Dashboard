@@ -7,6 +7,7 @@ import streamlit as st
 
 from fonctions.compare import comparaison, comparaison_rune_graph, score_percentile
 from fonctions.visuel import css, page_header, section_header
+from fonctions.journey import tr
 
 
 css()
@@ -47,8 +48,8 @@ def _render_scope(
     )
     col_rank.metric(
         st.session_state.langue["Classement"],
-        f"#{rank}" if rank is not None else "Non-noté",
-        f"{percentile:.0f} % de scores inférieurs" if population_size else None,
+        f"#{rank}" if rank is not None else tr('Non classé','Unranked'),
+        (f"{percentile:.0f} % "+tr('de scores inférieurs','of scores are lower')) if population_size else None,
         delta_color="off",
     )
 
@@ -74,17 +75,18 @@ def _render_comparison_section(
 ):
     section_header(f"{icon} {title}", subtitle)
 
-    scope_general = "Général"
-    guild_name = st.session_state.get("guilde", "Guilde")
+    scope_general = tr('Général','Global')
+    guild_name = st.session_state.get("guilde") or tr('Ma guilde','My guild')
     selected_scope = st.segmented_control(
-        "Périmètre de comparaison",
-        options=[scope_general, guild_name],
-        default=scope_general,
-        key=f"scope_{score_column}",
+        tr('Périmètre de comparaison','Comparison scope'),
+        options=['global','guild'],
+        format_func=lambda code:scope_general if code=='global' else guild_name,
+        default='global',
+        key=f"ui_scope_{score_column}",
         label_visibility="collapsed",
     )
 
-    if selected_scope == guild_name:
+    if selected_scope == 'guild':
         size, average, best, df = guild_data
         _render_scope(
             scope_name=guild_name,
@@ -135,7 +137,7 @@ def comparaison_entre_joueurs():
 
     _render_comparison_section(
         title=f'Runes · {st.session_state["score"]:,} pts'.replace(",", " "),
-        subtitle="Situez votre compte par rapport à l’ensemble des joueurs ou à votre guilde.",
+        subtitle=tr('Situez votre compte par rapport à l’ensemble des joueurs ou à votre guilde.','Compare your account with all players or your guild.'),
         icon="◈",
         player_score=int(st.session_state["score"]),
         score_column="score_general",
@@ -145,8 +147,8 @@ def comparaison_entre_joueurs():
     )
 
     _render_comparison_section(
-        title=f'Artéfacts · {st.session_state["score_arte"]:,} pts'.replace(",", " "),
-        subtitle="Comparez la qualité globale de vos artéfacts avec les mêmes repères.",
+        title=(tr('Artéfacts','Artifacts')+f' · {st.session_state["score_arte"]:,} pts').replace(",", " "),
+        subtitle=tr('Comparez la qualité globale de vos artéfacts avec les mêmes repères.','Compare your overall artifact quality using the same benchmarks.'),
         icon="◆",
         player_score=int(st.session_state["score_arte"]),
         score_column="score_arte",
@@ -163,8 +165,8 @@ def comparaison_entre_joueurs():
 
 if st.session_state.get("submitted"):
     page_header(
-        "Comparaison",
-        "Comprenez immédiatement votre position, l’écart à la moyenne et votre percentile.",
+        tr('Comparaison','Comparison'),
+        tr('Comprenez votre position, l’écart à la moyenne et la proportion de scores inférieurs.','See your rank, the gap to the average, and the proportion of lower scores.'),
         icon="⚖️",
         eyebrow="Scoring",
     )

@@ -53,8 +53,8 @@ def test_saved_pages(engine,export,monkeypatch):
         assert not at.exception,(page,[e.message for e in at.exception])
         assert not at.error,(page,[e.value for e in at.error])
         if page=='ladder':
-            for choice in at.selectbox[0].options:
-                at.selectbox[0].set_value(choice).run()
+            for choice in ['score_general','score_spd','score_arte','score_qual','rune_set','speed_set','com2us_global','com2us']:
+                at.selectbox(key='ui_ladder_kind').set_value(choice).run()
                 assert not at.exception,(choice,[e.message for e in at.exception])
         if page=='optimisation_spd':
             at.selectbox[0].set_value('Swift').run()

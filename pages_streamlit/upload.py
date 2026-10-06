@@ -20,6 +20,8 @@ def tr(fr, en):
     return en if english else fr
 st.session_state.langue = json.loads(Path('langue/en.json' if english else 'langue/fr.json').read_text(encoding='utf-8'))
 page_header(tr('Analyser mon compte', 'Analyse my account'), tr('Importez votre export Summoners War pour identifier les améliorations utiles.', 'Import your Summoners War export to find useful upgrades.'), icon='📁')
+if st.session_state.get('_deleted_report'):
+    st.success(tr('Relevé supprimé : ','Deleted report: ')+st.session_state.pop('_deleted_report'))
 with st.expander(tr('Comment obtenir le JSON ?', 'How do I get the JSON?')):
     st.markdown(tr('Exportez votre compte avec [SW Exporter](https://github.com/Xzandro/sw-exporter), puis déposez le fichier JSON ci-dessous. Vérifiez le compte dans l’aperçu avant de lancer l’analyse.', 'Export your account with [SW Exporter](https://github.com/Xzandro/sw-exporter), then upload the JSON below. Check the account preview before analysing.'))
     st.caption(tr('Le fichier sert à calculer vos statistiques. La sauvegarde de l’historique est optionnelle. La visibilité d’un nouveau compte est privée.', 'The file is used to calculate your statistics. Saving history is optional. New accounts are private.'))
@@ -35,6 +37,9 @@ if st.session_state.get('analysis_ready'):
         st.switch_page('pages_streamlit/general.py')
     if st.session_state.get('import_notice'):
         st.caption(st.session_state.import_notice)
+    if st.session_state.get('import_summary'):
+        from fonctions.journey import show_import_summary
+        show_import_summary(st.session_state.import_summary)
 if raw is not None:
     try:
         data = validate_export(raw)
@@ -61,6 +66,8 @@ if raw is not None:
             stage = tr('Chargement des noms de monstres', 'Loading monster names')
             def report(message):
                 global stage
+                if ' / ' in message:
+                    message=message.split(' / ',1)[1 if english else 0]
                 stage = message
                 status.write(message)
             try:
@@ -72,6 +79,13 @@ if raw is not None:
                     metadata, inserted = persist_analysis(result, progress=report)
                     notice = tr('Historique sauvegardé.', 'History saved.') if inserted else tr('Ce fichier avait déjà été enregistré : aucun doublon créé.', 'This file was already saved: no duplicate created.')
                 else:
+                    from fonctions.journey import import_summary, SCORES
+                    from fonctions.snapshots import snapshot
+                    previous = None
+                    if st.session_state.get('compteid') == result['compteid'] and st.session_state.get('analysis_ready'):
+                        previous = {column:st.session_state[key] for column,key in SCORES.items()}
+                        previous.update(date=st.session_state.report_date, scoring_version=st.session_state.scoring_version, snapshot=snapshot(st.session_state))
+                    result['import_summary'] = import_summary(result, previous)
                     from datetime import datetime
                     from zoneinfo import ZoneInfo
                     metadata = dict(id_joueur=None, visibility=0, rank=0, report_date=datetime.now(ZoneInfo('Europe/Paris')).strftime('%d/%m/%Y'))

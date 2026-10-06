@@ -638,8 +638,8 @@ def _render_recommendations(view: pd.DataFrame) -> None:
     columns.append("Recommandation")
     config: dict[str, Any] = {
         "Slot": st.column_config.NumberColumn("Slot", format="%d", width="small"),
-        "Efficience": st.column_config.NumberColumn(tr("Efficience", "Efficiency"), format="%.2f"),
-        "Potentiel": st.column_config.NumberColumn(tr("Potentiel", "Potential"), format="%.2f"),
+        "Efficience": st.column_config.NumberColumn(tr("Efficience (%)", "Efficiency (%)"), format="%.2f"),
+        "Potentiel": st.column_config.NumberColumn(tr("Potentiel (%)", "Potential (%)"), format="%.2f"),
         "Gain potentiel": st.column_config.ProgressColumn(
             tr("Gain potentiel", "Potential gain"),
             format="+%.2f",
@@ -895,15 +895,9 @@ def preset_tools():
 
 def rune_details(data_class, filtered):
     with st.expander(_tr("Fiche d’une rune", "Rune details")):
-        selected=st.selectbox(_tr("Identifiant de rune", "Rune ID"),filtered['Id rune'].astype(str),key='rune_details_id')
-        row=data_class.data.loc[int(selected)]
-        st.code(str(selected),language=None)
-        st.caption(f"{row['rune_set']} · Slot {row['rune_slot']} · {row['rune_equiped']}")
-        st.write(f"{_tr('Principale', 'Main')}: {data_class.property.get(row['main_type'], row['main_type'])} +{row['main_value']}")
-        details=[]
-        for sub in ('first_sub','second_sub','third_sub','fourth_sub'):
-            details.append({'Stat':data_class.property.get(row[sub],row[sub]),'Base':row[f'{sub}_value'],_tr('Meule','Grind'):row[f'{sub}_grinded_value'],'Total':row[f'{sub}_value_total']})
-        st.dataframe(pd.DataFrame(details),hide_index=True,width='stretch')
+        from fonctions.rune_card import rune_card
+        rune_card(data_class, filtered['Id rune'], 'ui_optimisation_rune',
+                  dict(zip(filtered['Id rune'].astype(int),filtered['Gain potentiel'])))
 
 
 if __name__ == "__main__":

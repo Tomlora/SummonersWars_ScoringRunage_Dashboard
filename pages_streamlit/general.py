@@ -14,7 +14,7 @@ def general_page():
     page_header(st.session_state.pseudo,st.session_state.guilde,icon='📚')
     cols=st.columns(4)
     for col,key,label in zip(cols,['score','score_spd','score_arte','score_qual'],[tr('Score runes','Rune score'),tr('Score vitesse','Speed score'),tr('Score artéfacts','Artifact score'),tr('Score qualité','Quality score')]):
-        col.metric(label,int(st.session_state[key]))
+        col.metric(label,f"{int(st.session_state[key]):,} pts".replace(',', ' '))
     st.caption(f"{st.session_state.report_date} · {st.session_state.scoring_version} · {st.session_state.analysis_seconds:.2f} s")
     with st.expander(tr('Comprendre les scores','Understand the scores')):
         st.write(tr('Runes : 1, 2 ou 3 points pour les paliers [100,110[, [110,120[ et ≥120, multipliés par le coefficient du set. Le gain potentiel est une limite théorique, pas une promesse de résultat.', 'Runes: 1, 2 or 3 points for tiers [100,110), [110,120) and ≥120, multiplied by the set coefficient. Potential gain is a theoretical limit, not a guaranteed outcome.'))
@@ -23,8 +23,9 @@ def general_page():
     choice=st.segmented_control(tr('Analyse','Analysis'),['Scores',tr('Statistiques','Statistics'),tr('Monstres','Monsters')],default='Scores',key='overview_view')
     if choice=='Scores':
         st.dataframe(st.session_state.tcd.drop(columns=['id','date'],errors='ignore'),width='stretch')
-        detail=st.selectbox(tr('Détail','Detail'),['Runes','Speed','Artefacts','Qualité','Com2us'])
-        key={'Runes':'tcd_detail_score','Speed':'tcd_spd','Artefacts':'tcd_arte','Qualité':'df_scoring_quality','Com2us':'df_scoring_com2us_summary'}[detail]
+        names={'runes':'Runes','speed':tr('Vitesse','Speed'),'artifacts':tr('Artéfacts','Artifacts'),'quality':tr('Qualité','Quality'),'com2us':'Com2us'}
+        detail=st.selectbox(tr('Détail','Detail'),list(names),format_func=names.get,key='ui_overview_detail')
+        key={'runes':'tcd_detail_score','speed':'tcd_spd','artifacts':'tcd_arte','quality':'df_scoring_quality','com2us':'df_scoring_com2us_summary'}[detail]
         st.dataframe(st.session_state[key].rename(columns=str),width='stretch')
     elif choice==tr('Statistiques','Statistics'):
         avg=st.session_state.data_avg

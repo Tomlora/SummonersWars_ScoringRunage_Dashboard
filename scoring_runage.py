@@ -39,7 +39,7 @@ if ready:
         st.session_state.saved_filter_presets=deepcopy(preferences['presets'])
     # Keep widget values when Streamlit cleans up widgets from inactive pages.
     for key in list(st.session_state):
-        if key.startswith(PREFIXES):
+        if key.startswith((*PREFIXES, 'ui_', 'evol_')):
             st.session_state[key]=st.session_state[key]
 def page(file,fr,en,icon): return st.Page('pages_streamlit/'+file+'.py',title=tr(fr,en),icon=icon)
 pages={tr('Accueil','Home'):[page('upload','Importer un JSON','Import JSON','📁')]}

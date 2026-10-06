@@ -79,6 +79,43 @@ Référence : [authentification OIDC native de Streamlit](https://docs.streamlit
   joueur ni ses informations de connexion. Réimporter le même compte conserve les
   préférences de session ; changer de compte isole les préférences.
 
+## Parcours et repères
+
+- Après l'import, le bilan affiche les quatre scores en points, leur écart au
+  dernier relevé du même compte et les runes nouvelles/améliorées/modifiées/absentes
+  lorsque le détail précédent existe. La comparaison est préparée avant le
+  remplacement d'une journée. Une méthode de calcul inconnue ou différente ne
+  produit pas de delta. En mode local, le précédent import de la session sert de
+  référence. Le statut confirme si l'historique a été enregistré ou si le fichier
+  existait déjà ; « Ouvrir les résultats » conduit à la vue générale.
+- Les classements proposent « Me retrouver », le rang du compte et l'écart au
+  rang strictement supérieur, même si le compte n'est pas sur la page affichée.
+  La recherche ne porte que sur les noms autorisés à l'affichage et conserve les
+  rangs du périmètre choisi. Les ex æquo partagent le même rang.
+- Les indicateurs, filtres de guilde, pages, recherches et périodes sont conservés
+  pendant la navigation dans la session, avec des codes indépendants de la langue.
+  Ils sont réinitialisés lors d'un nouvel import. Le résultat d'une recherche de
+  build reste consultable ; après changement de critères ou de verrous, il faut
+  relancer la recherche. Les préférences enregistrées décrites plus haut restent
+  distinctes de ces choix temporaires d'affichage.
+- Une fiche de rune commune à Optimisation, Planification et Mes tâches présente
+  l'équipement, les statistiques et le gain maximal en points d'efficience. Elle
+  permet de protéger une rune ou d'ouvrir sa tâche. Les tâches filtrées se
+  sauvegardent sans effacer les tâches masquées ; une erreur annule l'ensemble de
+  cette sauvegarde. Les anciens champs `note` sont repris lors de la mise à niveau
+  de la table de tâches, au premier enregistrement.
+- Évolution propose 30/90/365 jours ou tout l'historique, jusqu'au dernier relevé
+  disponible (la date de fin est affichée). La sélection s'applique aux scores,
+  paliers et détails par set. La progression absolue va du premier au dernier
+  relevé de la sélection ; elle nécessite deux relevés de méthode connue identique.
+- Mes données affiche les scores et le nombre d'imports détaillés avant de
+  supprimer une journée entière. Changer de date renouvelle la confirmation.
+  La liste est immédiatement actualisée après suppression d'un ancien relevé.
+  Supprimer le relevé actuellement analysé ramène à l'import.
+- Les libellés des parcours ci-dessus sont disponibles en français et anglais.
+  Les scores sont des points ; les efficiences sont des pourcentages et leurs
+  gains des points d'efficience. Une valeur indisponible n'est pas assimilée à zéro.
+
 ## Conservation et suppression
 
 `sw_rune_snapshots` conserve uniquement les statistiques normalisées de runes et leurs

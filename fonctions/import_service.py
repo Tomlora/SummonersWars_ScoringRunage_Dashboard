@@ -171,9 +171,12 @@ def persist_analysis(result, date=None, progress=lambda message: None):
                 requete_perso_bdd('INSERT INTO sw_user(joueur,visibility,guilde_id,joueur_id) VALUES (:name,0,:guild,:account)', {'name':result['pseudo'],'guild':result['guildeid'],'account':result['compteid']})
                 user = get_user(result['compteid'], type='id')
         user_id, visibility, _, rank = user
+        from fonctions.journey import previous_report, import_summary
+        summary = import_summary(result, previous_report(conn, user_id))
         params = {'id': int(user_id), 'sha': result['import_hash'], 'version': SCORING_VERSION}
         previous = conn.execute(text('SELECT date FROM sw_imports WHERE id_joueur=:id AND payload_sha=:sha AND scoring_version=:version'), params).scalar()
         metadata = dict(id_joueur=user_id, visibility=visibility, rank=rank, report_date=previous or date)
+        result['import_summary'] = summary
         if previous:
             from fonctions.snapshots import save_snapshot
             progress('Sauvegarde du détail des runes / Saving rune details')

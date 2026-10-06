@@ -54,6 +54,9 @@ with stock_tab:
               tr('Gain max.','Max gain'):round(row.max_gain,2)} for row in plan.itertuples()])
         st.dataframe(shown,hide_index=True,width='stretch')
         st.download_button(tr('Exporter le plan','Export plan'),shown.to_csv(index=False).encode('utf-8-sig'),'grind-plan.csv','text/csv',on_click='ignore')
+        with st.expander(tr('Fiche d’une rune','Rune details')):
+            from fonctions.rune_card import rune_card
+            rune_card(runes,plan.id_rune,'ui_plan_rune',plan.groupby('id_rune').max_gain.sum().to_dict())
     if remaining:
         import pandas as pd
         with st.expander(tr('Stock restant après réservation','Stock after reservation')):
@@ -67,21 +70,32 @@ with build_tab:
     speed=a.number_input(tr('SPD minimale des runes','Minimum rune SPD'),min_value=0,max_value=400,step=1,key='plan_speed')
     accuracy=b.number_input(tr('ACC minimale des runes (%)','Minimum rune ACC (%)'),min_value=0,max_value=300,step=1,key='plan_accuracy')
     slot2=st.checkbox(tr('Principale SPD en slot 2','SPD main in slot 2'),value=True,key='plan_slot2')
+    signature=(st.session_state.import_hash,primary,secondary,speed,accuracy,slot2,tuple(sorted(locks)))
     if st.button(tr('Rechercher le build','Search build'),type='primary'):
+        st.session_state.pop('_build_result',None)
         with st.spinner(tr('Recherche…','Searching…')):
             try:
                 build=constrained_build(runes.data_set,primary,None if secondary=='any' else secondary,speed,accuracy,locks,slot2)
             except SearchLimit as error:
                 st.warning(str(error))
             else:
-                if build.empty:
-                    st.info(tr('Aucun build ne satisfait ces critères et verrous.', 'No build satisfies these criteria and locks.'))
-                else:
-                    st.dataframe(build.assign(id_rune=build.id_rune.astype(str)).rename(columns={'id_rune':'Rune','rune_slot':'Slot','rune_set':'Set','spd':'SPD','acc':'ACC (%)'}),hide_index=True,width='stretch')
-                    st.success(f"SPD +{build.spd.sum():g} · ACC +{build.acc.sum():g}%")
+                st.session_state['_build_result']=(signature,build)
+    cached=st.session_state.get('_build_result')
+    if cached and cached[0] != signature:
+        st.info(tr('Les critères ou les verrous ont changé. Relancez la recherche pour actualiser le build.', 'Criteria or locks changed. Run the search again to update the build.'))
+    elif cached:
+        build=cached[1]
+        if build.empty:
+            st.info(tr('Aucun build ne satisfait ces critères et verrous.', 'No build satisfies these criteria and locks.'))
+        else:
+            st.dataframe(build.assign(id_rune=build.id_rune.astype(str)).rename(columns={'id_rune':'Rune','rune_slot':'Slot','rune_set':'Set','spd':'SPD','acc':'ACC (%)'}),hide_index=True,width='stretch')
+            st.success(f"SPD +{build.spd.sum():g} · ACC +{build.acc.sum():g}%")
+            with st.expander(tr('Examiner les runes du build','Inspect build runes')):
+                from fonctions.rune_card import rune_card
+                rune_card(runes,build.id_rune,'ui_build_rune')
 
 with prefs_tab:
-    st.caption(tr('Enregistrez les filtres, colonnes, critères et verrous. Les objectifs restent enregistrés depuis leurs pages. Sans compte connecté, exportez les préférences pour les retrouver plus tard.', 'Save filters, columns, criteria and locks. Goals remain saved from their own pages. Without a connected account, export preferences to restore them later.'))
+    st.caption(tr('Enregistrez les filtres, colonnes, critères et verrous. Les objectifs restent enregistrés depuis leurs pages. Sans historique enregistré, exportez les préférences pour les retrouver plus tard.', 'Save filters, columns, criteria and locks. Goals remain saved from their own pages. Without saved history, export preferences to restore them later.'))
     if st.button(tr('Enregistrer mes préférences','Save my preferences')):
         save_current()
         st.success(tr('Préférences enregistrées.' if user_id else 'Préférences prêtes à exporter.', 'Preferences saved.' if user_id else 'Preferences ready to export.'))
