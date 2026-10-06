@@ -43,7 +43,6 @@ if ready:
             st.session_state[key]=st.session_state[key]
 def page(file,fr,en,icon): return st.Page('pages_streamlit/'+file+'.py',title=tr(fr,en),icon=icon)
 pages={tr('Accueil','Home'):[page('upload','Importer un JSON','Import JSON','📁')]}
-pages[tr('Calculateurs','Calculators')]=[page('calculator','Efficience des runes','Rune efficiency','🔢'),page('calculator_arte','Efficience des artéfacts','Artifact efficiency','💎'),page('dmg_add','Dégâts additionnels','Additional damage','💥'),page('use_arte','Utilisation des artéfacts','Artifact usage','🧠')]
 if ready:
     pages[tr('Mon compte','My account')]=[page('general','Vue générale','Overview','📚')]
     pages[tr('Runes','Runes')]=[page('optimisation','Optimisation','Optimisation','🔍'),page('stats_runes','Statistiques','Statistics','📊'),page('upgrade_runes','Améliorations','Upgrades','⬆️')]
@@ -58,4 +57,5 @@ if ready:
         pages['Live']=[page('donjons','Donjons','Dungeons','🏯'),page('raid','Raid','Raid','🐲')]
         pages[tr('Paramètres','Settings')]=[page('visibility','Visibilité','Visibility','👀'),page('options','Mes données','My data','📱'),page('update','Nouveautés','Updates','🔈')]
     st.sidebar.caption(f"{st.session_state.pseudo} · {st.session_state.get('report_date','')}\n\n{tr('Calcul','Scoring')} {st.session_state.get('scoring_version','')}")
-st.navigation(pages,position='sidebar',expanded=False).run()
+pages[tr('Calculateurs','Calculators')]=[page('calculator','Efficience des runes','Rune efficiency','🔢'),page('calculator_arte','Efficience des artéfacts','Artifact efficiency','💎'),page('dmg_add','Dégâts additionnels','Additional damage','💥'),page('use_arte','Utilisation des artéfacts','Artifact usage','🧠')]
+st.navigation(pages,position='sidebar',expanded=True).run()

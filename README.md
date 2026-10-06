@@ -46,4 +46,4 @@ La suite couvre calculs, recherche exhaustive de vitesse, conservation des ident
 
 ## Planification et comptes
 
-La comparaison détaillée des imports, le stock limité de meules, les verrous et les préférences persistantes sont décrits dans [le guide de configuration et d’utilisation](docs/accounts-and-planning.md). Sur un déploiement partagé, configurer OIDC et les rattachements administrateur avant la mise à jour : les écritures anonymes sont désormais refusées. L’analyse locale reste disponible.
+La comparaison détaillée des imports, le stock limité de meules, les verrous et les préférences persistantes sont décrits dans [le guide de configuration et d’utilisation](docs/accounts-and-planning.md). Par défaut, un export valide permet de sauvegarder comme auparavant, sans connexion OIDC. Les pages d’historique et de classement sont accessibles après sauvegarde, et les calculateurs figurent en dernier dans le menu. Le mode OIDC strict reste une option explicite (`access.require_oidc = true`), désactivée par défaut.

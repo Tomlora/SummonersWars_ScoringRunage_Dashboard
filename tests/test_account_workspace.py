@@ -61,13 +61,13 @@ def test_spoofing_account_id_does_not_grant_access(engine,export):
 def test_missing_identity_wrong_issuer_expiry_and_revocation(monkeypatch):
     class User(dict): pass
     monkeypatch.setattr(access.st,'user',User(is_logged_in=True,iss='issuer',sub='subject',exp=10**12))
-    monkeypatch.setattr(access,'access_config',lambda:{'accounts':[dict(wizard_id=1,issuer='issuer',subject='subject')]})
+    monkeypatch.setattr(access,'access_config',lambda:{'require_oidc':True,'accounts':[dict(wizard_id=1,issuer='issuer',subject='subject')]})
     assert access.can_access(1)
     access.st.user['iss']='other';assert not access.can_access(1)
     access.st.user['iss']='issuer';access.st.user['exp']=0;assert not access.can_access(1)
     access.st.user['exp']=10**12;access.st.user['is_logged_in']=False;assert not access.can_access(1)
     access.st.user['is_logged_in']=True
-    monkeypatch.setattr(access,'access_config',lambda:{})
+    monkeypatch.setattr(access,'access_config',lambda:{'require_oidc':True})
     assert not access.can_access(1)
 
 

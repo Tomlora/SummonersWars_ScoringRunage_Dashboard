@@ -8,6 +8,9 @@ from fonctions import gestion_bdd as db
 ROOT=Path(__file__).resolve().parents[1]
 
 def test_saved_pages(engine,export,monkeypatch):
+    from fonctions import access
+    monkeypatch.setattr(access,'access_config',lambda:{})
+    monkeypatch.setattr(access,'identity',lambda:None)
     monkeypatch.chdir(ROOT)
     monkeypatch.setenv('API_SQL','test-engine-injected')
     with engine.begin() as c:
@@ -34,7 +37,17 @@ def test_saved_pages(engine,export,monkeypatch):
     at=AppTest.from_file(str(ROOT/'scoring_runage.py'),default_timeout=30)
     for key,value in state.items():at.session_state[key]=value
     at.session_state['translations_selected']='Français'
+    import streamlit as st
+    navigation=st.navigation
+    menus=[]
+    def capture_menu(pages,**kwargs):
+        menus.append((list(pages),kwargs))
+        return navigation(pages,**kwargs)
+    monkeypatch.setattr(st,'navigation',capture_menu)
     at.run()
+    assert menus[-1][0][-1]=='Calculateurs'
+    assert 'Classements' in menus[-1][0]
+    assert menus[-1][1]['expanded'] is True
     for page in ['evolution','comparaison','ladder','ladder_value','ladder_arte','ladder_others','objectif_rune','objectif_arte','build_manager','optimisation_spd','options','visibility','planning','import_changes']:
         at.switch_page('pages_streamlit/'+page+'.py').run()
         assert not at.exception,(page,[e.message for e in at.exception])

@@ -162,9 +162,14 @@ def persist_analysis(result, date=None):
         try:
             user = get_user(result['compteid'], type='id')
         except IndexError:
-            # A name is not proof of ownership of a legacy account.
-            requete_perso_bdd('INSERT INTO sw_user(joueur,visibility,guilde_id,joueur_id) VALUES (:name,0,:guild,:account)', {'name':result['pseudo'],'guild':result['guildeid'],'account':result['compteid']})
-            user = get_user(result['compteid'], type='id')
+            from fonctions.access import oidc_required
+            try:
+                if oidc_required():
+                    raise IndexError('Strict account binding')
+                user = get_user(result['pseudo'], id_compte=result['compteid'])
+            except IndexError:
+                requete_perso_bdd('INSERT INTO sw_user(joueur,visibility,guilde_id,joueur_id) VALUES (:name,0,:guild,:account)', {'name':result['pseudo'],'guild':result['guildeid'],'account':result['compteid']})
+                user = get_user(result['compteid'], type='id')
         user_id, visibility, _, rank = user
         params = {'id': int(user_id), 'sha': result['import_hash'], 'version': SCORING_VERSION}
         previous = conn.execute(text('SELECT date FROM sw_imports WHERE id_joueur=:id AND payload_sha=:sha AND scoring_version=:version'), params).scalar()

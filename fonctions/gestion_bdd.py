@@ -153,7 +153,10 @@ def get_user(joueur, type='name_user', id_compte=0):
         if row is None or (type == 'name_user' and id_compte and row['joueur_id'] not in (0, id_compte)):
             raise IndexError('Unknown account')
         if row['joueur_id'] == 0:
-            raise IndexError('Legacy account needs administrator binding')
+            from fonctions.access import oidc_required
+            if oidc_required():
+                raise IndexError('Legacy account needs administrator binding')
+            conn.execute(text('UPDATE sw_user SET joueur_id=:account WHERE id=:id'), {'account':id_compte,'id':row['id']})
         return row['id'], row['visibility'], row['guilde_id'], row['rank']
 
 

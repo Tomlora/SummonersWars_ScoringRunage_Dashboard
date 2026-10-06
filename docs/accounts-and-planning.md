@@ -2,43 +2,46 @@
 
 ## Avant de déployer
 
-Cette version ferme les accès persistants anonymes. Sans configuration OIDC et sans
-rattachement administrateur, l'analyse locale reste disponible, mais aucun import
-ne peut lire ou modifier l'historique d'un compte. Préparer la configuration avant
-de remplacer l'application partagée.
+Le fonctionnement historique est conservé par défaut : avec `API_SQL` configuré,
+l'import d'un export valide propose la sauvegarde activée, sans connexion OIDC ni
+rattachement administrateur. Le compte est reconnu par son identifiant dans l'export ;
+sa propriété n'est donc pas certifiée. Une ancienne ligne dont `joueur_id=0` peut être
+rattachée par pseudo comme auparavant, sans écraser l'identifiant d'un autre compte.
 
-1. Installer `requirements.txt` (inclut `streamlit[auth]`) et sauvegarder la base.
-2. Appliquer les migrations `20261005_import_manifest.sql` puis
-   `20261006_workspace_snapshots.sql` dans le schéma `sw`. Les tables historiques et
-   référentiels existants restent nécessaires ; ces migrations ne les recréent pas.
-3. Enregistrer une application chez le fournisseur OIDC, avec l'URL exacte
-   `https://votre-domaine/oauth2callback`. Copier `.streamlit/secrets.example.toml`
-   vers le fichier secret du serveur et remplacer toutes les valeurs d'exemple.
-   Utiliser HTTPS, un secret de cookie aléatoire, et ne pas versionner ce fichier.
-4. Après vérification indépendante de la propriété du compte de jeu, ajouter un
-   bloc `[[access.accounts]]` associant son `wizard_id` au couple exact `iss`/`sub`
-   de l'identité vérifiée par le fournisseur. Ne pas prendre ces valeurs depuis un
-   export, un nom de joueur ou une adresse email fournie librement. Plusieurs
-   comptes peuvent être rattachés à la même identité par plusieurs blocs.
-5. Vérifier les anciennes lignes `sw_user` dont `joueur_id=0`, ainsi que les doublons
-   de `joueur_id`. Après contrôle administratif, renseigner l'identifiant externe
-   sur la ligne historique correcte. L'application ne récupère plus automatiquement
-   une ancienne ligne en faisant correspondre uniquement le pseudo.
-6. Tester une connexion autorisée, une autre identité non autorisée, la déconnexion,
-   puis le retrait d'un rattachement. Recharger les secrets/redémarrer les instances
-   après leur modification ; le prochain rerun réévalue les droits et efface l'état
-   privé si l'accès a été retiré. Les données déjà affichées dans un navigateur ne
-   peuvent pas être rappelées à distance.
+Installer `requirements.txt` et appliquer les migrations `20261005_import_manifest.sql`
+puis `20261006_workspace_snapshots.sql` dans le schéma `sw`. Les tables historiques et
+référentiels existants restent nécessaires. Les sauvegardes restent atomiques et
+idempotentes. Après une sauvegarde, Évolution, Comparaison, les classements, les objectifs
+et les autres pages de compte sont disponibles. Le menu est déplié, avec Calculateurs
+en dernière section. Réimporter le JSON après cette mise à jour pour remplacer une
+ancienne analyse locale qui n'avait pas pu être enregistrée.
 
-L'identité provient uniquement de `st.user`, jamais de `session_state` ou du JSON.
-L'expiration du jeton est vérifiée lorsqu'elle est exposée par le fournisseur.
-Les services d'import, suppression, préférences et instantanés vérifient aussi les
-droits côté serveur. Les pages privées vérifient l'accès avant lecture, y compris
-avant les lectures mises en cache. Les classements conservent leurs règles de
-visibilité existantes.
+Le référentiel des monstres est chargé dès qu'une base est configurée, même si la
+sauvegarde est décochée. Le mode de démonstration ne consulte jamais la base. Sans
+référentiel, les identifiants restent le recours pour les noms inconnus.
 
-Le flux réel avec votre fournisseur et vos secrets doit être validé au déploiement.
-Les tests automatisés utilisent des identités contrôlées, sans appeler un fournisseur.
+### OIDC strict : option désactivée par défaut
+
+Aucun fichier de secrets OIDC n'est nécessaire pour le fonctionnement précédent.
+La présence d'une configuration OIDC ou de rattachements existants n'active pas le
+contrôle strict. Pour l'activer volontairement :
+
+1. Définir explicitement `[access] require_oidc = true` dans les secrets du serveur.
+2. Configurer un fournisseur OIDC et l'URL `https://votre-domaine/oauth2callback`, à
+   partir de `.streamlit/secrets.example.toml`. Utiliser HTTPS et remplacer les
+   valeurs d'exemple ; ne jamais versionner les vrais secrets.
+3. Après vérification indépendante de la propriété du compte de jeu, ajouter un bloc
+   `[[access.accounts]]` liant son `wizard_id` au couple exact `iss`/`sub` de l'identité.
+4. En mode strict, les anciennes lignes `joueur_id=0` doivent être rattachées par
+   l'administrateur : la correspondance de pseudo automatique est désactivée.
+5. Valider connexion, déconnexion et révocation avec le fournisseur réel. Recharger
+   les secrets/redémarrer les instances après modification. Le prochain rerun
+   réévalue les droits ; les données déjà affichées ne peuvent pas être rappelées.
+
+En mode strict uniquement, les écritures et pages privées exigent une identité
+vérifiée et un rattachement serveur. L'expiration du jeton est vérifiée lorsqu'elle
+est exposée. Les tests utilisent des identités contrôlées, sans appeler de fournisseur.
+Les règles de visibilité des classements sont conservées dans les deux modes.
 Référence : [authentification OIDC native de Streamlit](https://docs.streamlit.io/develop/concepts/connections/authentication).
 
 ## Utilisation
@@ -69,7 +72,7 @@ Référence : [authentification OIDC native de Streamlit](https://docs.streamlit
   admissibles. Si sa limite de 100 000 états est atteinte, elle le signale sans
   conclure qu'aucun build n'existe. Restreindre le set secondaire réduit la recherche.
 - **Préférences** : enregistrer pour conserver filtres, colonnes, critères et verrous
-  sur le compte autorisé, après fermeture du navigateur. Les filtres nommés sont
+  sur le compte importé, après fermeture du navigateur. Les filtres nommés sont
   également persistants. Les actions/priorités utilisent des codes indépendants de
   la langue. Les objectifs se sauvegardent sur leurs propres pages. En mode local,
   exporter puis restaurer le JSON de préférences ; il ne contient pas l'export du
@@ -88,6 +91,6 @@ compte supprime aussi ses préférences/verrous. Aucun effacement automatique pa
 n'est effectué : surveiller le volume et appliquer la politique de conservation du
 déploiement.
 
-Les préférences d'un compte sont partagées entre ses sessions autorisées : la dernière
+Les préférences d'un compte sont partagées entre ses sessions : la dernière
 sauvegarde remplace la précédente. Après toute modification dans le jeu, refaire un
 export pour recalculer stock et verrous sur un inventaire à jour.

@@ -1,6 +1,7 @@
-"""Server-side OIDC identity and operator-managed game-account grants.
+"""Legacy export-based access by default; optional operator-enabled OIDC.
 
-No identity or grant is accepted from the uploaded JSON or session_state.
+Legacy mode trusts the game-account ID in the export. In optional strict mode,
+OIDC identity and grants come only from Streamlit and server-side secrets.
 """
 import time
 import streamlit as st
@@ -29,7 +30,15 @@ def identity():
     return (issuer, subject) if issuer and subject else None
 
 
+def oidc_required():
+    return access_config().get('require_oidc', False) is True
+
+
 def can_access(wizard_id):
+    if not oidc_required():
+        # Historical behavior: a valid game export identifies the account.
+        # This is deliberately not a certification of account ownership.
+        return isinstance(wizard_id, int) and not isinstance(wizard_id, bool) and wizard_id > 0
     who = identity()
     if who is None:
         return False
@@ -64,6 +73,8 @@ def require_saved_page():
 
 
 def login_panel():
+    if not oidc_required():
+        return
     try:
         configured = bool(st.secrets.get('auth', {}).get('server_metadata_url'))
     except (FileNotFoundError, KeyError):

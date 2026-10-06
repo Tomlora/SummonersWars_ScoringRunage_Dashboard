@@ -57,7 +57,8 @@ if raw is not None:
     if st.button(tr('Analyser ce fichier', 'Analyse this file'), key='upload_submit', type='primary'):
         with st.status(tr('Analyse en cours…', 'Analysing…'), expanded=True) as status:
             try:
-                reference = lire_bdd('sw_ref_monsters').T if configured and not use_demo and save else pd.DataFrame()
+                # Names are reference data, independent of saving or account authentication.
+                reference = lire_bdd('sw_ref_monsters').T if configured and not use_demo else pd.DataFrame()
                 result = analyse_export(data, reference, progress=status.write)
                 if save and configured and not use_demo:
                     status.write(tr('Sauvegarde de l’historique', 'Saving history'))

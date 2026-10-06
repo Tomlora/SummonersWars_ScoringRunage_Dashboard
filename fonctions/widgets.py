@@ -2,6 +2,10 @@
 import streamlit as st
 
 def selectbox(label, options, **kwargs):
+    # Compatibility with callers of the former optional-selector component.
+    empty_label = kwargs.pop('no_selection_label', None)
+    if empty_label is not None:
+        kwargs.setdefault('placeholder', empty_label)
     kwargs.setdefault('index', None)
     return st.selectbox(label, options, **kwargs)
 

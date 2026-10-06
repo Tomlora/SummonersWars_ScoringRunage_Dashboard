@@ -71,7 +71,7 @@ df_where_to_use = charger_data_artefact()
 
 tab1, tab2 = st.tabs([st.session_state.langue['search_artefact'], st.session_state.langue['search_monster']])
 
-stats = df_where_to_use.columns.drop(['Family', 'Element', 'Awakened', 'Attribute', 'Preferred stats', 'Include', 'name', 'url', 'natural_stars'])
+stats = df_where_to_use.columns.drop(['Family', 'Element', 'Awakened', 'Attribute', 'Preferred stats', 'Stats préférées', 'Include', 'name', 'url', 'natural_stars'])
 
 with tab1:
     col1, col2, col3, col4 = st.columns(4)
