@@ -20,6 +20,7 @@ def tr(fr, en):
     return en if english else fr
 st.session_state.langue = json.loads(Path('langue/en.json' if english else 'langue/fr.json').read_text(encoding='utf-8'))
 page_header(tr('Analyser mon compte', 'Analyse my account'), tr('Importez votre export Summoners War pour identifier les améliorations utiles.', 'Import your Summoners War export to find useful upgrades.'), icon='📁')
+community_stats = st.empty()
 if st.session_state.get('_deleted_report'):
     st.success(tr('Relevé supprimé : ','Deleted report: ')+st.session_state.pop('_deleted_report'))
 with st.expander(tr('Comment obtenir le JSON ?', 'How do I get the JSON?')):
@@ -30,6 +31,18 @@ with st.expander(tr('Comment obtenir le JSON ?', 'How do I get the JSON?')):
 
 uploaded = st.file_uploader(tr('Export JSON', 'JSON export'), type=['json'], key='upload_file')
 use_demo = st.checkbox(tr('Essayer avec le compte fictif', 'Try the fictional account'), key='demo_mode')
+if environ.get('API_SQL') and not use_demo:
+    from fonctions.community import community_counts
+    try:
+        nb_user, nb_guilde, nb_score, heure = community_counts()
+    except (SQLAlchemyError, pd.errors.DatabaseError, ValueError, KeyError, IndexError, RuntimeError):
+        community_stats.caption(tr('Statistiques de la communauté temporairement indisponibles.', 'Community statistics temporarily unavailable.'))
+    else:
+        community_stats.markdown(
+            f':blue[{heure}] : :green[{nb_user}] {st.session_state.langue["utilisateurs"]} | '
+            f':violet[{nb_guilde}] {st.session_state.langue["guildes"]} | '
+            f':orange[{nb_score}] {st.session_state.langue["scores"]}'
+        )
 raw = demo if use_demo else uploaded.getvalue() if uploaded is not None else None
 if st.session_state.get('analysis_ready'):
     st.success(tr('Dernière analyse disponible : ', 'Last analysis available: ') + st.session_state.pseudo)
