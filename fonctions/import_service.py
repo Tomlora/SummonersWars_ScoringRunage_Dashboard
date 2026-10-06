@@ -150,7 +150,7 @@ def analyse_export(data, reference, progress=lambda message: None):
     return result
 
 
-def persist_analysis(result, date=None):
+def persist_analysis(result, date=None, progress=lambda message: None):
     from fonctions.access import require_account
     require_account(result['compteid'])
     date = date or datetime.now(ZoneInfo('Europe/Paris')).strftime('%d/%m/%Y')
@@ -176,9 +176,11 @@ def persist_analysis(result, date=None):
         metadata = dict(id_joueur=user_id, visibility=visibility, rank=rank, report_date=previous or date)
         if previous:
             from fonctions.snapshots import save_snapshot
+            progress('Sauvegarde du détail des runes / Saving rune details')
             save_snapshot(conn,user_id,result,previous)
             return metadata, False
         # One complete snapshot per account/day, preserving earlier days.
+        progress('Sauvegarde des scores / Saving scores')
         supprimer_data(user_id, date, keep_rune_snapshots=True)
         def save(frame, table, index=True, latest=False):
             data = frame.copy()
@@ -225,7 +227,9 @@ def persist_analysis(result, date=None):
         requete_perso_bdd('UPDATE sw_user SET lang=:lang WHERE id=:id', {'id':user_id,'lang':result['lang']})
         conn.execute(text('INSERT INTO sw_imports(id_joueur,payload_sha,scoring_version,date) VALUES (:id,:sha,:version,:date)'), {**params,'date':date})
         from fonctions.snapshots import save_snapshot
+        progress('Sauvegarde du détail des runes / Saving rune details')
         save_snapshot(conn, user_id, result, date)
+        progress('Validation de la transaction / Committing transaction')
     return metadata, True
 
 

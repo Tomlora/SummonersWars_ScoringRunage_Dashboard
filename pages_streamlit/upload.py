@@ -1,5 +1,7 @@
 import json
 import logging
+import traceback
+from uuid import uuid4
 from pathlib import Path
 from os import environ
 
@@ -56,28 +58,42 @@ if raw is not None:
         st.caption(tr('Mode local : l’analyse fonctionne sans base de données.', 'Local mode: analysis works without a database.'))
     if st.button(tr('Analyser ce fichier', 'Analyse this file'), key='upload_submit', type='primary'):
         with st.status(tr('Analyse en cours…', 'Analysing…'), expanded=True) as status:
+            stage = tr('Chargement des noms de monstres', 'Loading monster names')
+            def report(message):
+                global stage
+                stage = message
+                status.write(message)
             try:
                 # Names are reference data, independent of saving or account authentication.
                 reference = lire_bdd('sw_ref_monsters').T if configured and not use_demo else pd.DataFrame()
-                result = analyse_export(data, reference, progress=status.write)
+                result = analyse_export(data, reference, progress=report)
                 if save and configured and not use_demo:
-                    status.write(tr('Sauvegarde de l’historique', 'Saving history'))
-                    metadata, inserted = persist_analysis(result)
+                    report(tr('Sauvegarde de l’historique', 'Saving history'))
+                    metadata, inserted = persist_analysis(result, progress=report)
                     notice = tr('Historique sauvegardé.', 'History saved.') if inserted else tr('Ce fichier avait déjà été enregistré : aucun doublon créé.', 'This file was already saved: no duplicate created.')
                 else:
                     from datetime import datetime
                     from zoneinfo import ZoneInfo
                     metadata = dict(id_joueur=None, visibility=0, rank=0, report_date=datetime.now(ZoneInfo('Europe/Paris')).strftime('%d/%m/%Y'))
                     notice = tr('Analyse locale, sans enregistrement.', 'Local analysis, not saved.')
+                report(tr('Affichage des résultats', 'Displaying results'))
                 publish_analysis(st.session_state, result, metadata)
                 st.session_state.import_notice = notice
                 if save and configured and not use_demo:
                     st.cache_data.clear()
                 status.update(label=tr('Analyse terminée', 'Analysis complete'), state='complete', expanded=False)
             except (SQLAlchemyError, ValueError, KeyError, TypeError, IndexError, RuntimeError, PermissionError) as error:
-                logging.getLogger(__name__).error('Import failed (%s)', type(error).__name__)
+                reference_id = uuid4().hex[:12]
+                # SQL exceptions may contain the export or credentials. Keep
+                # only code locations, without exception messages or locals.
+                locations = ' -> '.join(f'{Path(frame.filename).name}:{frame.lineno} ({frame.name})'
+                                        for frame in traceback.extract_tb(error.__traceback__))
+                logging.getLogger(__name__).error('Import %s failed at %s (%s): %s',
+                                                 reference_id, stage, type(error).__name__, locations)
                 status.update(label=tr('Analyse interrompue', 'Analysis interrupted'), state='error')
                 st.error(tr('L’import n’a pas pu aboutir. Votre dernière analyse est conservée. Vérifiez le fichier et la connexion à la base avant de réessayer.', 'Import failed. Your last successful analysis is preserved. Check the file and database connection before retrying.'))
                 st.caption(tr('Type d’erreur : ', 'Error type: ') + type(error).__name__)
+                st.caption(tr('Étape : ', 'Step: ') + stage)
+                st.caption(tr('Référence à transmettre : ', 'Reference to share: ') + reference_id)
             else:
                 st.rerun()

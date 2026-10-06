@@ -90,3 +90,30 @@ def test_old_oidc_config_does_not_implicitly_block_saving(monkeypatch):
     assert access.can_access(123)
     monkeypatch.setattr(access,'access_config',lambda:{'require_oidc':True,'accounts':[]})
     assert not access.can_access(123)
+
+
+def test_import_failure_has_safe_diagnostic_and_preserves_analysis(reference_database, export, monkeypatch, caplog):
+    from fonctions import snapshots
+    monkeypatch.setattr(st, 'file_uploader', lambda *args, **kwargs: BytesIO(json.dumps(export).encode()))
+    at = AppTest.from_file(str(ROOT/'scoring_runage.py'), default_timeout=30).run()
+    at.button(key='upload_submit').click().run()
+    assert not at.exception and not at.error
+    previous_hash = at.session_state['import_hash']
+    previous_score = at.session_state['score']
+    export['runes'][0]['sec_eff'][0][1] += 1
+    def fail(*args):
+        raise ValueError('private-export-and-database-secret')
+    monkeypatch.setattr(snapshots, 'save_snapshot', fail)
+    at.run().button(key='upload_submit').click().run()
+    assert not at.exception and len(at.error) == 1
+    captions = '\n'.join(item.value for item in at.caption)
+    assert 'ValueError' in captions
+    assert 'Étape : Sauvegarde du détail des runes' in captions
+    assert 'Référence à transmettre :' in captions
+    assert 'private-export-and-database-secret' not in captions + caplog.text
+    assert 'snapshots' in caplog.text or '(fail)' in caplog.text
+    assert at.session_state['import_hash'] == previous_hash
+    assert at.session_state['score'] == previous_score
+    with reference_database.connect() as conn:
+        assert conn.execute(text('SELECT COUNT(*) FROM sw_imports')).scalar() == 1
+        assert conn.execute(text('SELECT COUNT(*) FROM sw_rune_snapshots')).scalar() == 1

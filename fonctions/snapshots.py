@@ -1,5 +1,6 @@
 """Versioned rune snapshots; no raw player export is stored."""
 import json
+from math import isfinite
 from datetime import datetime, timezone
 import pandas as pd
 from sqlalchemy import text, inspect
@@ -22,7 +23,10 @@ def snapshot(result):
     for rune in all_runes:
         row = result['data_rune'].data.loc[rune['rune_id']]
         efficiency = float(row['efficiency'])
-        tier = sum(efficiency >= edge for edge in (100,110,120))
+        # Incomplete rune stats can yield NaN even in a valid export. Preserve
+        # the missing value, with no score contribution, as in scoring_rune.
+        efficiency = efficiency if isfinite(efficiency) else None
+        tier = sum(efficiency >= edge for edge in (100,110,120)) if efficiency is not None else 0
         records[str(rune['rune_id'])] = {**{key:rune[key] for key in FIELDS},
             'efficiency':efficiency, 'points':tier * coef_set.get(row['rune_set'], 1)}
     return {'version':SCHEMA_VERSION, 'scoring_version':result['scoring_version'],
@@ -67,7 +71,10 @@ def compare_snapshots(before, after):
         old,new=before['runes'].get(key),after['runes'].get(key)
         if old == new:
             continue
-        status = 'added' if old is None else 'removed' if new is None else 'improved' if new['efficiency'] > old['efficiency'] else 'changed'
+        improved = (old is not None and new is not None
+                    and old['efficiency'] is not None and new['efficiency'] is not None
+                    and new['efficiency'] > old['efficiency'])
+        status = 'added' if old is None else 'removed' if new is None else 'improved' if improved else 'changed'
         changes = [field for field in FIELDS if old and new and old[field] != new[field]]
         rows.append({'id_rune':str(key),'status':status,'changes':', '.join(changes),
                      'efficiency_before':old['efficiency'] if old else None,

@@ -54,6 +54,66 @@ def test_reference_export_scores_and_no_mutation():
     assert len(result['data_rune'].data)==1393
     assert len(result['data_arte'].data_a)==478
 
+
+def test_reference_export_saves_missing_efficiencies_and_is_idempotent(engine, monkeypatch):
+    from sqlalchemy import text
+    from fonctions import access
+    from fonctions.import_service import persist_analysis
+    from fonctions.snapshots import load_snapshot, list_snapshots, compare_snapshots
+
+    monkeypatch.setattr(access, 'access_config', lambda: {})
+    root = Path(__file__).resolve().parents[1]
+    data = validate_export(next((root/'SW python').glob('*.json')).read_bytes())
+    result = analyse_export(data, pd.DataFrame())
+    missing = result['data_rune'].data.efficiency.isna()
+    assert missing.sum() == 41
+    metadata, inserted = persist_analysis(result, '06/10/2026')
+    assert inserted
+    uid = metadata['id_joueur']
+    saved = load_snapshot(uid, result['import_hash'], result['scoring_version'])
+    assert len(saved['runes']) == 1393
+    assert saved['score'] == sum(rune['points'] for rune in saved['runes'].values()) == 699
+    for rune_id in missing[missing].index:
+        assert saved['runes'][str(rune_id)]['efficiency'] is None
+        assert saved['runes'][str(rune_id)]['points'] == 0
+    assert compare_snapshots(saved, saved).empty
+    repeated, inserted = persist_analysis(result, '07/10/2026')
+    assert not inserted and repeated == metadata
+    assert len(list_snapshots(uid)) == 1
+    with engine.connect() as conn:
+        assert conn.execute(text('SELECT COUNT(*) FROM sw_imports')).scalar() == 1
+        assert conn.execute(text('SELECT score_general,score_spd,score_arte,score_qual FROM sw_score')).all() == [(699,513,426,1264)]
+
+
+@pytest.mark.parametrize('old,new', [(None,105.0),(105.0,None),(None,None),(100.0,105.0)])
+def test_snapshot_changes_with_unavailable_efficiency(export, old, new):
+    from fonctions.snapshots import snapshot, compare_snapshots
+    before = snapshot(analyse_export(validate_export(export), pd.DataFrame()))
+    key = next(iter(before['runes']))
+    before['runes'][key].update(efficiency=old, points=0 if old is None else 1)
+    after = deepcopy(before)
+    after['runes'][key].update(efficiency=new, points=0 if new is None else 1)
+    after['runes'][key]['upgrade_curr'] += 1
+    change = compare_snapshots(before, after).iloc[0]
+    assert change.status == ('improved' if old is not None and new is not None else 'changed')
+    assert change.score_delta == after['runes'][key]['points'] - before['runes'][key]['points']
+    if old is None:
+        assert pd.isna(change.efficiency_before)
+    if new is None:
+        assert pd.isna(change.efficiency_after)
+
+
+@pytest.mark.parametrize('value', [float('nan'), float('inf'), float('-inf')])
+def test_snapshot_serializes_nonfinite_computed_efficiency_as_null(export, value):
+    import json
+    from fonctions.snapshots import snapshot
+    result = analyse_export(validate_export(export), pd.DataFrame())
+    key = export['runes'][0]['rune_id']
+    result['data_rune'].data.loc[key, 'efficiency'] = value
+    saved = json.loads(json.dumps(snapshot(result), allow_nan=False))
+    assert saved['runes'][str(key)]['efficiency'] is None
+    assert saved['runes'][str(key)]['points'] == 0
+
 def test_detailed_workbook_can_be_read(export):
     from pages_streamlit.optimisation import _build_detailed_workbook, _inventory_dataframe
     runes=Rune(export,{})

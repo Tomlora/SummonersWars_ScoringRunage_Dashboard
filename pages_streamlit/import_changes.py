@@ -24,6 +24,7 @@ try:
 except ValueError as error:
     st.warning(str(error)); st.stop()
 st.metric(tr('Score runage','Rune score'),after['score'],delta=after['score']-before['score'])
+st.caption(tr('Une efficience vide signifie que le calcul est indisponible pour cette rune. Elle ne contribue pas au score et ne permet pas de conclure à une amélioration.', 'An empty efficiency means the calculation is unavailable for that rune. It contributes no score and cannot establish an improvement.'))
 st.caption(tr('La contribution de chaque rune dépend de son palier d’efficience (100/110/120) et du coefficient de son set. Une amélioration peut donc ne pas changer le score. « Disparue » signifie absente de l’export, pas nécessairement vendue.', 'Each rune contributes according to its efficiency tier (100/110/120) and set coefficient. An improvement may therefore leave the score unchanged. Removed means absent from the export, not necessarily sold.'))
 names={'added':tr('Nouvelle','New'),'removed':tr('Disparue','Removed'),'improved':tr('Améliorée','Improved'),'changed':tr('Modifiée','Changed')}
 selected=st.multiselect(tr('Changements','Changes'),list(names),default=list(names),format_func=names.get)
