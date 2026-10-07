@@ -8,9 +8,36 @@ from sqlalchemy import text
 from streamlit.testing.v1 import AppTest
 from fonctions.history import deduplicate_scores
 from fonctions.import_service import analyse_export, validate_export, persist_analysis, publish_analysis
-from fonctions.rune_visual import rune_svg, rune_label, stat_text
+from fonctions.rune_visual import rune_svg, rune_label, stat_text, slot_shape
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.mark.parametrize('slot', range(1, 7))
+def test_slot_orientation_and_upright_number(slot):
+    root = ElementTree.fromstring(slot_shape(slot))
+    assert root.attrib['data-rune-slot'] == str(slot)
+    assert root.find('g').attrib['transform'] == f'rotate({(slot-1)*60})'
+    # The number is outside the rotating group, so it remains upright.
+    assert root.find('text').text == str(slot)
+
+
+@pytest.mark.parametrize('language', ['Français', 'English'])
+def test_upgrade_results_have_matching_rune_cards(export, monkeypatch, language):
+    monkeypatch.chdir(ROOT)
+    monkeypatch.delenv('API_SQL', raising=False)
+    result = analyse_export(validate_export(export), pd.DataFrame())
+    state = {}; publish_analysis(state, result, {'id_joueur':None,'report_date':'07/10/2026'})
+    app = AppTest.from_file(str(ROOT/'scoring_runage.py'), default_timeout=30)
+    for key,value in state.items(): app.session_state[key] = value
+    app.session_state['translations_selected'] = language
+    app.run().switch_page('pages_streamlit/upgrade_runes.py').run()
+    app.selectbox(key='substat1').set_value('SPD').run()
+    assert not app.exception
+    selected = app.selectbox(key='ui_upgrade_rune').value
+    assert selected in result['data_rune'].data.index
+    assert result['data_rune'].data.loc[selected, 'rune_slot'] == 1
+    assert app.image
 
 
 def test_deduplicate_only_matching_account_day_and_all_four_scores(engine, export):

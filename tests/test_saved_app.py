@@ -59,6 +59,8 @@ def test_saved_pages(engine,export,monkeypatch):
         if page=='optimisation_spd':
             at.selectbox[0].set_value('Swift').run()
             assert not at.exception,[e.message for e in at.exception]
+            assert at.selectbox(key='ui_speed_rune').value in at.session_state['optimisation'][0].id_rune.tolist()
+            assert at.image
         if page=='objectif_arte':
             next(s for s in at.slider if s.label.endswith(' SOIN')).set_value(20).run()
             next(s for s in at.slider if s.label.endswith(' SPD')).set_value(45).run()

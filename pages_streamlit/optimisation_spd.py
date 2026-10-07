@@ -59,6 +59,11 @@ def opti_speed():
         
         with col2:
             st.metric('Speed Max', st.session_state.optimisation[1])
+
+        from fonctions.rune_card import rune_card
+        from fonctions.journey import tr
+        with st.expander(tr('Retrouver les runes de ce build', 'Find the runes in this build')):
+            rune_card(df_speed, st.session_state.optimisation[0].id_rune, 'ui_speed_rune')
         
     
         if st.session_state.df_mob_optimisation.empty:

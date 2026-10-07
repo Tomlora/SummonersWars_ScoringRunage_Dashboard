@@ -13,6 +13,10 @@ Elles montrent le niveau, les étoiles, la qualité d’origine, les statistique
 principale et innée, les quatre sous-statistiques, le monstre équipé et
 l’efficience. Les totaux incluent les meules ; « dont +X » précise la part de
 la meule sans l’ajouter une deuxième fois. Les fiches fonctionnent hors ligne.
+La silhouette s’oriente selon le slot : 1 en haut, puis 2 à 6 dans le sens
+horaire. Le numéro reste droit. Un petit diagramme des six emplacements
+surligne la position de la rune. Cette fiche est aussi disponible dans
+Optimisation, Planification, Liste de tâches, Meilleure vitesse et Améliorations.
 
 La recherche de build vise la vitesse, selon les sets, la vitesse minimale,
 la principale du slot 2 et les protections. L’ancien minimum d’ACC n’est plus

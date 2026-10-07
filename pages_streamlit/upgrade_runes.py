@@ -165,6 +165,8 @@ def upgrade_r():
         
         with st.expander(st.session_state.langue['show_rune']):
             if df_rune.shape[0] > 0:
+                from fonctions.rune_card import rune_card
+                rune_card(st.session_state.data_rune, df_rune.sort_values('efficiency', ascending=False).index, 'ui_upgrade_rune')
                 st.dataframe(df_rune[['rune_equiped', 'level', 'efficiency', 'main_type', 'innate_type', 'first_sub', 'first_sub_value_total', 'second_sub', 'second_sub_value_total', 'third_sub', 'third_sub_value_total', 'fourth_sub', 'fourth_sub_value_total']]\
                     .sort_values(by='efficiency', ascending=False)\
                         .rename(columns={'first_sub': 'Sub1',
