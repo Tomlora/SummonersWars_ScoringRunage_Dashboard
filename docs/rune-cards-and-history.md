@@ -33,9 +33,13 @@ imports ne sont pas modifiés. Aucun nettoyage n’est effectué lors du déploi
 
 ## Apparence
 
-Le menu ⋮ en haut à droite propose Theme : **Dark** reprend les couleurs du
-dashboard, **Light** utilise un fond blanc et **System** suit l’appareil.
-La configuration de base reste sombre. Les blocs personnalisés s’adaptent au
+Le thème sombre du dashboard est proposé par défaut via un seul thème
+personnalisé `[theme]`, basé sur `dark`. Les variantes `[theme.light]` et
+`[theme.dark]` sont retirées pour éviter une sélection initiale selon le système.
+Le menu ⋮ → Theme propose **Custom Theme** pour les couleurs du dashboard,
+**Light** pour un fond blanc et les autres choix natifs de Streamlit.
+Un choix déjà mémorisé dans le navigateur reste prioritaire. Le changement de
+configuration nécessite un redémarrage de Streamlit. Les blocs personnalisés s’adaptent au
 mode choisi et les graphiques utilisent une palette adaptée lors de leur rendu.
 Le choix de thème utilise le mécanisme natif de Streamlit, propre au navigateur.
 

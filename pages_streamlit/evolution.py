@@ -52,7 +52,6 @@ if len(selected)<2:
     st.info(tr('Deux relevés sont nécessaires pour mesurer une progression.','Two reports are needed to measure progress.'))
 elif not comparable:
     st.warning(tr('Ces relevés ne peuvent pas être comparés : leur méthode de calcul est différente ou inconnue. Vous pouvez toujours consulter leurs scores.','Scoring methods differ or are unknown: changes are not calculated. Historical values are still displayed.'))
-st.dataframe(selected.iloc[::-1].rename(columns=labels).set_index('date'),width='stretch',height='content')
 
 def plot(frame,y,color=None,dash=None,unit=None,key=None):
     if frame.empty:
@@ -74,15 +73,15 @@ if detail:
     quality=quality[quality.date.isin(dates)&quality.Set.isin(chosen)]
     a,b=st.tabs([tr('Runes','Runes'),tr('Qualité','Quality')])
     with a:
-        st.dataframe(runes,width='stretch',hide_index=True)
         for tab,field in zip(st.tabs([tr('Score (points)','Score (points)'),'100 ≤ E < 110','110 ≤ E < 120','E ≥ 120']),['points','100','110','120']):
             with tab:
                 plot(runes,field,'Set',unit=tr('Points','Points') if field=='points' else None)
+        st.dataframe(runes,width='stretch',hide_index=True)
     with b:
-        st.dataframe(quality.rename(columns={'LGD':tr('Légendaires','Legendary'),'ANTIQUE_LGD':tr('Légendaires antiques','Ancient legendary')}),width='stretch',hide_index=True)
         for tab,field in zip(st.tabs([tr('Score (points)','Score (points)'),tr('Légendaires','Legendary'),tr('Légendaires antiques','Ancient legendary')]),['score','LGD','ANTIQUE_LGD']):
             with tab:
                 plot(quality,field,'Set',unit=tr('Points','Points') if field=='score' else None)
+        st.dataframe(quality.rename(columns={'LGD':tr('Légendaires','Legendary'),'ANTIQUE_LGD':tr('Légendaires antiques','Ancient legendary')}),width='stretch',hide_index=True)
 else:
     metric=st.radio(tr('Indicateur','Metric'),list(labels),format_func=labels.get,horizontal=True,key='ui_history_metric')
     plot(selected,metric,unit=tr('Score (points)','Score (points)'))
@@ -96,3 +95,6 @@ else:
             with tab:
                 group=details[details.Palier.eq(tier)]
                 plot(group,'Nombre','arte_type' if table=='sw_arte' else 'Set','type' if table=='sw_arte' else None,key=table+tier)
+
+st.subheader(tr('Tableau des scores','Score table'))
+st.dataframe(selected.iloc[::-1].rename(columns=labels).set_index('date'),width='stretch',height='content')
