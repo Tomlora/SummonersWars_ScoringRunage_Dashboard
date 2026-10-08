@@ -11,6 +11,7 @@ import streamlit as st
 
 from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd
 from fonctions.visuel import css, page_header, section_header
+from fonctions.rune_visual import show_rune, rune_label
 
 
 css()
@@ -319,7 +320,7 @@ def build_manager_page() -> None:
     page_header(
         _tr("Bibliothèque de builds", "Build library"),
         _tr(
-            "Mémorisez plusieurs combos de runes par monstre et rechargez-les selon le scénario.",
+            "Préparez plusieurs builds pour chaque monstre et retrouvez-les selon vos besoins : RTA, siège ou donjons.",
             "Save multiple rune combos per monster and reload them for each scenario.",
         ),
         icon="🔨",
@@ -332,8 +333,8 @@ def build_manager_page() -> None:
 
     st.info(
         _tr(
-            "Seuls le nom du monstre, le nom du scénario et les six identifiants de runes sont sauvegardés.",
-            "Only the monster name, scenario name and six rune identifiers are saved.",
+            "Vos builds sont sauvegardés ici. Ils ne changent pas l’équipement de vos monstres dans le jeu.",
+            "Your builds are saved here. They do not change your monsters’ equipment in game.",
         ),
         icon="🔒",
     )
@@ -347,13 +348,13 @@ def build_manager_page() -> None:
     saved_builds = _load_saved_builds(int(st.session_state.id_joueur))
 
     total1, total2, total3 = st.columns(3)
-    total1.metric(_tr("Combos sauvegardés", "Saved combos"), len(saved_builds))
+    total1.metric(_tr("Builds sauvegardés", "Saved combos"), len(saved_builds))
     total2.metric(_tr("Monstres concernés", "Monsters covered"), saved_builds["monstre"].nunique() if not saved_builds.empty else 0)
     total3.metric(_tr("Runes disponibles", "Available runes"), len(catalog))
 
     section_header(
         _tr("1. Choisir le monstre et le point de départ", "1. Choose a monster and starting point"),
-        _tr("Chargez l'équipement actuel ou un scénario déjà sauvegardé.", "Load current equipment or a saved scenario."),
+        _tr("Chargez l'équipement actuel ou un build déjà sauvegardé.", "Load current equipment or a saved scenario."),
     )
 
     monster_labels = {int(row.id_unit): _monster_label(pd.Series(row._asdict())) for row in monsters.itertuples(index=False)}
@@ -371,7 +372,7 @@ def build_manager_page() -> None:
         swarfarm = st.session_state.get("swarfarm")
         if isinstance(swarfarm, pd.DataFrame) and {"name", "image_filename"}.issubset(swarfarm.columns):
             match = swarfarm[swarfarm["name"] == monster_name]
-            if not match.empty:
+            if not match.empty and pd.notna(match.iloc[0]['image_filename']) and match.iloc[0]['image_filename']:
                 st.image(
                     f"https://swarfarm.com/static/herders/images/monsters/{match.iloc[0]['image_filename']}",
                     width=88,
@@ -396,14 +397,15 @@ def build_manager_page() -> None:
         st.session_state["_build_manager_context"] = context
 
     section_header(
-        _tr("2. Composer le combo", "2. Compose the combo"),
+        _tr("2. Choisir les runes", "2. Compose the combo"),
         _tr("Chaque liste ne contient que les runes du slot correspondant.", "Each list contains only runes for the corresponding slot."),
     )
 
-    labels = _rune_labels(catalog)
+    labels = {int(i):rune_label(data_class,int(i)) for i in catalog.id_rune}
+    labels[0] = _tr('Aucune rune','No rune')
     selected_ids: list[int] = []
-    for slot_group in ((1, 2, 3), (4, 5, 6)):
-        columns = st.columns(3)
+    for slot_group in ((1, 2), (3, 4), (5, 6)):
+        columns = st.columns(2)
         for column, slot in zip(columns, slot_group):
             with column:
                 with st.container(border=True):
@@ -425,37 +427,32 @@ def build_manager_page() -> None:
                     if row.empty:
                         st.caption(_tr("Emplacement vide", "Empty slot"))
                     else:
-                        rune = row.iloc[0]
-                        st.caption(_rune_details(rune))
-                        st.caption(
-                            f"{_tr('Équipée sur', 'Equipped on')} : {rune['Équipée sur']} · "
-                            f"{_tr('Efficience', 'Efficiency')} : {float(rune['Efficience']):.1f} %"
-                        )
+                        show_rune(data_class, int(selected))
 
     rows = _selected_rows(catalog, selected_ids)
     _render_summary(rows, monster_name)
 
     section_header(
-        _tr("3. Sauvegarder le scénario", "3. Save the scenario"),
+        _tr("3. Sauvegarder le build", "3. Save the scenario"),
         _tr("Utilisez un nom explicite : RTA rapide, Siège, Boss, etc.", "Use a clear name: Fast RTA, Siege, Boss, etc."),
     )
     build_name = st.text_input(
-        _tr("Nom du scénario", "Scenario name"),
+        _tr("Nom du build", "Scenario name"),
         key="build_manager_name",
         placeholder=_tr("Ex. RTA rapide", "E.g. Fast RTA"),
         max_chars=80,
     ).strip()
-    overwrite = st.toggle(_tr("Remplacer le scénario s'il existe déjà", "Replace the scenario if it already exists"), value=False)
-    if st.button(_tr("Sauvegarder ce combo", "Save this combo"), type="primary", width="stretch"):
+    overwrite = st.toggle(_tr("Remplacer le build s'il existe déjà", "Replace the scenario if it already exists"), value=False)
+    if st.button(_tr("Sauvegarder ce build", "Save this combo"), type="primary", width="stretch"):
         if not build_name:
-            st.error(_tr("Donnez un nom au scénario.", "Enter a scenario name."))
+            st.error(_tr("Donnez un nom au build.", "Enter a scenario name."))
         elif not any(selected_ids):
             st.error(_tr("Sélectionnez au moins une rune.", "Select at least one rune."))
         else:
             _save_build(int(st.session_state.id_joueur), monster_name, build_name, selected_ids, overwrite)
 
     if saved_row is not None:
-        with st.expander(_tr("Supprimer le scénario chargé", "Delete loaded scenario")):
+        with st.expander(_tr("Supprimer le build chargé", "Delete loaded scenario")):
             confirmation = st.checkbox(
                 _tr("Je confirme la suppression définitive", "I confirm permanent deletion"),
                 key=f"delete_build_{selected_build_id}",

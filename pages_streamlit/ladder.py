@@ -47,17 +47,20 @@ def classement():
             st.session_state.ui_ladder_value=choices[0]
         metric=st.radio(tr('Valeur','Value'),choices,format_func=lambda k:{'mean_SCORE':tr('Moyenne','Average'),'max_SCORE':tr('Maximum','Maximum'),'sum_SCORE':tr('Total','Total')}[k],horizontal=True,key='ui_ladder_value')
         data['score']=data[metric]
-    data=select_snapshots(data,'score',mode).dropna(subset=['score'])
-    from fonctions.leaderboards import visible_players, ranking_table, ranking_page
+    from fonctions.leaderboards import visible_players, ranking_table, ranking_page, movement_caption, report_versions
+    data=data.merge(report_versions(),on=['id','date'],how='left')
     data=visible_players(data,st.session_state.id_joueur,st.session_state.guildeid)
     if st.toggle(tr('Ma guilde uniquement','My guild only'),key='ui_ladder_guild'):
         data=data[data.guilde_id.eq(st.session_state.guildeid)]
+    history=data
+    data=select_snapshots(data,'score',mode).dropna(subset=['score'])
     if data.empty:
         st.info(tr('Aucun relevé disponible.','No snapshots available.'));return
     data.insert(0,'Rang',data.score.rank(method='min',ascending=False).astype('int64'))
+    movement_caption(history,data,mode=mode,check_versions=True)
     shown=ranking_page(data,'score','ui_ladder_')
     st.caption(tr('Les anciens relevés conservent leur méthode de calcul.','Older snapshots retain their original scoring method.'))
-    ranking_table(shown, ['Rang','joueur','guilde','score','date'],
+    ranking_table(shown, ['Rang','joueur','guilde','score',*(['Écart'] if 'Écart' in shown else []),'date'],
                   {'score':st.column_config.NumberColumn(tr('Score (points)','Score (points)'), format='%.2f' if kind in ('com2us','com2us_global') else '%.0f')})
 
 if __name__=='__main__':classement()

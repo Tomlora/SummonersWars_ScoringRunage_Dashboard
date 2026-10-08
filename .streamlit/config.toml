@@ -3,6 +3,7 @@ headless = true
 port = 8501
 
 [theme]
+# A single custom theme is the default; Light remains available in Streamlit's menu.
 base = 'dark'
 primaryColor = '#49a4ff'
 backgroundColor = '#07111f'

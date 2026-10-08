@@ -5,11 +5,9 @@ import streamlit as st
 from fonctions.visuel import css
 from fonctions.gestion_bdd import lire_bdd_perso
 from fonctions.widgets import selectbox
-from streamlit_extras.add_vertical_space import add_vertical_space
-from streamlit_extras.metric_cards import style_metric_cards
 from math import floor
 css()
-style_metric_cards(background_color='#03152A', border_color='#0083B9', border_left_color='#0083B9', border_size_px=0, box_shadow=False)
+
 
 
 @st.cache_data()
@@ -61,6 +59,11 @@ def opti_speed():
         
         with col2:
             st.metric('Speed Max', st.session_state.optimisation[1])
+
+        from fonctions.rune_card import rune_card
+        from fonctions.journey import tr
+        with st.expander(tr('Retrouver les runes de ce build', 'Find the runes in this build')):
+            rune_card(df_speed, st.session_state.optimisation[0].id_rune, 'ui_speed_rune')
         
     
         if st.session_state.df_mob_optimisation.empty:
@@ -74,7 +77,7 @@ def opti_speed():
         
             monster_selected = st.selectbox('Selectionner le monstre', st.session_state.df_mob_optimisation.index.unique())
             
-            add_vertical_space(3)
+            st.space(84)
             
             
             col3, col4 = st.columns([0.75, 0.25])

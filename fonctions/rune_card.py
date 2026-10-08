@@ -2,23 +2,19 @@
 import pandas as pd
 import streamlit as st
 from fonctions.journey import tr
+from fonctions.rune_visual import rune_label, show_rune
 
 
 def rune_card(runes, ids, key, gains=None, actions=True):
     ids = list(dict.fromkeys(int(value) for value in ids if int(value) in runes.data.index))
     if not ids:
         return
-    inventory_label = tr('Inventaire','Inventory')
-    def label(value):
-        row = runes.data.loc[value]
-        monster = inventory_label if row.rune_equiped in (0,'0','Inventaire','Inventory') else row.rune_equiped
-        return f"{row.rune_set} · Slot {row.rune_slot} · {monster} · #{value}"
+    labels = {value: rune_label(runes, value) for value in ids}
     if st.session_state.get(key) not in ids:
         st.session_state[key] = ids[0]
-    selected = st.selectbox(tr('Rune à examiner','Rune to inspect'), ids, format_func=label, key=key)
+    selected = st.selectbox(tr('Rune à examiner','Rune to inspect'), ids, format_func=labels.get, key=key)
     row = runes.data.loc[selected]
-    st.code(str(selected), language=None)
-    st.caption(label(selected))
+    show_rune(runes, selected)
     def stat(code):
         label = runes.property.get(code, code)
         if label in (0,'Aucun'):

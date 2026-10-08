@@ -30,7 +30,11 @@ def snapshot(result):
         records[str(rune['rune_id'])] = {**{key:rune[key] for key in FIELDS},
             'efficiency':efficiency, 'points':tier * coef_set.get(row['rune_set'], 1)}
     return {'version':SCHEMA_VERSION, 'scoring_version':result['scoring_version'],
-            'score':int(result['score']), 'runes':records}
+            'score':int(result['score']), 'runes':records,
+            # Optional additive field: older rune snapshots stay readable.
+            # Store only the best artifact value per category, not the export.
+            'goal_artifacts':json.loads(result['data_arte'].df_top[
+                ['main_type','substat','arte_attribut','1']].to_json(orient='records'))}
 
 
 def save_snapshot(conn, user_id, result, date):

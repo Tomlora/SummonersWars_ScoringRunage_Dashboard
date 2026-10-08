@@ -1,7 +1,5 @@
 import streamlit as st
-from streamlit_extras.add_vertical_space import add_vertical_space
 from math import ceil
-from streamlit_extras.metric_cards import style_metric_cards
 import json
 
 
@@ -25,13 +23,12 @@ try:
         st.session_state.langue = translation("Français") 
 except:
     pass  
-    
-style_metric_cards(background_color='#03152A', border_color='#0083B9', border_left_color='#0083B9', border_size_px=0, box_shadow=False, border_radius_px=300)
+
 
 
 st.title('Calculateur DMG Artefact')
 
-add_vertical_space(1)
+st.space(28)
 col1, col2, col3, col4, col5 = st.columns([0.15,0.40,0.10, 0.40,0.15])
 
 def input_stats(key, format_hp=None, value=0, max_hp=None, max_atk=None, max_def=None, max_vit=None, value_spd=0):
@@ -67,11 +64,11 @@ def arte(hp, atk, defense, vit, number):
     with col2:
         st.write('DMG')
         st.markdown(f':green[{dmg_hp}]')
-        add_vertical_space(3)
+        st.space(84)
         st.markdown(f':blue[{dmg_atk}]')
-        add_vertical_space(3)
+        st.space(84)
         st.markdown(f':violet[{dmg_def}]')
-        add_vertical_space(3)
+        st.space(84)
         st.markdown(f':orange[{dmg_vit}]')
          
         st.metric('Total', round(dmg_hp + dmg_atk + dmg_def + dmg_vit,1))
@@ -122,7 +119,7 @@ atk_bonus = atk_base + ceil(atk_base * atk_bat) + ceil(atk_base * atk_lead) + at
 def_bonus = def_base + ceil(def_base * def_bat) + ceil(def_base * def_lead) + def_rune
 vit_bonus = vit_base + ceil(vit_base * vit_bat) + ceil(vit_base * vit_lead) + vit_rune
 
-add_vertical_space(3)
+st.space(84)
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:

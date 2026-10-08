@@ -1,6 +1,5 @@
 
 import streamlit as st
-from streamlit_extras.add_vertical_space import add_vertical_space
 from fonctions.gestion_bdd import requete_perso_bdd
 from fonctions.visuel import css
 
@@ -15,7 +14,7 @@ css()
 
 
 st.title("Feedback")
-add_vertical_space(1)
+st.space(28)
 st.markdown("Si vous avez des suggestions ou des bugs à signaler, veuillez les écrire ici :")
 
 st.info("Je ne suis pas developpeur web, l'application est réalisée avec mes faibles compétences dans le domaine :) ")

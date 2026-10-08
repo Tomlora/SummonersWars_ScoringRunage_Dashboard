@@ -46,7 +46,7 @@ def test_preferences_survive_new_session_and_language(engine,export,monkeypatch)
     at.toggle(key='optimisation_show_substats').set_value(True).run()
     at.multiselect(key='optimisation_displayed_substats').set_value(['SPD','ACC']).run()
     at.switch_page('pages_streamlit/planning.py').run()
-    at.number_input(key='plan_accuracy').set_value(40).run()
+    at.number_input(key='plan_speed').set_value(40).run()
     at.multiselect(key='locks_runes').set_value([301]).run()
     next(b for b in at.button if b.label=='Enregistrer mes préférences').click().run()
     assert not at.exception
@@ -61,7 +61,7 @@ def test_preferences_survive_new_session_and_language(engine,export,monkeypatch)
     assert fresh.multiselect(key='optimisation_displayed_substats').value==['SPD','ACC']
     fresh.switch_page('pages_streamlit/planning.py').run()
     assert not fresh.exception
-    assert fresh.number_input(key='plan_accuracy').value==40
+    assert fresh.number_input(key='plan_speed').value==40
     assert fresh.multiselect(key='locks_runes').value==[301]
 
 

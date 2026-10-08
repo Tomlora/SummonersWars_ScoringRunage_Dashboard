@@ -2,7 +2,6 @@ from fonctions.gestion_bdd import lire_bdd, lire_bdd_perso
 import pandas as pd
 import plotly.express as px
 from fonctions.streamlit_filter_tree import condition_tree, config_from_dataframe
-from streamlit_extras.add_vertical_space import add_vertical_space
 
 from pandas.api.types import (
     is_categorical_dtype,
