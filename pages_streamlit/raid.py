@@ -1,10 +1,10 @@
 
 import streamlit as st
 import pandas as pd
-from streamlit_extras.no_default_selectbox import selectbox
+from fonctions.widgets import selectbox
 
 from fonctions.visuel import css
-import plotly_express as px
+import plotly.express as px
 
 css()
 
@@ -30,7 +30,7 @@ def donjon():
         df_run['date'] = pd.to_datetime(df_run['date'])
 
         # Le R5 n'est pas détecté
-        df_run['dungeon'].fillna('R5', inplace=True)
+        df_run['dungeon'] = df_run['dungeon'].fillna('R5')
         # type de donjon
         
         list_donjon = df_run['dungeon'].unique()

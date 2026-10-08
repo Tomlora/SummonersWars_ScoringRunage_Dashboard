@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.express as px
 from fonctions.streamlit_filter_tree import condition_tree, config_from_dataframe
 from streamlit_extras.add_vertical_space import add_vertical_space
-from pygwalker.api.streamlit import StreamlitRenderer
 
 from pandas.api.types import (
     is_categorical_dtype,
@@ -15,8 +14,23 @@ from pandas.api.types import (
 import streamlit as st
 
 
-def load_pygwalker(df, config=''):
+def _load_pygwalker(df, config=''):
+    from pygwalker.api.streamlit import StreamlitRenderer
     return StreamlitRenderer(df, spec=config, kernel_computation=True)
+
+class _TableExplorer:
+    def __init__(self, frame):
+        self.frame = frame
+    def explorer(self):
+        st.info("Exploration sous forme de tableau / Table explorer")
+        st.dataframe(self.frame, width="stretch")
+
+def load_pygwalker(data, config=""):
+    try:
+        return _load_pygwalker(data, config)
+    except (ImportError, AttributeError, TypeError, RuntimeError):
+        return _TableExplorer(data)
+
 
 
 
@@ -41,9 +55,11 @@ def transformation_stats_visu(nom_table, joueur, distinct: bool = False, score='
     """
     # Lire la bdd
     if nom_table == 'sw_score':
-        df_actuel : pd.DataFrame = lire_bdd_perso('''SELECT DISTINCT score_general, date, id_joueur, score_spd, score_arte, score_qual FROM sw.sw_score;''', index_col='id_joueur')
+        df_actuel : pd.DataFrame = lire_bdd_perso('''SELECT DISTINCT score_general, date, id_joueur, score_spd, score_arte, score_qual FROM sw_score WHERE id_joueur=:id''', index_col='id_joueur', params={'id':joueur})
     else:
-        df_actuel : pd.DataFrame = lire_bdd(nom_table, distinct=distinct)
+        allowed = {'sw', 'sw_spd', 'sw_arte'}
+        if nom_table not in allowed: raise ValueError('Unknown history table')
+        df_actuel = lire_bdd_perso(f'SELECT {"DISTINCT " if distinct else ""}* FROM {nom_table} WHERE id=:id', index_col=None, params={'id':joueur})
     df_actuel = df_actuel.transpose()
     df_actuel.reset_index(inplace=True)
 

@@ -6,9 +6,9 @@ import pandas as pd
 from streamlit_extras.colored_header import colored_header
 
 from fonctions.visuel import css
-from streamlit_extras.no_default_selectbox import selectbox
+from fonctions.widgets import selectbox
 from streamlit_extras.metric_cards import style_metric_cards
-import plotly_express as px
+import plotly.express as px
 
 css()
 
@@ -37,7 +37,11 @@ def grind_arte():
     if attribut_select != None:
         df_efficience = df_efficience[df_efficience['arte_attribut'] == attribut_select]
         
-    top = st.slider(st.session_state.langue['nb_artefact_to_show'], 10, df_efficience.shape[0], round(df_efficience.shape[0]/2), 10) 
+    if df_efficience.empty:
+        st.info(st.session_state.langue['no_data'])
+        return
+    top = st.number_input(st.session_state.langue['nb_artefact_to_show'], min_value=1, max_value=len(df_efficience), value=min(50,len(df_efficience)), step=1)
+
         
 
         

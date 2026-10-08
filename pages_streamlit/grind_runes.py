@@ -108,7 +108,7 @@ def export_excel(data, data_short, data_property, data_count, data_inventaire):
     tableau(data_count, worksheet4)
     tableau(data_inventaire, worksheet5)
 
-    writer.save()
+    writer.close()
 
     processed_data = output.getvalue()
 

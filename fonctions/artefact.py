@@ -334,7 +334,7 @@ class Artefact():
             elif x['arte_type'] == 'ELEMENT':
                 return dict_arte_element[x['arte_attribut']]
             
-        self.data_a['arte_attribut'] = self.data_a.apply(lambda x : identification_attribut(x), axis=1)
+        self.data_a['arte_attribut'] = pd.Series([identification_attribut(row) for row in self.data_a.to_dict('records')], index=self.data_a.index, dtype=object)
 
         def value_max(x):
             return dict_arte_effect[x]['max']  # first proc + 4 upgrades
@@ -358,75 +358,17 @@ class Artefact():
         
         self.data_a[['arte_type', 'arte_attribut']] = self.data_a[['arte_type', 'arte_attribut']].astype('category')
         
-        self.data_a['arte_equiped'] = self.data_a['arte_equiped'].replace({0 : st.session_state.langue['Inventaire']})
-        self.data_a['arte_equiped'] = self.data_a['arte_equiped'].replace(monsters)
+        self.data_a['arte_equiped'] = self.data_a['arte_equiped'].astype(object).replace({0 : 'Inventaire'})
+        self.data_a['arte_equiped'] = self.data_a['arte_equiped'].astype(object).replace(monsters)
         self.data_a['arte_equiped'] = self.data_a['arte_equiped'].astype('category')
         
     def scoring_arte(self):
-        self.data_eff = self.data_a[['efficiency', 'arte_type', 'main_type']]
-
-        self.data_eff['eff_binned'] = pd.cut(
-            self.data_eff['efficiency'], bins=(80, 85, 90, 95, 100, 120), right=False)
-
-        self.data_eff.dropna(inplace=True)
-
-        self.data_eff = self.data_eff.groupby(
-            ['eff_binned', 'arte_type', 'main_type']).count()
-
-        self.data_eff.reset_index(inplace=True)
-
-        palier_1 = self.data_eff['eff_binned'].unique()[0]  # 80-85
-        palier_2 = self.data_eff['eff_binned'].unique()[1]  # 85-90
-        palier_3 = self.data_eff['eff_binned'].unique()[2]  # 90-95
-        palier_4 = self.data_eff['eff_binned'].unique()[3]  # 95-100
-        palier_5 = self.data_eff['eff_binned'].unique()[4]  # 100+
-
-        palier_arte = {palier_1: 1,
-                       palier_2: 2,
-                       palier_3: 3,
-                       palier_4: 4,
-                       palier_5: 5}
-
-        self.data_eff['factor'] = 0
-
-        for key, value in palier_arte.items():
-            self.data_eff['factor'] = np.where(
-                self.data_eff['eff_binned'] == key, value, self.data_eff['factor'])
-
-        self.data_eff['points'] = self.data_eff['efficiency'] * self.data_eff['factor']
-
-        self.data_eff.drop(['factor'], axis=1, inplace=True)
-
-        self.data_eff['eff_binned'] = self.data_eff['eff_binned'].replace({palier_1: '80',
-                                                                           palier_2: '85',
-                                                                           palier_3: '90',
-                                                                           palier_4: '95',
-                                                                           palier_5: '100+'})
-
-        self.score_a = self.data_eff['points'].sum()
-
-        # Calcul du TCD :
-
-        self.tcd_arte = self.data_eff.pivot_table(
-            self.data_eff, ['arte_type', 'main_type'], 'eff_binned', 'sum')['efficiency']
-        # pas besoin du multiindex
-        self.tcd_arte.columns.name = "efficiency"
-        self.tcd_arte.index.name = 'Artefact'
-
-        self.tcd_arte.reset_index(inplace=True)
-        self.tcd_arte.set_index('arte_type', inplace=True)
-
-        self.tcd_arte.rename(columns={'main_type': 'type'}, inplace=True)
-
-        total_80 = self.tcd_arte['80'].sum()
-        total_85 = self.tcd_arte['85'].sum()
-        total_90 = self.tcd_arte['90'].sum()
-        total_95 = self.tcd_arte['95'].sum()
-        total_100 = self.tcd_arte['100+'].sum()
-
-        self.tcd_arte.loc['Total'] = [' ', total_80,
-                                      total_85, total_90, total_95, total_100]
-
+        from fonctions.analysis import tier_counts
+        labels = ['80', '85', '90', '95', '100+']
+        counts = tier_counts(self.data_a, 'efficiency', [80, 85, 90, 95, 100, np.inf], labels, ('arte_type', 'main_type'))
+        self.score_a = int(counts.mul([1, 2, 3, 4, 5]).sum().sum())
+        self.tcd_arte = counts.reset_index().rename(columns={'main_type': 'type'}).set_index('arte_type')
+        self.tcd_arte.loc['Total'] = [' ', *counts.sum().tolist()]
         return self.tcd_arte, self.score_a
     
     
@@ -434,149 +376,36 @@ class Artefact():
         
 
     def calcul_value_max(self):
-
         self.data_max = self.data_a.copy()
-        
-               
-        def prepare_data(data_max, aggfunc):        
-            df_first = pd.pivot_table(data_max,
-                                      index=['first_sub', 'arte_type', 'arte_attribut'],
-                                      values='first_sub_value',
-                                      aggfunc=aggfunc).reset_index()
-            df_second = pd.pivot_table(data_max,
-                                       index=['second_sub', 'arte_type', 'arte_attribut'],
-                                       values='second_sub_value',
-                                       aggfunc=aggfunc).reset_index()
-            df_third = pd.pivot_table(data_max,
-                                      index=['third_sub', 'arte_type', 'arte_attribut'],
-                                      values='third_sub_value',
-                                      aggfunc=aggfunc).reset_index()
-            df_fourth = pd.pivot_table(data_max,
-                                       index=['fourth_sub', 'arte_type', 'arte_attribut'],
-                                       values='fourth_sub_value',
-                                       aggfunc=aggfunc).reset_index()
-
-            df_max = df_first.merge(df_second,
-                                    how='outer',
-                                    left_on=['first_sub', 'arte_type', 'arte_attribut'],
-                                    right_on=['second_sub', 'arte_type', 'arte_attribut'])
-            df_max = df_max.merge(df_third,
-                                  how='outer',
-                                  left_on=['first_sub', 'arte_type', 'arte_attribut'],
-                                  right_on=['third_sub', 'arte_type', 'arte_attribut'])
-            df_max = df_max.merge(df_fourth,
-                                  how='outer',
-                                  left_on=['first_sub', 'arte_type', 'arte_attribut'],
-                                  right_on=['fourth_sub', 'arte_type', 'arte_attribut'])
-            
-            df_max = df_max[df_max['first_sub'] != 'Aucun']
-            
-
-            return df_max
-        
-
-        
-        # MAX
-        
-
-        self.df_max = prepare_data(self.data_max, 'max')
-        
-        # En regroupant, il y a des positions où il n'y a pas la substat qu'on cherche.
-        self.df_max['third_sub'] = self.df_max['third_sub'].fillna(self.df_max['fourth_sub'])
-        self.df_max['second_sub'] = self.df_max['second_sub'].fillna(self.df_max['third_sub'])
-        self.df_max['first_sub'] = self.df_max['first_sub'].fillna(self.df_max['second_sub'])
-        
-            
-        self.df_max.drop(['second_sub', 'third_sub', 'fourth_sub'], axis=1, inplace=True)
-    
-        # on remplace les valeurs nulles par 0
-        self.df_max.select_dtypes(include='number').fillna(0, inplace=True)    
-        
-        self.df_max['max_value'] = self.df_max[['first_sub_value', 'second_sub_value', 'third_sub_value', 'fourth_sub_value']].max(axis=1)
-        self.df_max.rename(columns={'first_sub' : 'substat'}, inplace=True)
-        self.df_max.set_index('substat', inplace=True)
-        
-
-               
-        self.df_max = self.df_max[['arte_type', 'arte_attribut', 'max_value']]
-        
-
-        self.df_max_arte_type = self.df_max.groupby(['arte_type', 'substat']).agg({'max_value' : 'max'})
-        self.df_max_element = self.df_max.groupby(['arte_attribut', 'substat']).agg({'max_value' : 'max'})
-        self.df_max_substat = self.df_max.groupby(['substat']).agg({'max_value' : 'max'})
+        parts = []
+        for sub in ('first_sub', 'second_sub', 'third_sub', 'fourth_sub'):
+            part = self.data_a[['index', 'arte_type', 'arte_attribut', 'main_type', sub, f'{sub}_value']].copy()
+            part.rename(columns={sub:'substat', f'{sub}_value':'value'}, inplace=True)
+            parts.append(part)
+        self._long = pd.concat(parts, ignore_index=True)
+        self._long = self._long[self._long['substat'].notna() & (self._long['substat'] != 'Aucun')]
+        self.df_max = self._long.groupby(['substat','arte_type','arte_attribut'], observed=True)['value'].max().rename('max_value').reset_index().set_index('substat')
+        self.df_max_arte_type = self.df_max.groupby(['arte_type','substat'], observed=True).agg(max_value=('max_value','max'))
+        self.df_max_element = self.df_max.groupby(['arte_attribut','substat'], observed=True).agg(max_value=('max_value','max'))
+        self.df_max_substat = self.df_max.groupby('substat', observed=True).agg(max_value=('max_value','max'))
         
 
     
     def count_substat(self, mot_cle, nb_mot_cle):
-        data = self.data_a.copy()
-        data['totalsub'] = data['first_sub'] + data['second_sub'] + data['third_sub'] + data['fourth_sub']
-        data_grp = data.groupby(['index']).agg({'totalsub':lambda x: ', '.join(tuple(x.tolist()))})
-        data_grp['critere'] = data_grp['totalsub'].apply(lambda x: len(re.findall(mot_cle, x)))
-        data_count = data_grp[data_grp['critere'] >= nb_mot_cle]
-        return data_count, data_count.shape[0]
+        cols=['first_sub','second_sub','third_sub','fourth_sub']
+        count=sum(self.data_a[c].astype(str).str.count(mot_cle).fillna(0) for c in cols)
+        result=self.data_a.loc[count>=nb_mot_cle].copy()
+        return result, len(result)
     
     
     def top(self):
-        
-        def prepare_data(data_max, aggfunc):        
-            df_first = pd.pivot_table(data_max, index=['first_sub', 'arte_attribut', 'main_type'], values='first_sub_value', aggfunc=aggfunc).reset_index()
-            df_second = pd.pivot_table(data_max, index=['second_sub', 'arte_attribut', 'main_type'], values='second_sub_value', aggfunc=aggfunc).reset_index()
-            df_third = pd.pivot_table(data_max, index=['third_sub', 'arte_attribut', 'main_type'], values='third_sub_value', aggfunc=aggfunc).reset_index()
-            df_fourth = pd.pivot_table(data_max, index=['fourth_sub', 'arte_attribut', 'main_type'], values='fourth_sub_value', aggfunc=aggfunc).reset_index()
-
-            df_max = df_first.merge(df_second, how='outer', left_on=['first_sub', 'arte_attribut', 'main_type'], right_on=['second_sub', 'arte_attribut', 'main_type'])
-            df_max['first_sub'].fillna(df_max['second_sub'], inplace=True)
-            df_max = df_max.merge(df_third, how='outer', left_on=['first_sub', 'arte_attribut', 'main_type'], right_on=['third_sub', 'arte_attribut', 'main_type'])
-            df_max['first_sub'].fillna(df_max['third_sub'], inplace=True)
-            df_max = df_max.merge(df_fourth, how='outer', left_on=['first_sub', 'arte_attribut', 'main_type'], right_on=['fourth_sub', 'arte_attribut', 'main_type'])
-            df_max['first_sub'].fillna(df_max['fourth_sub'], inplace=True)
-            
-            df_max = df_max[df_max['first_sub'] != 'Aucun']
-            
-            df_max['third_sub'] = df_max['third_sub'].fillna(df_max['fourth_sub'])
-            df_max['second_sub'] = df_max['second_sub'].fillna(df_max['third_sub'])
-            df_max['first_sub'] = df_max['first_sub'].fillna(df_max['second_sub'])
-            
-            df_max[['first_sub_value', 'second_sub_value', 'third_sub_value', 'fourth_sub_value']] = df_max[['first_sub_value', 'second_sub_value', 'third_sub_value', 'fourth_sub_value']].fillna(0)
-            
-            
-
-            return df_max
-        
-        
-        def fill_avg(x):
-            long = len(x)
-            if long < 5:
-                for i in range(5-long): 
-                    x.append(0) 
-            return x
-        
-        def calcul_avg(data_max, n):
-            
-            df_avg = prepare_data(data_max, lambda x: x.nlargest(n).tolist())
-            df_avg = df_avg.applymap(lambda x: [0] if x == 0 else x)
-            df_avg['value'] = df_avg[['first_sub_value', 'second_sub_value', 'third_sub_value', 'fourth_sub_value']].sum(axis=1)
-            df_avg['value'] = df_avg['value'].apply(lambda x: fill_avg(x))
-            df_avg[f'top{n}'] = df_avg['value'].apply(lambda liste: np.sort(np.array(liste))[-n:])
-            
-            
-            return df_avg
-
-        self.df_top = calcul_avg(self.data_max, 5)
-         
-        self.df_top[['5', '4', '3', '2', '1']] = self.df_top['top5'].apply(lambda x: pd.Series(list(x))) 
-        
-        self.df_top = self.df_top[['first_sub', 'arte_attribut', 'main_type', '1', '2', '3', '4', '5']]
-                    
-        self.df_top.rename(columns={'first_sub' : 'substat'}, inplace=True)
-        
-        self.df_top.sort_values(by=['arte_attribut', 'substat'], inplace=True)
-   
-        
-        self.df_top.reset_index(inplace=True, drop=True)
-        
-
-
+        if not hasattr(self, '_long'):
+            self.calcul_value_max()
+        rows=[]
+        for (stat, attribut, main), group in self._long.groupby(['substat','arte_attribut','main_type'], observed=True):
+            values=group['value'].nlargest(5).tolist()
+            rows.append({'substat':stat,'arte_attribut':attribut,'main_type':main, **{str(i):values[i-1] if len(values)>=i else np.nan for i in range(1,6)}})
+        self.df_top=pd.DataFrame(rows,columns=['substat','arte_attribut','main_type','1','2','3','4','5'])
         return self.df_top
   
 def return_style(color, background_color):

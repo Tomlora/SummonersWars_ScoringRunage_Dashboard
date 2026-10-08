@@ -6,7 +6,7 @@ from fonctions.visualisation import transformation_stats_visu, plotline_evol_run
 from fonctions.gestion_bdd import lire_bdd_perso
 from fonctions.visuel import load_lottieurl, css
 from streamlit_lottie import st_lottie
-from streamlit_extras.button_selector import button_selector
+from fonctions.widgets import button_selector
 
 import pandas as pd
 from datetime import timedelta
@@ -194,9 +194,6 @@ def palier_page():
             col1, _, col2 = st.columns([40,5, 60])
 
             with col2:
-                img = load_lottieurl(
-                    'https://assets10.lottiefiles.com/packages/lf20_sfiiilbf.json')
-                st_lottie(img, width=40, height=40)
                 
                 
                 
@@ -405,22 +402,9 @@ def palier_page():
                 
 
         except Exception as e:
-            print(e)
-            st.subheader('Erreur')
-            st.write('Pas de JSON chargé')
+            st.error('Historique indisponible / History unavailable.')
+            st.caption(type(e).__name__)
 
 
-if 'submitted' in st.session_state:
-    if st.session_state.submitted:    
-        st.title('Evolution des stats')
-        palier_page()
-    
-    else:
-        st.switch_page("pages_streamlit/upload.py")
-
-else:
-    st.switch_page("pages_streamlit/upload.py")
-    
-    
-    
-st.caption('Made by Tomlora :sunglasses:')
+if __name__ == "__main__":
+    palier_page()

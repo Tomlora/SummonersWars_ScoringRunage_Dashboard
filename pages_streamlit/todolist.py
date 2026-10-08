@@ -28,7 +28,6 @@ def todo():
     notes = charger_notes(st.session_state.id_joueur)
     
         # # swarfarm
-    @st.cache_data(ttl='10m', show_spinner=st.session_state.langue['loading_rune'])
     def charger_data(joueur):
         swarfarm = st.session_state.swarfarm[[
             'com2us_id', 'name', 'image_filename', 'url']].set_index('com2us_id')
@@ -60,8 +59,7 @@ def todo():
             columns=rename_column, inplace=True)
         st.session_state.data_rune.data_build['Equipé'] = st.session_state.data_rune.data_build['Equipé'].astype(
             'str')
-        st.session_state.data_rune.data_build['Equipé'].replace(
-            {'0': st.session_state.langue['Inventaire']}, inplace=True)
+        st.session_state.data_rune.data_build['Equipé'] = st.session_state.data_rune.data_build['Equipé'].replace({'0': st.session_state.langue['Inventaire']})
         
         st.session_state.data_rune.data_build[['Set rune', 'Stat principal', 'innate_type']] = st.session_state.data_rune.data_build[['Set rune', 'Stat principal', 'innate_type']].astype('category')
         

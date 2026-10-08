@@ -17,33 +17,9 @@ def download_params(id_compte):
         return df_params.iloc[0].tolist()
 
 
-@st.cache_data
 def load_efficience():
-    df_eff = st.session_state.data_rune.count_efficience_per_slot()
-    # df_eff = df_eff.groupby(['rune_set', 'rune_slot'], as_index=False)
-
-    df_eff['efficience'] = pd.cut(df_eff['efficiency'], 
-                                            bins=(100, 110, 140),
-                                            right=False)
-    
-
-    # si en-dessous de 100, on supprime
-    df_eff.dropna(subset=['efficience'], inplace=True)
-
-    df_eff['efficience'] = df_eff['efficience'].astype(str)
-
-    # palier
-    palier_1 = df_eff['efficience'].unique()[0]  # '[100.0, 110.0)'
-    palier_2 = df_eff['efficience'].unique()[1]  # '[110.0, 120.0)'
-
-
-    df_eff['efficience'] = df_eff['efficience'].replace({palier_1: 100,
-                                                        palier_2: 110})
-    
-    df_eff = df_eff.groupby(['rune_set', 'rune_slot', 'efficience'], as_index=False).count()
-
-    df_eff.rename(columns={'efficiency' : 'Quantité'}, inplace=True)
-    return df_eff
+    from fonctions.analysis import objective_counts
+    return objective_counts(st.session_state.data_rune.count_efficience_per_slot())
 
 def get_img_runes(df : pd.DataFrame):
     if not "set" in df.columns:
@@ -53,20 +29,16 @@ def get_img_runes(df : pd.DataFrame):
         return df
 
 def tableau(df, set, efficience, liste_params, n_params):
-    df_filter = df[(df['rune_set'] == set) & (df['efficience'] == efficience)]
-    df_filter['Objectif'] = liste_params[n_params]
-    df_filter['Réalisation'] = (df_filter['Quantité'] / df_filter['Objectif']) * 100
-    df_filter['Réalisation'] = df_filter['Réalisation'].apply(lambda x : f'{int(x)}%')
-
-
-
-    df_filter.set_index(['rune_set'], inplace=True)
-    df_filter = get_img_runes(df_filter)
-    real_total = int((df_filter['Quantité'].sum() / df_filter['Objectif'].sum()) * 100)
-    real_total = f'{real_total}%'
-    df_filter.drop(columns=['set'], inplace=True)
-    df_filter.loc[7] = ['', '', df_filter['Quantité'].sum() , df_filter['Objectif'].sum(), real_total, ''] 
-    return df_filter, real_total
+    selected = df[(df['rune_set'] == set) & (df['efficience'] == efficience)]
+    counts = selected.set_index('rune_slot')['Quantité'].reindex(range(1, 7), fill_value=0)
+    target = max(1, int(liste_params[n_params]))
+    df_filter = pd.DataFrame({'rune_set': set, 'rune_slot': range(1, 7), 'efficience': efficience,
+                              'Quantité': counts.to_numpy(), 'Objectif': target})
+    df_filter['Réalisation'] = (df_filter['Quantité'] / target * 100).astype(int).astype(str) + '%'
+    total = f"{int(counts.sum() / (target * 6) * 100)}%"
+    df_filter['img'] = f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{set.lower()}.png'
+    df_filter = df_filter.set_index('rune_set')
+    return df_filter, total
 
 
 def checkbox_stat(dict_params, value, defaut1, defaut2, defaut3):
@@ -116,9 +88,9 @@ def objectif_rune():
     
         if st.button(st.session_state.langue['sauvegarder']):
             requete_perso_bdd('''
-                              DELETE FROM sw.sw_objectifs_rune
+                              DELETE FROM sw_objectifs_rune
 	                          WHERE id = :id;
-                            INSERT INTO sw.sw_objectifs_rune(
+                            INSERT INTO sw_objectifs_rune(
                                 id, vio100, vio110, destroy100, destroy110, will100, will110, despair100, despair110, swift100, swift110, nemesis100, nemesis110)
                                 VALUES (:id, :vio100, :vio110, :destroy100, :destroy110, :will100, :will110, :despair100, :despair110, :swift100, :swift110, :nemesis100, :nemesis110); ''',
                                 dict_params={'id' : st.session_state.id_joueur,

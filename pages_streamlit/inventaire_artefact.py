@@ -5,7 +5,7 @@ from streamlit_extras.colored_header import colored_header
 import pandas as pd
 from fonctions.export import export_excel
 from fonctions.artefact import dict_arte_effect_english, dataframe_replace_to_english
-from streamlit_extras.no_default_selectbox import selectbox
+from fonctions.widgets import selectbox
 
 from fonctions.visuel import css
 from datetime import timedelta

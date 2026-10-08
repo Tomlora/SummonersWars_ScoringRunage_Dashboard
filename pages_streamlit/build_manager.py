@@ -103,10 +103,10 @@ def _compact_rune_catalog(data_class: Any) -> pd.DataFrame:
             catalog[column] = default
 
     catalog["id_rune"] = pd.to_numeric(catalog["id_rune"], errors="coerce").fillna(0).astype("int64")
-    catalog["Slot"] = pd.to_numeric(catalog["Slot"], errors="coerce").fillna(0).astype(int)
+    catalog["Slot"] = pd.to_numeric(catalog["Slot"], errors="coerce").fillna(0).astype("int64")
     for column in ["Valeur principale", "Valeur innée", "Valeur 1", "Valeur 2", "Valeur 3", "Valeur 4", "Efficience"]:
         catalog[column] = pd.to_numeric(catalog[column], errors="coerce").fillna(0)
-    catalog["Équipée sur"] = catalog["Équipée sur"].replace({0: "Inventaire", "0": "Inventaire"}).fillna("Inventaire").astype(str)
+    catalog["Équipée sur"] = catalog["Équipée sur"].astype(object).replace({0: "Inventaire", "0": "Inventaire"}).fillna("Inventaire").astype(str)
 
     catalog = catalog[
         [
@@ -286,25 +286,27 @@ def _save_build(user_id: int, monster_name: str, build_name: str, rune_ids: list
         st.error(_tr("Ce nom existe déjà pour ce monstre.", "This name already exists for this monster."))
         return
 
-    if not duplicate.empty:
-        requete_perso_bdd(
-            "DELETE FROM sw_build WHERE id = :user_id AND LOWER(monstre) = LOWER(:monster) AND LOWER(nom_build) = LOWER(:build_name)",
-            {"user_id": int(user_id), "monster": monster_name, "build_name": build_name},
-        )
+    from fonctions.gestion_bdd import transaction
+    with transaction():
+        if not duplicate.empty:
+            requete_perso_bdd(
+                "DELETE FROM sw_build WHERE id = :user_id AND LOWER(monstre) = LOWER(:monster) AND LOWER(nom_build) = LOWER(:build_name)",
+                {"user_id": int(user_id), "monster": monster_name, "build_name": build_name},
+            )
 
-    params = {
-        "user_id": int(user_id),
-        "monster": monster_name.lower(),
-        "build_name": build_name,
-        **{f"rune{slot}": int(rune_ids[slot - 1]) for slot in range(1, 7)},
-    }
-    requete_perso_bdd(
-        """
-        INSERT INTO sw.sw_build(id, monstre, nom_build, rune1, rune2, rune3, rune4, rune5, rune6)
-        VALUES (:user_id, :monster, :build_name, :rune1, :rune2, :rune3, :rune4, :rune5, :rune6)
-        """,
-        params,
-    )
+        params = {
+            "user_id": int(user_id),
+            "monster": monster_name.lower(),
+            "build_name": build_name,
+            **{f"rune{slot}": int(rune_ids[slot - 1]) for slot in range(1, 7)},
+        }
+        requete_perso_bdd(
+            """
+            INSERT INTO sw_build(id, monstre, nom_build, rune1, rune2, rune3, rune4, rune5, rune6)
+            VALUES (:user_id, :monster, :build_name, :rune1, :rune2, :rune3, :rune4, :rune5, :rune6)
+            """,
+            params,
+        )
     _load_saved_builds.clear()
     st.success(_tr("Combo sauvegardé.", "Combo saved."))
     st.rerun()
@@ -336,6 +338,9 @@ def build_manager_page() -> None:
     data_class = st.session_state.data_rune
     catalog = _compact_rune_catalog(data_class)
     monsters = _monster_catalog()
+    if monsters.empty:
+        st.info(_tr('Aucun monstre dans cet export.', 'No monsters in this export.'))
+        return
     saved_builds = _load_saved_builds(int(st.session_state.id_joueur))
 
     total1, total2, total3 = st.columns(3)
@@ -400,7 +405,7 @@ def build_manager_page() -> None:
             with column:
                 with st.container(border=True):
                     st.markdown(f"**Slot {slot}**")
-                    options = [0] + catalog.loc[catalog["Slot"] == slot, "id_rune"].astype(int).tolist()
+                    options = [0] + catalog.loc[catalog["Slot"] == slot, "id_rune"].astype("int64").tolist()
                     current = _safe_int(st.session_state.get(f"build_manager_slot_{slot}", 0))
                     if current not in options:
                         options.append(current)
@@ -470,13 +475,5 @@ def build_manager_page() -> None:
     st.caption("Made by Tomlora 😎")
 
 
-try:
+if __name__ == "__main__":
     build_manager_page()
-except KeyError as error:
-    st.warning(
-        _tr(
-            f"Les données nécessaires au gestionnaire de builds sont absentes : {error}",
-            f"Required build manager data is missing: {error}",
-        ),
-        icon="⚠️",
-    )

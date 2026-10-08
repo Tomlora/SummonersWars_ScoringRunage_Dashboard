@@ -25,9 +25,11 @@ def visibility():
                             st.session_state.langue['visible_all']: 3,
                             st.session_state.langue['caché_mais_visible']: 4}
         # on enregistre si changement
-        requete_perso_bdd('''UPDATE sw_user SET visibility = :visibility where joueur = :joueur''', {'visibility': dict_visibility[slider_visibility],
-                                                                                                        'joueur': st.session_state["pseudo"]})
+        if dict_visibility[slider_visibility] != st.session_state.visibility:
+            requete_perso_bdd('''UPDATE sw_user SET visibility = :visibility where id = :joueur''', {'visibility': dict_visibility[slider_visibility],
+                                                                                                        'joueur': st.session_state["id_joueur"]})
         
+            st.cache_data.clear()
         st.session_state.visibility = dict_visibility[slider_visibility]
 
         

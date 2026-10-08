@@ -37,15 +37,15 @@ def stats(n):
 
     with column1:
         stats_selected = st.selectbox(
-            f'Substat {n}', options=max_sub_by_proc(4).keys(), key=f'substat{n}')
+            f'Substat {n}', options=max_sub_by_proc(4).keys(), key=f'calc_rune_substat{n}')
 
     with column2:
         proc = st.number_input(
-            f'Proc Substat {n}', min_value=0, max_value=4, format='%i', key=f'proc{n}')
+            f'Proc Substat {n}', min_value=0, max_value=4, format='%i', key=f'calc_rune_proc{n}')
 
     with column3:
         value = st.number_input(
-            f'Valeur de base', format='%i', min_value=0, key=f'value{n}')
+            f'Valeur de base', format='%i', min_value=0, key=f'calc_rune_value{n}')
 
     with column5:
         max_stats = max_sub_by_proc(proc)[stats_selected]
@@ -55,7 +55,7 @@ def stats(n):
 
         with column6:
             value_meule = st.number_input(
-                'Meule', format='%i', min_value=0, key=f'meule{n}')
+                'Meule', format='%i', min_value=0, key=f'calc_rune_meule{n}')
 
     else:
         value_meule = 0
@@ -78,11 +78,11 @@ def calculateur_efficiency():
 
     with column0_0:
         innate_stats = st.selectbox(
-            'Innate', options=max_sub_by_proc(4).keys(), key='innate')
+            'Innate', options=max_sub_by_proc(4).keys(), key='calc_rune_innate')
 
     with column0_1:
         value0 = st.number_input(
-            st.session_state.langue["valeur"], format='%i', min_value=0, key='value0')
+            st.session_state.langue["valeur"], format='%i', min_value=0, key='calc_rune_value0')
 
     st.markdown("***")
 
