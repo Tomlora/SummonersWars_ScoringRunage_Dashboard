@@ -22,5 +22,6 @@ if kind=='Arena':
     score='score'; columns=['win','lose','score']
 else:
     score='damage'; columns=['rank','damage']
+history=data
 data=select_snapshots(data,score,'latest')
-show_ranking(data,score,columns,key_prefix='ui_pvp_',column_config={'score':st.column_config.NumberColumn(tr('Victoires (%)','Wins (%)'),format='%.1f %%'),'win':tr('Victoires','Wins'),'lose':tr('Défaites','Losses'),'rank':tr('Rang World Boss','World Boss rank'),'damage':st.column_config.NumberColumn(tr('Dégâts','Damage'),format='%.0f')})
+show_ranking(data,score,columns,key_prefix='ui_pvp_',history=history,column_config={'score':st.column_config.NumberColumn(tr('Victoires (%)','Wins (%)'),format='%.1f %%'),'win':tr('Victoires','Wins'),'lose':tr('Défaites','Losses'),'rank':tr('Rang World Boss','World Boss rank'),'damage':st.column_config.NumberColumn(tr('Dégâts','Damage'),format='%.0f')})

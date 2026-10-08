@@ -41,3 +41,39 @@ Le choix de thème utilise le mécanisme natif de Streamlit, propre au navigateu
 
 Le lien Nouveautés se trouve dans Accueil, avant Mon compte. L’espace vertical
 des objectifs utilise maintenant `st.space`, sans l’extension dépréciée.
+
+## Classements et objectifs
+
+Les classements proposent les six scores les plus proches du compte connecté,
+avec son propre compte toujours présent, l’écart de score et le rang du
+classement complet. Les filtres de guilde et les règles de visibilité restent
+appliqués avant toute sélection ou comparaison.
+
+Pour les scores et PvP/World Boss, le rang est reconstitué à la date du précédent
+relevé distinct du joueur : chaque concurrent utilise son dernier relevé
+disponible à cette date, ou son record à cette date en mode Record. Le rang
+actuel inclut les nouveaux concurrents. La population de chaque classement est
+indiquée ; les mouvements intrajournaliers et les relevés supprimés ne peuvent
+pas être reconstitués. La visibilité et l’appartenance aux guildes sont celles
+d’aujourd’hui. Pour les scores calculés, toutes les observations utilisées
+doivent avoir une méthode de calcul connue et identique. Sinon, aucune variation
+n’est annoncée. Les classements détaillés Runes et Artéfacts ne conservent que
+la dernière mesure : leurs variations restent explicitement indisponibles.
+
+Les objectifs affichent les réussites, les manques et la progression, avec les
+filtres Tous, À atteindre et Nouveaux objectifs atteints. Pour les runes, chaque
+set/palier/emplacement compte séparément ; un surplus ne compense plus un manque
+sur un autre emplacement. Les paliers existants restent distincts : [100,110[
+et 110+. Pour les artéfacts, la meilleure valeur doit dépasser le seuil entier
+choisi : un seuil de 10 demande donc 11 %. La matrice effets × attributs utilise
+les catégories observées dans l’un des deux imports pour chaque principale
+activée ; les anciennes lignes S3/S4 sont réunies par leur maximum.
+
+Les nouveaux objectifs atteints comparent l’import affiché à son prédécesseur
+enregistré, y compris le même jour, selon les paramètres actuels appliqués aux
+deux imports. Recharger le même export ne crée pas de nouvelle réussite.
+Les méthodes différentes, l’absence d’un prédécesseur et les anciens instantanés
+sans détail d’artéfacts donnent une comparaison indisponible, jamais zéro réussite
+supposée. Les futurs instantanés ajoutent uniquement les meilleures valeurs
+d’artéfacts par catégorie, sans sauvegarder l’export brut. Les paramètres sont
+enregistrés atomiquement et restent propres au compte connecté.

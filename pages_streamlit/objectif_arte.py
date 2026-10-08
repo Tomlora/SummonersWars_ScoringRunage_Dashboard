@@ -1,299 +1,53 @@
-from fonctions.access import require_saved_page
-require_saved_page()
-import streamlit as st
 import pandas as pd
-from fonctions.visuel import load_lottieurl, css
-from fonctions.artefact import dataframe_replace_to_english, dict_arte_effect_english
-from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd
-import plotly.graph_objects as go
-import numpy as np
+import streamlit as st
+from fonctions.access import require_saved_page
+from fonctions.goals import (artifact_goals, save_goals, ARTIFACT_STATS,
+    previous_goal_snapshot, artifact_progress)
+from fonctions.goal_ui import goal_summary, goal_table
+from fonctions.journey import tr
+from fonctions.visuel import css, page_header
 
-
-
+require_saved_page()
 css()
+page_header(tr('Objectifs d’artéfacts','Artifact goals'),tr('Suivez les effets qui vous manquent.','Track the effects you still need.'),icon='🎯')
+saved=artifact_goals(st.session_state.id_joueur)
+params={}
+keys=dict(zip(ARTIFACT_STATS,('reduction','dmg_elem','crit_dmg','precision','soin','spd')))
+labels={'REDUCTION':tr('Réduction des dégâts','Damage reduction'),'DMG ELEM':tr('Dégâts par élément','Element damage'),
+        'CRIT DMG':tr('Dégâts critiques','Critical damage'),'PRECISION':tr('Précision','Accuracy'),
+        'SOIN':tr('Soins','Healing'),'SPD':tr('Vitesse','Speed')}
+with st.expander(tr('Définir mes objectifs','Set my goals')):
+    st.caption(tr('Un objectif est atteint quand la meilleure valeur dépasse le seuil choisi. Les seuils sont exprimés en %.',
+                  'A goal is reached when your best value exceeds the selected threshold. Thresholds are percentages.'))
+    for group,dbkey in keys.items():
+        maximum=60 if group=='SPD' else 30
+        params[group]=st.slider(tr('Seuil','Threshold')+' '+group,10,maximum,max(10,min(maximum,int(saved[dbkey]))),key='goal_arte_'+dbkey)
+        for stat,col in zip(('HP','ATK','DEF'),st.columns(3)):
+            params[f'{group}_{stat}']=col.checkbox(stat,value=bool(saved[f'{dbkey}_{stat.lower()}']),key=f'{group}_{stat}')
+    if st.button(tr('Enregistrer mes objectifs','Save my goals')):
+        values={}
+        for group,dbkey in keys.items():
+            values[dbkey]=params[group]
+            for stat in ('HP','ATK','DEF'):
+                values[f'{dbkey}_{stat.lower()}']=params[f'{group}_{stat}']
+        save_goals(st.session_state.id_joueur,'arte',values)
+        st.success(tr('Vos objectifs sont enregistrés.','Your goals have been saved.'))
 
-
-
-
-
-
-def objectif():
-    data_arte : pd.DataFrame = st.session_state.data_arte.df_top.copy()
-    
-    
-
-    
-    from fonctions.goals import artifact_goals
-    params = artifact_goals(st.session_state.id_joueur)
-
-    def checkbox_stat(dict_params, value, defaut1, defaut2, defaut3):
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            dict_params[f'{value}_HP'] = st.checkbox('HP', value=defaut1, key=f'{value}_HP')
-        with col2:
-            dict_params[f'{value}_ATK'] = st.checkbox('ATK', value=defaut2, key=f'{value}_ATK')
-        with col3:
-            dict_params[f'{value}_DEF'] = st.checkbox('DEF', value=defaut3, key=f'{value}_DEF')
-        
-        return dict_params
-        
-        
-    param_objectifs = {}
-    with st.expander('Paramètres'):
-        param_objectifs['REDUCTION'] = st.slider(f'{st.session_state.langue["objectif"]} Reduction', 10, 30, params['reduction'])
-        param_objectifs = checkbox_stat(param_objectifs, 'REDUCTION', params['reduction_hp'], params['reduction_atk'], params['reduction_def'])
-        param_objectifs['DMG ELEM'] = st.slider(f'{st.session_state.langue["objectif"]} DMG ELEM', 10, 30, params['dmg_elem'])
-        param_objectifs = checkbox_stat(param_objectifs, 'DMG ELEM', params['dmg_elem_hp'], params['dmg_elem_atk'], params['dmg_elem_def'])
-        param_objectifs['CRIT DMG'] = st.slider(f'{st.session_state.langue["objectif"]} CRIT DMG', 10, 30, params['crit_dmg'])
-        param_objectifs = checkbox_stat(param_objectifs, 'CRIT DMG', params['crit_dmg_hp'], params['crit_dmg_atk'], params['crit_dmg_def'])
-        param_objectifs['PRECISION'] = st.slider(f'{st.session_state.langue["objectif"]} PRECISION', 10, 30, params['precision'])
-        param_objectifs = checkbox_stat(param_objectifs, 'PRECISION', params['precision_hp'], params['precision_atk'], params['precision_def'])
-        param_objectifs['SOIN'] = st.slider(f'{st.session_state.langue["objectif"]} SOIN', 10, 30, params['soin'])
-        param_objectifs = checkbox_stat(param_objectifs, 'SOIN', params['soin_hp'], params['soin_atk'], params['soin_def'])
-        param_objectifs['SPD'] = st.slider(f'{st.session_state.langue["objectif"]} SPD', 10, 60, params['spd'])
-        param_objectifs = checkbox_stat(param_objectifs, 'SPD', params['spd_hp'], params['spd_atk'], params['spd_def'])
-
-    
-        if st.button(st.session_state.langue['sauvegarder']):
-            requete_perso_bdd('''
-                              DELETE FROM sw_objectifs_arte
-	                          WHERE id = :id;
-                              INSERT INTO sw_objectifs_arte(
-                            id, reduction, dmg_elem, crit_dmg, "precision", soin, reduction_hp, reduction_atk, reduction_def, dmg_elem_hp, dmg_elem_atk,
-                            dmg_elem_def, crit_dmg_hp, crit_dmg_atk, crit_dmg_def, precision_hp, precision_atk, precision_def,
-                            soin_hp, soin_atk, soin_def, spd, spd_hp, spd_atk, spd_def)
-                            VALUES (:id, :reduction, :dmg_elem, :crit_dmg, :precision, :soin, :reduction_hp, :reduction_atk, :reduction_def, :dmg_elem_hp, :dmg_elem_atk,
-                            :dmg_elem_def, :crit_dmg_hp, :crit_dmg_atk, :crit_dmg_def, :precision_hp, :precision_atk, :precision_def,
-                            :soin_hp, :soin_atk, :soin_def, :spd, :spd_hp, :spd_atk, :spd_def);  ''',
-                                dict_params={'id' : st.session_state.id_joueur,
-                                             'reduction' : param_objectifs['REDUCTION'],
-                                             'dmg_elem' : param_objectifs['DMG ELEM'],
-                                             'crit_dmg' : param_objectifs['CRIT DMG'],
-                                             'precision' : param_objectifs['PRECISION'],
-                                             'soin' : param_objectifs['SOIN'],
-                                             'reduction_hp' : param_objectifs['REDUCTION_HP'],
-                                             'reduction_def' : param_objectifs['REDUCTION_DEF'],
-                                             'reduction_atk' : param_objectifs['REDUCTION_ATK'],
-                                             'dmg_elem_hp' : param_objectifs['DMG ELEM_HP'],
-                                             'dmg_elem_atk' : param_objectifs['DMG ELEM_ATK'],
-                                             'dmg_elem_def' : param_objectifs['DMG ELEM_DEF'],
-                                             'crit_dmg_hp' : param_objectifs['CRIT DMG_HP'],
-                                             'crit_dmg_atk' : param_objectifs['CRIT DMG_ATK'],
-                                             'crit_dmg_def' : param_objectifs['CRIT DMG_DEF'],
-                                             'precision_hp' : param_objectifs['PRECISION_HP'],
-                                             'precision_atk' : param_objectifs['PRECISION_ATK'],
-                                             'precision_def' : param_objectifs['PRECISION_DEF'],
-                                             'soin_hp' : param_objectifs['SOIN_HP'],
-                                             'soin_atk' : param_objectifs['SOIN_ATK'],
-                                             'soin_def' : param_objectifs['SOIN_DEF'],
-                                             'spd' : param_objectifs['SPD'],
-                                             'spd_hp' : param_objectifs['SPD_HP'],
-                                             'spd_atk' : param_objectifs['SPD_ATK'],
-                                             'spd_def' : param_objectifs['SPD_DEF']})
-            
-            st.success(':v:')
-        
-    
-    if st.session_state.translations_selected == 'English':
-        data_arte['arte_attribut'] = data_arte['arte_attribut'].replace(dataframe_replace_to_english)
-
-        data_arte['substat'] = data_arte['substat'].replace(dict_arte_effect_english)
-        
-        options={ #'DMG INCREASED' : ['DMG INCREASED by % HP',
-                        #    "DMG INCREASED by % ATK",
-                        #    'DMG INCREASED by % DEF',
-                        #    'DMG INCREASED by % SPD'],
-             'REDUCTION' : ['REDUCTION DMG FROM FIRE',
-                            'REDUCTION DMG FROM WATER',
-                            'REDUCTION DMG FROM WIND',
-                            'REDUCTION DMG FROM LIGHT',
-                            'REDUCTION DMG FROM DARK'],
-             'DMG ELEM' : ['DMG TO FIRE',
-                          'DMG TO WATER',
-                          'DMG TO WIND',
-                          'DMG TO LIGHT',
-                          'DMG TO DARK'],
-             'CRIT DMG' : ['CRIT DMG RECU',
-                           'CRIT DMG S1',
-                           'CRIT DMG S2',
-                           'CRIT DMG S3',
-                           'CRIT DMG S4',
-                           'CRIT DMG S3/S4',
-                           'PREMIER HIT CRIT DMG'],
-             'PRECISION' : ['ACC S1',
-                            'ACC S2',
-                            'ACC S3'],
-             'SOIN' : ['HEAL S1', 
-                       'HEAL S2',
-                       'HEAL S3'],
-             'SPD' : ['SPD Increased']} 
-        
-        data_arte[['substat']] = data_arte[['substat']].replace({'ATK Increased' : 'ATK/DEF Increased', 
-                                                                'DEF Increased' : 'ATK/DEF Increased',
-                                                                'CRIT DMG S3' : 'CRIT DMG S3/S4',
-                                                                'CRIT DMG S4' : 'CRIT DMG S3/S4',
-                                                                'REVENGE' : 'REVENGE AND COOP',
-                                                                 'COOP DMG' : 'REVENGE AND COOP',})  
-        
-    else:
-    
-        options={ #'DMG SUPP' : ['DMG SUPP EN FONCTION DES HP',
-                            # "DMG SUPP EN FONCTION DE L'ATQ",
-                            # 'DMG SUPP EN FONCTION DE LA DEF',
-                            # 'DMG SUPP EN FONCTION DE LA SPD'],
-                'REDUCTION' : ['REDUCTION SUR FEU',
-                                'REDUCTION SUR EAU',
-                                'REDUCTION SUR VENT',
-                                'REDUCTION SUR LUMIERE',
-                                'REDUCTION SUR DARK'],
-                'DMG ELEM' : ['DMG SUR FEU',
-                            'DMG SUR EAU',
-                            'DMG SUR VENT',
-                            'DMG SUR LUMIERE',
-                            'DMG SUR DARK'],
-                'CRIT DMG' : ['CRIT DMG S1',
-                            'CRIT DMG S2',
-                            'CRIT DMG S3',
-                            'CRIT DMG S4',
-                            'CRIT DMG S3/S4',
-                            'PREMIER HIT CRIT DMG'],
-                'PRECISION' : ['PRECISION S1',
-                                'PRECISION S2',
-                                'PRECISION S3'],
-                'SOIN' : ['SOIN S1',
-                          'SOIN S2',
-                          'SOIN S3'],
-                'SPD' : ['RENFORCEMENT SPD']} 
-
-        data_arte[['substat']] = data_arte[['substat']].replace({'RENFORCEMENT ATK' : 'RENFORCEMENT ATK/DEF', 
-                                                                'RENFORCEMENT DEF' : 'RENFORCEMENT ATK/DEF',
-                                                                'CRIT DMG S3' : 'CRIT DMG S3/S4',
-                                                                'CRIT DMG S4' : 'CRIT DMG S3/S4',
-                                                                'REVENGE' : 'REVENGE ET COOP',
-                                                                'COOP DMG' : 'REVENGE ET COOP',})
-        
-    reduction, dmg_sur, crit_dmg, precision, soin, spd = st.tabs(['REDUCTION', 'DMG ELEM', 'CRIT DMG', st.session_state.langue["precision"], st.session_state.langue["soin"], 'SPD'])  
-    
-    dict_tab = {'REDUCTION' : reduction,
-                'DMG ELEM' : dmg_sur,
-                'CRIT DMG' : crit_dmg,
-                'PRECISION' : precision,
-                'SOIN' : soin,
-                'SPD' : spd}  
-    
-    dict_true = {}
-    dict_true_max = {} 
-    dict_diff = {}
-            
-    for main_stat in data_arte['main_type'].unique():
-        data_filter : pd.DataFrame = data_arte[data_arte['main_type'] == main_stat]
-        
-        for key, stats in options.items():
-            
-            if param_objectifs[f'{key}_{main_stat}']:
-                with dict_tab[key]:
-                    data_filter2 = data_filter[data_filter['substat'].isin(stats)]
-                
-                
-                    data_filter2['count'] = (data_filter2[['1', '2', '3', '4', '5']] > param_objectifs[key]).sum(axis=1)
-                    
-                    df_to_show = data_filter2.pivot_table(values='count',
-                                                        index='substat',
-                                                        columns='arte_attribut',
-                                                        fill_value=0)
-                    
-                    df_bool = df_to_show >= 1
-                    
-                    
-                    if not key in dict_true.keys():
-                        dict_true[key] = df_bool.sum(axis=0).sum()
-                        dict_true_max[key] = df_bool.count(axis=0).sum()
-                        dict_diff[key] = 0
-                    
-                    else:
-                        dict_true[key] = dict_true[key] + df_bool.sum(axis=0).sum()
-                        dict_true_max[key] = dict_true_max[key] + df_bool.count(axis=0).sum()
-                        dict_diff[key] = dict_true_max[key] - dict_true[key]                    
-                    
-                    st.subheader(f'{main_stat} > {param_objectifs[key]}')
-                    
-                    st.dataframe(df_bool,
-                                use_container_width=True,
-                                height=225)
-                    
-
-        
-    df_final = pd.DataFrame.from_dict([dict_true, dict_true_max, dict_diff])
- 
-   
-    fig = go.Figure()
-    
-    trace1 = go.Bar(x=df_final.columns, y=df_final.loc[0], name='Réalisé')
-    trace2 = go.Bar(x=df_final.columns, y=df_final.loc[1], name=st.session_state.langue["objectif"])
-   
-    fig.add_traces([trace1, trace2])
-    
-    # ---- Par Substat
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.plotly_chart(fig)
-        
-    with col2:
-        df_final_t = df_final.T.reset_index()
-        df_final_t['Progression'] = np.round(df_final_t[0] / df_final_t[1] * 100,2)
-        df_final_t['Type'] = np.where(df_final_t['index'].isin(['REDUCTION', 'DMG ELEM']), 'ELEMENT', 'ATTRIBUT')
-        
-        st.space(196)
-        st.dataframe(df_final_t[['index', 'Progression']].sort_values(by='Progression', ascending=False),
-                     use_container_width=True)
-
-    fig.update_layout(
-        title="Par Substat",
-        xaxis_title="Substat",
-        yaxis_title="Quantité",
-    )
-        
-
-    # ---- Par Type
-    df_grp = df_final_t.groupby('Type', as_index=False).sum()
-    df_grp['Progression'] = np.round(df_grp[0] / df_grp[1] * 100,2)
-        
-    
-    fig = go.Figure()
-    
-    trace1 = go.Bar(x=df_grp['Type'], y=df_grp[0], name='Réalisé')
-    trace2 = go.Bar(x=df_grp['Type'], y=df_grp[1], name=st.session_state.langue["objectif"])
-   
-    fig.add_traces([trace1, trace2])
-    
-    fig.update_layout(
-        title="Par Type",
-        xaxis_title="Type",
-        yaxis_title="Quantité",
-    )
-    
-    col3, col4 = st.columns(2)
-    
-    with col3:
-        st.plotly_chart(fig)
-        
-    with col4:
-        st.space(196)
-        st.dataframe(df_grp[['Type', 'Progression']].sort_values(by='Progression', ascending=False),
-                     use_container_width=True)
-                
-if 'submitted' in st.session_state:
-    if st.session_state.submitted:    
-        st.title(st.session_state.langue["objectif"])
-        objectif()
-    
-    else:
-        st.switch_page("pages_streamlit/upload.py")
-
+previous,date=previous_goal_snapshot(st.session_state.id_joueur,st.session_state.get('import_hash'),st.session_state.get('scoring_version'))
+old=None
+if previous is not None and 'goal_artifacts' in previous:
+    old=pd.DataFrame(previous['goal_artifacts'],columns=['main_type','substat','arte_attribut','1'])
 else:
-    st.switch_page("pages_streamlit/upload.py")
-    
-    
-st.caption('Made by Tomlora :sunglasses:')
+    date=None
+rows=artifact_progress(st.session_state.data_arte.df_top,params,old)
+goal_summary(rows,date,'arte')
+st.caption(tr('Chaque objectif associe une statistique principale, un effet et un attribut présents dans l’un des deux imports. La meilleure valeur est utilisée ; les anciennes lignes S3 et S4 sont regroupées.',
+              'Each goal combines a main stat, effect and attribute found in either import. The best value is used; legacy S3 and S4 effects are merged.'))
+if not rows.empty:
+    for group,tab in zip(keys,st.tabs(list(labels.values()))):
+        with tab:
+            selected=rows[rows.group.eq(group)]
+            if not selected.empty:
+                st.progress(float(selected.progress.mean()/100),text=tr(f'{int(selected.achieved.sum())} / {len(selected)} objectifs atteints',
+                                                                     f'{int(selected.achieved.sum())} / {len(selected)} goals reached'))
+            goal_table(selected,'arte','goal_arte_view_'+keys[group])

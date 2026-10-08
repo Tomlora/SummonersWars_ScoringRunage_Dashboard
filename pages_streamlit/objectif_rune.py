@@ -1,270 +1,42 @@
-from fonctions.access import require_saved_page
-require_saved_page()
-
 import streamlit as st
-import pandas as pd
-from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd
-from fonctions.visuel import css
+from fonctions.access import require_saved_page
+from fonctions.analysis import objective_counts
+from fonctions.goals import (rune_goals, save_goals, RUNE_SETS, RUNE_KEYS,
+    previous_goal_snapshot, snapshot_rune_counts, rune_progress)
+from fonctions.goal_ui import goal_summary, goal_table
+from fonctions.journey import tr
+from fonctions.visuel import css, page_header
+
+require_saved_page()
 css()
+page_header(tr('Objectifs de runes','Rune goals'),tr('Repérez les emplacements à renforcer.','See which slots need more runes.'),icon='🎯')
+params=rune_goals(st.session_state.id_joueur)
+with st.expander(tr('Définir mes objectifs','Set my goals')):
+    st.caption(tr('Nombre de runes souhaité pour chaque emplacement. Les paliers sont distincts : 100 à moins de 110, puis 110 et plus.',
+                  'Desired rune count for each slot. Tiers are separate: 100 to below 110, then 110 and above.'))
+    for i,name in enumerate(RUNE_SETS):
+        cols=st.columns(2)
+        for j,tier in enumerate((100,110)):
+            key=RUNE_KEYS[i*2+j]
+            params[key]=cols[j].slider(f'{name} · '+('100–109.99' if tier==100 else '110+'),2,60,max(2,min(60,int(params[key]))),key='goal_'+key)
+    if st.button(tr('Enregistrer mes objectifs','Save my goals')):
+        save_goals(st.session_state.id_joueur,'rune',params)
+        st.success(tr('Vos objectifs sont enregistrés.','Your goals have been saved.'))
 
-
-def download_params(id_compte):
-    df_params = lire_bdd_perso(f'''SELECT * from sw_objectifs_rune WHERE id = {id_compte} ''', index_col='id').T
-        
-    if df_params.empty:
-        return [20, 10, 10, 5, 20, 10, 20, 10, 20, 10, 10, 5]
-    else:
-        return df_params.iloc[0].tolist()
-
-
-def load_efficience():
-    from fonctions.analysis import objective_counts
-    return objective_counts(st.session_state.data_rune.count_efficience_per_slot())
-
-def get_img_runes(df : pd.DataFrame):
-    if not "set" in df.columns:
-        df.insert(0, 'set', df.index)
-        df['img'] = df['set'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
-
-        return df
-
-def tableau(df, set, efficience, liste_params, n_params):
-    selected = df[(df['rune_set'] == set) & (df['efficience'] == efficience)]
-    counts = selected.set_index('rune_slot')['Quantité'].reindex(range(1, 7), fill_value=0)
-    target = max(1, int(liste_params[n_params]))
-    df_filter = pd.DataFrame({'rune_set': set, 'rune_slot': range(1, 7), 'efficience': efficience,
-                              'Quantité': counts.to_numpy(), 'Objectif': target})
-    df_filter['Réalisation'] = (df_filter['Quantité'] / target * 100).astype(int).astype(str) + '%'
-    total = f"{int(counts.sum() / (target * 6) * 100)}%"
-    df_filter['img'] = f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{set.lower()}.png'
-    df_filter = df_filter.set_index('rune_set')
-    return df_filter, total
-
-
-def checkbox_stat(dict_params, value, defaut1, defaut2, defaut3):
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        dict_params[f'{value}_HP'] = st.checkbox('HP', value=defaut1, key=f'{value}_HP')
-    with col2:
-        dict_params[f'{value}_ATK'] = st.checkbox('ATK', value=defaut2, key=f'{value}_ATK')
-    with col3:
-        dict_params[f'{value}_DEF'] = st.checkbox('DEF', value=defaut3, key=f'{value}_DEF')
-        
-    return dict_params
-        
-        
-
-
-def objectif_rune():
-
-    df_efficience = load_efficience()
-
-    liste_params = download_params(st.session_state.id_joueur)
-
-
-
-    param_objectifs = {}
-    with st.expander('Paramètres'):
-        param_objectifs['Violent (100)'] = st.slider(f'{st.session_state.langue["objectif"]} Violent (100)', 2, 60, liste_params[0])
-        param_objectifs['Violent (110)'] = st.slider(f'{st.session_state.langue["objectif"]} Violent (110)', 2, 60, liste_params[1])
-
-        param_objectifs['Destroy (100)'] = st.slider(f'{st.session_state.langue["objectif"]} Destroy (100)', 2, 60, liste_params[2])
-        param_objectifs['Destroy (110)'] = st.slider(f'{st.session_state.langue["objectif"]} Destroy (110)', 2, 60, liste_params[3])
-
-        param_objectifs['Will (100)'] = st.slider(f'{st.session_state.langue["objectif"]} Will (100)', 2, 60, liste_params[4])
-        param_objectifs['Will (110)'] = st.slider(f'{st.session_state.langue["objectif"]} Will (110)', 2, 60, liste_params[5])
-
-        param_objectifs['Despair (100)'] = st.slider(f'{st.session_state.langue["objectif"]} Despair (100)', 2, 60, liste_params[6])
-        param_objectifs['Despair (110)'] = st.slider(f'{st.session_state.langue["objectif"]} Despair (110)', 2, 60, liste_params[7])
-
-        param_objectifs['Swift (100)'] = st.slider(f'{st.session_state.langue["objectif"]} Swift (100)', 2, 60, liste_params[8])
-        param_objectifs['Swift (110)'] = st.slider(f'{st.session_state.langue["objectif"]} Swift (110)', 2, 60, liste_params[9])
-
-        param_objectifs['Nemesis (100)'] = st.slider(f'{st.session_state.langue["objectif"]} Nemesis (100)', 2, 60, liste_params[10])
-        param_objectifs['Nemesis (110)'] = st.slider(f'{st.session_state.langue["objectif"]} Nemesis (110)', 2, 60, liste_params[11])
-
-
-
-    
-        if st.button(st.session_state.langue['sauvegarder']):
-            requete_perso_bdd('''
-                              DELETE FROM sw_objectifs_rune
-	                          WHERE id = :id;
-                            INSERT INTO sw_objectifs_rune(
-                                id, vio100, vio110, destroy100, destroy110, will100, will110, despair100, despair110, swift100, swift110, nemesis100, nemesis110)
-                                VALUES (:id, :vio100, :vio110, :destroy100, :destroy110, :will100, :will110, :despair100, :despair110, :swift100, :swift110, :nemesis100, :nemesis110); ''',
-                                dict_params={'id' : st.session_state.id_joueur,
-                                             'vio100' : param_objectifs['Violent (100)'],
-                                             'vio110' : param_objectifs['Violent (110)'],
-                                             'destroy100' : param_objectifs['Destroy (100)'],
-                                             'destroy110' : param_objectifs['Destroy (110)'],
-                                             'will100' : param_objectifs['Will (100)'],
-                                             'will110' : param_objectifs['Will (110)'],
-                                             'despair100' : param_objectifs['Despair (100)'],
-                                             'despair110' : param_objectifs['Despair (110)'],
-                                             'swift100' : param_objectifs['Swift (100)'],
-                                             'swift110' : param_objectifs['Swift (110)'],
-                                             'nemesis100' : param_objectifs['Nemesis (100)'],
-                                             'nemesis110' : param_objectifs['Nemesis (110)']})
-            
-            st.success(':v:')
-
-    tab100, tab110 = st.tabs(['Efficience 100', 'Efficience 110'])
-
-
-
-    with tab100:
-        df_vio100, objectif_vio100 = tableau(df_efficience, 'Violent', 100, liste_params, 0)
-        df_destroy100, objectif_destroy100 = tableau(df_efficience, 'Destroy', 100, liste_params, 2)
-        df_despair100, objectif_despair100 = tableau(df_efficience, 'Despair', 100, liste_params, 6)
-        df_will100, objectif_will100 = tableau(df_efficience, 'Will', 100, liste_params, 4)
-        df_swift100, objectif_swift100 = tableau(df_efficience, 'Swift', 100, liste_params, 8)
-        df_nem100, objectif_nem100 = tableau(df_efficience, 'Nemesis', 100, liste_params, 10)
-
-        df_vio110, objectif_vio110 = tableau(df_efficience, 'Violent', 110, liste_params, 1)
-        df_destroy110, objectif_destroy110 = tableau(df_efficience, 'Destroy', 110, liste_params, 3)
-        df_despair110, objectif_despair110 = tableau(df_efficience, 'Despair', 110, liste_params, 7)
-        df_will110, objectif_will110 = tableau(df_efficience, 'Will', 110, liste_params, 5)
-        df_swift110, objectif_swift110 = tableau(df_efficience, 'Swift', 110, liste_params, 9)
-        df_nem110, objectif_nem110 = tableau(df_efficience, 'Nemesis', 110, liste_params, 11)
-
-        col1, col2, col3, col4, col5, col6 = st.columns(6)
-
-        col1.metric('Violent (100)',objectif_vio100)
-        col2.metric('Destroy (100)',objectif_destroy100)
-        col3.metric('Despair (100)',objectif_despair100)
-        col4.metric('Will (100)',objectif_will100)
-        col5.metric('Swift (100)',objectif_swift100)
-        col6.metric('Nemesis (100)',objectif_nem100)
-
-        col1_1, col1_2 = st.columns(2)
-
-        with col1_1:
-
-            st.subheader('Violent')
-            st.dataframe(
-                        df_vio100.set_index('img'), 
-                        use_container_width=True, 
-                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
-                        )
-
-            st.subheader('Destroy')
-            st.dataframe(
-                        df_despair100.set_index('img'), 
-                        use_container_width=True, 
-                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
-                        )
-
-            st.subheader('Despair')
-            st.dataframe(
-                        df_despair100.set_index('img'), 
-                        use_container_width=True, 
-                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
-                        )
-
-        with col1_2:
-
-            st.subheader('Will')
-            st.dataframe(
-                        df_will100.set_index('img'), 
-                        use_container_width=True, 
-                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
-                        )
-
-
-            st.subheader('Swift')
-            st.dataframe(
-                        df_swift100.set_index('img'), 
-                        use_container_width=True, 
-                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
-                        )
-
-            st.subheader('Nemesis')
-            st.dataframe(
-                        df_nem100.set_index('img'), 
-                        use_container_width=True, 
-                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
-                        )
-
-
-
-    
-    with tab110:
-
-        col11, col12, col13, col14, col15, col16 = st.columns(6)
-
-        col11.metric('Violent (110)',objectif_vio110)
-        col12.metric('Destroy (110)',objectif_destroy110)
-        col13.metric('Despair (110)',objectif_despair110)
-        col14.metric('Will (110)',objectif_will110)
-        col15.metric('Swift (110)',objectif_swift110)
-        col16.metric('Nemesis (110)',objectif_nem110)
-
-        col2_1, col2_2 = st.columns(2)
-
-        with col2_1:
-
-            st.subheader('Violent')
-            st.dataframe(
-                        df_vio110.set_index('img'), 
-                        use_container_width=True, 
-                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
-                        )
-
-            st.subheader('Destroy')
-            st.dataframe(
-                        df_destroy110.set_index('img'), 
-                        use_container_width=True, 
-                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
-                        )
-
-            st.subheader('Despair')
-            st.dataframe(
-                        df_despair110.set_index('img'), 
-                        use_container_width=True, 
-                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
-                        )
-
-        with col2_2:
-
-            st.subheader('Will')
-            st.dataframe(
-                        df_will110.set_index('img'), 
-                        use_container_width=True, 
-                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
-                        )
-
-            st.subheader('Swift')
-            st.dataframe(
-                        df_swift110.set_index('img'), 
-                        use_container_width=True, 
-                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
-                        )
-
-            st.subheader('Nemesis')
-            st.dataframe(
-                        df_nem110.set_index('img'), 
-                        use_container_width=True, 
-                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Set de rune')}
-                        )
-    
-
-
-        
-
-if 'submitted' in st.session_state:
-    if st.session_state.submitted:    
-        st.title('Objectif Rune')
-        try:
-            objectif_rune()
-        except IndexError:
-            st.warning('Cet onglet est réservé aux joueurs ayant un meilleur niveau de runes')
-    
-    else:
-        st.switch_page("pages_streamlit/upload.py")
-
-else:
-    st.switch_page("pages_streamlit/upload.py")
-    
-    
-st.caption('Made by Tomlora :sunglasses:')
+previous,date=previous_goal_snapshot(st.session_state.id_joueur,st.session_state.get('import_hash'),st.session_state.get('scoring_version'))
+old=snapshot_rune_counts(previous,st.session_state.data_rune.set_to_show) if previous else None
+counts=objective_counts(st.session_state.data_rune.count_efficience_per_slot())
+rows=rune_progress(counts,params,old)
+goal_summary(rows,date,'rune')
+st.caption(tr('Chaque objectif correspond à un set, un palier d’efficience et un emplacement. Un surplus sur un emplacement ne compense pas un manque sur un autre.',
+              'Each goal covers one set, efficiency tier and slot. Extra runes in one slot do not make up for missing runes in another.'))
+for tier,tab in zip((100,110),st.tabs([tr('Efficience 100 à <110','Efficiency 100 to <110'),tr('Efficience 110 et plus','Efficiency 110 and above')])):
+    with tab:
+        selected=rows[rows.tier.eq(tier)]
+        cols=st.columns(3)
+        for i,name in enumerate(RUNE_SETS):
+            group=selected[selected.group.eq(name)]
+            with cols[i%3]:
+                st.metric(name,f'{int(group.achieved.sum())} / 6',help=tr('Emplacements ayant atteint leur objectif','Slots that reached their goal'))
+                st.progress(float(group.progress.mean()/100),text=tr(f'{int(group.remaining.sum())} runes manquantes',f'{int(group.remaining.sum())} runes missing'))
+        goal_table(selected,'rune',f'goal_rune_view_{tier}')
