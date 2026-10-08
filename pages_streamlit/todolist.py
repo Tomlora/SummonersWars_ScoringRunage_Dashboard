@@ -1,216 +1,86 @@
+from fonctions.access import require_saved_page
+require_saved_page()
 import pandas as pd
 import streamlit as st
-from fonctions.visualisation import filter_dataframe
+from fonctions.journey import tr
+from fonctions.tasks import load_tasks, save_tasks
 from fonctions.export import export_excel
-from fonctions.gestion_bdd import lire_bdd_perso, requete_perso_bdd, sauvegarde_bdd
-
-
-
-
-from fonctions.visuel import css
+from fonctions.rune_card import rune_card
+from fonctions.visuel import css, page_header
 css()
-
-
-
-
-
-
-st.title('To do list')
-
-
-def todo():
-    
-    st.info(st.session_state.langue['warning_detail_runes'], icon="⚠️")
-
-    def charger_notes(id_joueur):
-        return lire_bdd_perso(f"SELECT * FROM sw_todolist WHERE id_joueur = {id_joueur}", index_col='id_rune').T
-    
-    notes = charger_notes(st.session_state.id_joueur)
-    
-        # # swarfarm
-    def charger_data(joueur):
-        swarfarm = st.session_state.swarfarm[[
-            'com2us_id', 'name', 'image_filename', 'url']].set_index('com2us_id')
-        # df_mobs['name_monstre'] = df_mobs['id_monstre'].map(
-        #     swarfarm.to_dict(orient="dict")['name'])
-
-        # On peut faire le mapping...
-
-        st.session_state.data_rune.data_build = st.session_state.data_rune.data.copy()
-
-        st.session_state.data_rune.data_build = st.session_state.data_rune.data_build[st.session_state.data_rune.data_build['level'] >= 12]
-
-        rename_column = {'rune_set': 'Set rune',
-                        'rune_slot': 'Slot',
-                        'rune_equiped': 'Equipé',
-                        'main_type': 'Stat principal',
-                        'main_value': 'Valeur stat principal',
-                        'first_sub': 'Substat 1',
-                        'second_sub': 'Substat 2',
-                        'third_sub': 'Substat 3',
-                        'fourth_sub': 'Substat 4',
-                        'first_sub_value_total': 'Substat 1 total',
-                        'second_sub_value_total': 'Substat 2 total',
-                        'third_sub_value_total': 'Substat 3 total',
-                        'fourth_sub_value_total': 'Substat 4 total',
-                        }
-
-        st.session_state.data_rune.data_build.rename(
-            columns=rename_column, inplace=True)
-        st.session_state.data_rune.data_build['Equipé'] = st.session_state.data_rune.data_build['Equipé'].astype(
-            'str')
-        st.session_state.data_rune.data_build['Equipé'] = st.session_state.data_rune.data_build['Equipé'].replace({'0': st.session_state.langue['Inventaire']})
-        
-        st.session_state.data_rune.data_build[['Set rune', 'Stat principal', 'innate_type']] = st.session_state.data_rune.data_build[['Set rune', 'Stat principal', 'innate_type']].astype('category')
-        
-
-
-        st.session_state.data_rune.data_build = st.session_state.data_rune.data_build[['Set rune', 'Slot', 'Equipé', 'Stat principal', 'Valeur stat principal',
-                                                                                    'innate_type', 'innate_value', 'level',
-                                                                                    'Substat 1', 'Substat 1 total',
-                                                                                    'Substat 2', 'Substat 2 total',
-                                                                                    'Substat 3', 'Substat 3 total',
-                                                                                    'Substat 4', 'Substat 4 total']]
-
-        st.session_state.data_rune.data_build = st.session_state.data_rune.map_stats(st.session_state.data_rune.data_build, [
-            'Stat principal', 'innate_type', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4']).reset_index()
-
-        st.session_state.data_rune.data_build.rename(
-            columns={'index': 'id_rune'}, inplace=True)
-
-        # on peut préparer la page
-        st.warning('Runes +12 ou +15 seulement', icon="⚠️")
-        
-
-                
-        melt = st.session_state.data_rune.data_build.melt(id_vars=['id_rune', 'Set rune', 'Slot', 'level', 'Substat 1', 'Substat 2', 'Substat 3', 'Substat 4'],
-                            value_vars=['Substat 1 total', 'Substat 2 total', 'Substat 3 total', 'Substat 4 total'])
-
-
-
-        def changement_variable(x):
-            number = x.variable[-7]
-            type = x[f'Substat {number}']
-                        
-            return type
-
-        melt['variable'] = melt.apply(changement_variable, axis=1)
-                
-
-        pivot = melt.pivot_table(index=['id_rune', 'Set rune', 'Slot'],
-                                        columns='variable',
-                                        values='value',
-                                        aggfunc='first',
-                                        fill_value=0).reset_index()
-                
-
-        st.session_state.data_rune.data_build  = st.session_state.data_rune.data_build.merge(pivot, on=['id_rune', 'Set rune', 'Slot'])
-        
-        df_mobs = st.session_state.df_mobs.set_index('id_unit')
-        
-        return st.session_state.data_rune.data_build, swarfarm, df_mobs
-    
-    st.session_state.data_rune.data_build, swarfarm, df_mobs = charger_data(st.session_state.compteid)
-    
-
-    try:
-        data_build_filter = filter_dataframe(
-                st.session_state.data_rune.data_build.drop(['Substat 1', 'Substat 1 total', 'Substat 2', 'Substat 2 total', 'Substat 3', 'Substat 3 total', 'Substat 4', 'Substat 4 total', 'Aucun'], axis=1), 'data_build', type_number='int')
-    except KeyError:
-        data_build_filter = filter_dataframe(
-                st.session_state.data_rune.data_build.drop(['Substat 1', 'Substat 1 total', 'Substat 2', 'Substat 2 total', 'Substat 3', 'Substat 3 total', 'Substat 4', 'Substat 4 total'], axis=1), 'data_build', type_number='int')        
-        
-    if not 'img' in data_build_filter.columns:
-        img = data_build_filter['Set rune'].apply(lambda x: f'https://raw.githubusercontent.com/swarfarm/swarfarm/master/herders/static/herders/images/runes/{x.lower()}.png')
-        data_build_filter.insert(0, 'img', img, True)
-    
-    # Modification
-   
-    colonne_to_disabled = data_build_filter.columns.tolist()
-    
-    data_build_filter.set_index('id_rune', inplace=True)
-    
-    def ajout_colonne(df):
-        df['notes'] = "" 
-        df['stat_to_replace'] = "" 
-        df['stat_objectif'] = ""      
-        df['fait'] = False
-        return df
-        
-    data_build_filter = ajout_colonne(data_build_filter)
-    data_build_filter.update(notes)    
-    
-
-
-    def charger_df_edited(data_build_filter, joueur_id):    
-        edited_df = st.data_editor(data_build_filter, 
-                        use_container_width=True,
-                        column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune'),
-                                    'stat_to_replace' : st.column_config.SelectboxColumn("Stat to replace", options=data_build_filter['Stat principal'].unique().tolist()),
-                                    'stat_objectif' : st.column_config.SelectboxColumn("Stat objectif", options=data_build_filter['Stat principal'].unique().tolist())},
-                        disabled=colonne_to_disabled)
-        
-        return edited_df
-    
-    edited_df = charger_df_edited(data_build_filter, st.session_state.compteid)
-    
-    
-    def save(edited_df):
-        df_filter = edited_df[(edited_df['fait'] == True) | (edited_df['notes'] != "") | (edited_df['stat_to_replace'] != "") | (edited_df['stat_objectif'] != "")].copy()
-        df_filter['id_joueur'] = st.session_state.id_joueur
-        df_filter_to_save = df_filter[['id_joueur', 'notes', 'stat_to_replace', 'stat_objectif', 'fait']]
-        requete_perso_bdd('DELETE FROM sw_todolist WHERE id_joueur = :id_joueur', {'id_joueur' : st.session_state.id_joueur})
-        sauvegarde_bdd(df_filter_to_save, 'sw_todolist', 'append')
-        if df_filter.empty:
-            st.warning('Vide', icon="⚠️")
-        else:
-            st.success('Sauvegardé', icon="✅")
-        return df_filter
-    
-    def reset():
-        requete_perso_bdd('DELETE FROM sw_todolist WHERE id_joueur = :id_joueur', {'id_joueur' : st.session_state.id_joueur})
-        st.success('Réinitialisé')
-        
-
-    
-    # save(edited_df)
-
-
-
-    data_xlsx = export_excel(edited_df.drop('img', axis=1), 'Id_rune', 'Runes')
-
-    col1, col2, col3 = st.columns([0.7,0.15,0.15])
-    
-    with col1:
-        st.download_button(st.session_state.langue['download_excel'], data_xlsx, file_name='runes.xlsx',
-                            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    
-    with col2:
-        st.button('Sauvegarder', on_click=save, args=(edited_df,), help=' ⚠️ Il faut sauvegarder avant chaque modification de filtre')
-        st.button('Reset', on_click=reset)
-        
-
-        
-        
-        
-    st.subheader('ToDoList')
-    st.dataframe(edited_df[(edited_df['fait'] == True) | (edited_df['notes'] != "") | (edited_df['stat_to_replace'] != "") | (edited_df['stat_objectif'] != "")].copy(),
-                use_container_width=True,
-                column_config={'img' : st.column_config.ImageColumn('Rune', help='Rune')})
-
-    
-
-if 'submitted' in st.session_state:
-    if st.session_state.submitted:
-        try:
-            todo()
-        except KeyError:
-            st.warning('Cet onglet est réservé aux joueurs ayant un meilleur niveau de runes')
-
-    else:
-        st.switch_page("pages_streamlit/upload.py")
-
+page_header(tr('Mes tâches','My tasks'),tr('Préparez les modifications à effectuer dans le jeu.','Prepare the changes to make in game.'),icon='📋')
+runes=st.session_state.data_rune
+notes=load_tasks(st.session_state.id_joueur)
+data=runes.data[['rune_set','rune_slot','rune_equiped','level','efficiency']].copy()
+data.index.name='id_rune'
+data['rune_equiped']=data.rune_equiped.replace({0:tr('Inventaire','Inventory'),'0':tr('Inventaire','Inventory')})
+for key,default in [('notes',''),('stat_to_replace',''),('stat_objectif',''),('fait',False)]:
+    data[key]=notes[key].reindex(data.index).fillna(default)
+focus=st.session_state.get('ui_task_rune')
+if focus is not None:
+    st.info(tr('Rune sélectionnée : ','Selected rune: ')+str(focus))
+    if st.button(tr('Afficher toutes les runes','Show all runes')):
+        st.session_state.pop('ui_task_rune',None)
+        st.rerun()
+    data=data[data.index==focus]
+query=st.text_input(tr('Rechercher un monstre, un set ou un ID','Find a monster, set or ID'),key='ui_task_query')
+if query:
+    mask=data.rune_set.astype(str).str.contains(query,case=False,regex=False)|data.rune_equiped.astype(str).str.contains(query,case=False,regex=False)|data.index.astype(str).str.contains(query,regex=False)
+    data=data[mask]
+only=st.checkbox(tr('Uniquement mes tâches','Only my tasks'),key='ui_task_only')
+if only:
+    data=data[data.fait|data.notes.ne('')|data.stat_to_replace.ne('')|data.stat_objectif.ne('')]
+with st.expander(tr('Filtres avancés sur les statistiques','Advanced stat filters')):
+    if st.toggle(tr('Activer les filtres avancés','Enable advanced filters'),key='ui_task_advanced'):
+        from fonctions.visualisation import filter_dataframe
+        fields={'rune_set':'Set','rune_slot':'Slot','stars':tr('Étoiles','Stars'),'level':tr('Niveau','Level'),
+                'efficiency':tr('Efficience (%)','Efficiency (%)'),'main_type':tr('Principale','Main stat'),
+                'main_value':tr('Valeur principale','Main value'),'innate_type':tr('Innée','Innate stat'),
+                'innate_value':tr('Valeur innée','Innate value')}
+        for i,sub in enumerate(('first','second','third','fourth'),1):
+            fields[sub+'_sub']=tr('Sous-statistique ','Substat ')+str(i)
+            fields[sub+'_sub_value_total']=tr('Total sous-statistique ','Substat total ')+str(i)
+        stats=runes.data.loc[data.index,list(fields)].copy()
+        for column in ['main_type','innate_type','first_sub','second_sub','third_sub','fourth_sub']:
+            stats[column]=stats[column].map(lambda value:runes.property.get(value,value))
+        filtered=filter_dataframe(stats.rename(columns=fields),key='task_advanced_query')
+        data=data.loc[filtered.index]
+if data.empty:
+    st.info(tr('Aucune rune pour cette sélection. Effacez la recherche ou les filtres.','No runes match. Clear the search or filters.'))
 else:
-    st.switch_page("pages_streamlit/upload.py")
-
-st.caption('Made by Tomlora :sunglasses:')
+    size=st.selectbox(tr('Runes par page','Runes per page'),[25,50,100],key='ui_task_size')
+    pages=max(1,(len(data)+size-1)//size)
+    st.session_state.ui_task_page=min(max(st.session_state.get('ui_task_page',1),1),pages)
+    page=st.number_input('Page',1,pages,key='ui_task_page')
+    st.caption(tr(f'{len(data)} runes · page {page}/{pages}',f'{len(data)} runes · page {page}/{pages}'))
+    data=data.iloc[(page-1)*size:page*size]
+    st.caption(tr('Enregistrez vos modifications avant de changer les filtres. Les tâches masquées sont conservées.','Save changes before changing filters. Hidden tasks are kept.'))
+    with st.form('rune_tasks'):
+        edited=st.data_editor(data,width='stretch',height='content',disabled=['rune_set','rune_slot','rune_equiped','level','efficiency'],column_config={
+            '_index':st.column_config.NumberColumn(tr('ID rune','Rune ID'),format='%d',disabled=True),
+            'rune_set':'Set','rune_slot':'Slot','rune_equiped':tr('Monstre','Monster'),'level':tr('Niveau','Level'),
+            'efficiency':st.column_config.NumberColumn(tr('Efficience (%)','Efficiency (%)'),format='%.2f'),
+            'notes':tr('Notes','Notes'),'stat_to_replace':tr('Statistique à remplacer','Stat to replace'),
+            'stat_objectif':tr('Statistique souhaitée','Target stat'),'fait':tr('Terminé','Done')})
+        save=st.form_submit_button(tr('Enregistrer les tâches affichées','Save displayed tasks'))
+    if save:
+        save_tasks(st.session_state.id_joueur,edited)
+        notes=load_tasks(st.session_state.id_joueur)
+        st.success(tr('Tâches enregistrées.','Tasks saved.'))
+    st.download_button(tr('Exporter les tâches affichées','Export displayed tasks'),export_excel(edited,'id_rune','Runes'),'rune-tasks.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',on_click='ignore')
+    with st.expander(tr('Fiche d’une rune','Rune details')):
+        rune_card(runes,data.index,'ui_tasks_card',actions=False)
+if not notes.empty:
+    st.subheader(tr('Toutes mes tâches enregistrées','All saved tasks'))
+    st.dataframe(notes.rename(columns={'notes':tr('Notes','Notes'),'stat_to_replace':tr('Statistique à remplacer','Stat to replace'),'stat_objectif':tr('Statistique souhaitée','Target stat'),'fait':tr('Terminé','Done')}),width='stretch')
+    if st.button(tr('Réinitialiser toutes mes tâches','Reset all my tasks')):
+        st.session_state['_confirm_reset_tasks']=True
+    if st.session_state.get('_confirm_reset_tasks'):
+        st.warning(tr('Toutes les tâches de ce compte seront supprimées.','All tasks for this account will be deleted.'))
+        if st.button(tr('Confirmer la réinitialisation','Confirm reset')):
+            cleared=notes.copy()
+            for key in ['notes','stat_to_replace','stat_objectif']: cleared[key]=''
+            cleared['fait']=False
+            save_tasks(st.session_state.id_joueur,cleared)
+            st.session_state.pop('_confirm_reset_tasks',None)
+            st.rerun()

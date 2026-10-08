@@ -89,6 +89,7 @@ def test_bad_json(raw):
 def test_slot_mapping_and_input_immutability(export):
     unit={'unit_id':99,'unit_master_id':3,'runes':{'b':export['runes'][5],'a':export['runes'][1]}}
     export['unit_list']=[unit]
+    export['runes']=[r for r in export['runes'] if r['rune_id'] not in {302,306}]
     original=deepcopy(export)
     clean=validate_export(export)
     row=monster_frame(clean,pd.DataFrame()).iloc[0]

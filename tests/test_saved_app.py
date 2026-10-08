@@ -8,6 +8,9 @@ from fonctions import gestion_bdd as db
 ROOT=Path(__file__).resolve().parents[1]
 
 def test_saved_pages(engine,export,monkeypatch):
+    from fonctions import access
+    monkeypatch.setattr(access,'access_config',lambda:{})
+    monkeypatch.setattr(access,'identity',lambda:None)
     monkeypatch.chdir(ROOT)
     monkeypatch.setenv('API_SQL','test-engine-injected')
     with engine.begin() as c:
@@ -34,15 +37,43 @@ def test_saved_pages(engine,export,monkeypatch):
     at=AppTest.from_file(str(ROOT/'scoring_runage.py'),default_timeout=30)
     for key,value in state.items():at.session_state[key]=value
     at.session_state['translations_selected']='Français'
+    import streamlit as st
+    navigation=st.navigation
+    menus=[]
+    def capture_menu(pages,**kwargs):
+        menus.append((list(pages),kwargs))
+        return navigation(pages,**kwargs)
+    monkeypatch.setattr(st,'navigation',capture_menu)
     at.run()
-    for page in ['evolution','comparaison','ladder','ladder_value','ladder_arte','ladder_others','objectif_rune','objectif_arte','build_manager','optimisation_spd','options','visibility']:
+    assert menus[-1][0][-1]=='Calculateurs'
+    assert 'Classements' in menus[-1][0]
+    assert menus[-1][1]['expanded'] is True
+    for page in ['evolution','comparaison','ladder','ladder_value','ladder_arte','ladder_others','objectif_rune','objectif_arte','build_manager','optimisation_spd','options','visibility','planning','import_changes']:
         at.switch_page('pages_streamlit/'+page+'.py').run()
         assert not at.exception,(page,[e.message for e in at.exception])
         assert not at.error,(page,[e.value for e in at.error])
         if page=='ladder':
-            for choice in at.selectbox[0].options:
-                at.selectbox[0].set_value(choice).run()
+            for choice in ['score_general','score_spd','score_arte','score_qual','rune_set','speed_set','com2us_global','com2us']:
+                at.selectbox(key='ui_ladder_kind').set_value(choice).run()
                 assert not at.exception,(choice,[e.message for e in at.exception])
         if page=='optimisation_spd':
             at.selectbox[0].set_value('Swift').run()
             assert not at.exception,[e.message for e in at.exception]
+        if page=='objectif_arte':
+            next(s for s in at.slider if s.label.endswith(' SOIN')).set_value(20).run()
+            next(s for s in at.slider if s.label.endswith(' SPD')).set_value(45).run()
+            at.checkbox(key='SPD_HP').uncheck().run()
+            at.button[0].click().run()
+            assert not at.exception
+            at.switch_page('pages_streamlit/general.py').run()
+            at.switch_page('pages_streamlit/objectif_arte.py').run()
+            assert next(s for s in at.slider if s.label.endswith(' SOIN')).value==20
+            assert next(s for s in at.slider if s.label.endswith(' SPD')).value==45
+            assert not at.checkbox(key='SPD_HP').value
+            assert at.checkbox(key='SOIN_HP').value
+    # A second same-day import is selectable and shows the changed rune.
+    export['runes'][0]['sec_eff'][0][1]+=1
+    persist_analysis(analyse_export(validate_export(export),reference),'05/10/2026')
+    at.switch_page('pages_streamlit/import_changes.py').run()
+    assert not at.exception
+    assert len(at.dataframe[0].value)==1

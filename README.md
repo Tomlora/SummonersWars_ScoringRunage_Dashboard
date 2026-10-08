@@ -43,3 +43,7 @@ python -m pytest -q
 Pour les tests PostgreSQL, fournir `TEST_DATABASE_URL` vers une **base de test dédiée**, avec les droits de création/suppression de schémas. La suite crée des schémas `test_<uuid>` temporaires ; elle n’utilise jamais `API_SQL` pour ses écritures. Sans cette variable, les tests de transaction utilisent SQLite. GitHub Actions exécute aussi PostgreSQL 16.
 
 La suite couvre calculs, recherche exhaustive de vitesse, conservation des identifiants, classements/ex æquo, stocks, exports Excel, rollback/idempotence/suppression et navigation Streamlit en français/anglais avec comptes vides ou réduits. L’export de référence déjà présent dans le dépôt est utilisé comme contrôle d’intégration. Les essais locaux/CI ne remplacent pas la validation du schéma, des données et des services de l’installation réelle.
+
+## Planification et comptes
+
+La comparaison détaillée des imports, le stock limité de meules, les verrous et les préférences persistantes sont décrits dans [le guide de configuration et d’utilisation](docs/accounts-and-planning.md). Par défaut, un export valide permet de sauvegarder comme auparavant, sans connexion OIDC. Les pages d’historique et de classement sont accessibles après sauvegarde, et les calculateurs figurent en dernier dans le menu. Le mode OIDC strict reste une option explicite (`access.require_oidc = true`), désactivée par défaut.

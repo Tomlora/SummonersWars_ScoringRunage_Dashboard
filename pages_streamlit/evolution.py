@@ -1,410 +1,95 @@
-
-import streamlit as st
-import plotly.graph_objects as go
-import plotly.express as px
-from fonctions.visualisation import transformation_stats_visu, plotline_evol_rune_visu, filter_dataframe
-from fonctions.gestion_bdd import lire_bdd_perso
-from fonctions.visuel import load_lottieurl, css
-from streamlit_lottie import st_lottie
-from fonctions.widgets import button_selector
-
+from fonctions.access import require_saved_page
+require_saved_page()
 import pandas as pd
-from datetime import timedelta
-from streamlit_extras.row import row
-
-
+import plotly.express as px
+import streamlit as st
+from fonctions.gestion_bdd import lire_bdd_perso, connection
+from fonctions.visualisation import transformation_stats_visu
+from fonctions.visuel import css, page_header, apply_plotly_theme
+from fonctions.journey import tr, dated, period_rows, score_labels
+from sqlalchemy import inspect, text
 
 css()
+page_header(tr('Évolution','History'),tr('Suivez votre progression sur une période commune à tous les graphiques.','Track your progress over the same period in every chart.'),icon='📈')
+user=st.session_state.id_joueur
+scores=lire_bdd_perso('SELECT date,score_general,score_spd,score_arte,score_qual FROM sw_score WHERE id_joueur=:id',index_col=None,params={'id':user}).T
+if scores.empty:
+    st.info(tr('Aucun relevé disponible.','No reports available.'))
+    st.stop()
+labels=score_labels()
+periods={'30':tr('30 jours','30 days'),'90':tr('90 jours','90 days'),'365':tr('Un an','One year'),'all':tr('Tout','All')}
+def reset_dates():
+    st.session_state.pop('ui_history_dates',None)
+period=st.radio(tr('Période','Period'),list(periods),index=3,format_func=periods.get,horizontal=True,key='ui_history_period',on_change=reset_dates)
+end=dated(scores)._date.max()
+selected=period_rows(scores,None if period=='all' else int(period),end)
+st.caption(tr('Période se terminant au dernier relevé : ','Period ending at the latest report: ')+end.strftime('%d/%m/%Y'))
+options=selected.date.tolist()
+if 'ui_history_dates' in st.session_state:
+    st.session_state.ui_history_dates=[d for d in st.session_state.ui_history_dates if d in options]
+with st.expander(tr('Choisir les relevés affichés','Choose displayed reports')):
+    dates=st.multiselect(tr('Relevés','Reports'),options,default=options,key='ui_history_dates')
+selected=selected[selected.date.isin(dates)]
+if selected.empty:
+    st.info(tr('Sélectionnez au moins un relevé.','Select at least one report.'))
+    st.stop()
+versions={}
+with connection() as conn:
+    if inspect(conn).has_table('sw_imports'):
+        for day,version in conn.execute(text('SELECT DISTINCT date,scoring_version FROM sw_imports WHERE id_joueur=:id'),{'id':int(user)}):
+            versions.setdefault(day,set()).add(version)
+known=[versions.get(d,set()) for d in selected.date]
+comparable=all(len(v)==1 for v in known) and len(set.union(*known))==1
+first,last=selected.iloc[0],selected.iloc[-1]
+for col,(key,label) in zip(st.columns(4),labels.items()):
+    delta=float(last[key])-float(first[key]) if len(selected)>1 and comparable else None
+    col.metric(label,f'{last[key]:g} pts',None if delta is None else f'{delta:+g} pts')
+st.caption(tr('Progression absolue entre ','Absolute change between ')+f'{first.date} → {last.date} · {len(selected)} '+tr('relevés','reports'))
+if len(selected)<2:
+    st.info(tr('Deux relevés sont nécessaires pour mesurer une progression.','Two reports are needed to measure progress.'))
+elif not comparable:
+    st.warning(tr('Méthodes de calcul différentes ou inconnues : les écarts ne sont pas calculés. Les valeurs historiques restent affichées.','Scoring methods differ or are unknown: changes are not calculated. Historical values are still displayed.'))
+st.dataframe(selected.iloc[::-1].rename(columns=labels).set_index('date'),width='stretch',height='content')
 
+def plot(frame,y,color=None,dash=None,unit=None,key=None):
+    if frame.empty:
+        st.info(tr('Aucune donnée pour cette sélection.','No data for this selection.'))
+        return
+    frame=dated(frame)
+    fig=px.line(frame,x='_date',y=y,color=color,line_dash=dash,markers=True,labels={'_date':tr('Date','Date'),y:unit or tr('Nombre','Count'),'Set':'Set','Palier':tr('Palier','Tier'),'arte_type':tr('Type','Type'),'type':tr('Attribut','Attribute')})
+    st.plotly_chart(apply_plotly_theme(fig),width='stretch',key='history_chart_'+(key or y))
 
-
-@st.cache_data
-def filter_data(df, selected_options):
-    """Filtre la data en fonction des dates sélectionnés
-
-    Parameters
-    ----------
-    df : DataFrame
-        Dataframe avec les scores et dates
-    selected_options : List
-        Liste de dates à inclure dans le DataFrame
-
-    Returns
-    -------
-    DataFrame
-        DataFrame triée sur les dates sélectionnées
-    """
-    df_filtered = df[df['date'].isin(selected_options)]
-    return df_filtered
-
-@st.cache_data(ttl=timedelta(minutes=10))
-def charger_data(id_joueur):
-    
-    data_detail_global = lire_bdd_perso('''SELECT rune_set as "Set", "100", "110", "120", points, date from sw_detail where id = :id_joueur''',
-                                            params={'id_joueur': id_joueur}, index_col=None).T
-        
-    data_qual_global = lire_bdd_perso('''SELECT DISTINCT rune_set as "Set", "LGD", "ANTIQUE_LGD", score, date from sw_score_qual where "id" = :id_joueur''',
-                                          params={'id_joueur': id_joueur}, index_col=None).T
-    
-    return data_detail_global, data_qual_global
-
-
-def palier_page():
-    
-    check_detail = st.checkbox(st.session_state.langue['get_detail_set'], key='detail_set')
-
-    if check_detail:
-    
-        data_detail_global, data_qual_global = charger_data(st.session_state['id_joueur'])
-        
-        
-        select_set = st.multiselect(st.session_state.langue['select_set'], data_detail_global['Set'].unique().tolist(),
-                                    default=data_detail_global['Set'].unique().tolist()[0], key='evol_set')
-        
-        data_detail_filter = data_detail_global[data_detail_global['Set'].isin(select_set)]
-        
-        data_detail_filter['datetime'] = pd.to_datetime(data_detail_filter['date'], format='%d/%m/%Y')
-        
-        data_detail_filter.sort_values(by=['datetime'], ascending=False, inplace=True)
-        
-        data_scoring_filter = data_qual_global[data_qual_global['Set'].isin(select_set)]
-        
-        data_scoring_filter['datetime'] = pd.to_datetime(data_scoring_filter['date'], format='%d/%m/%Y')
-        
-        data_scoring_filter.sort_values(by=['datetime'], ascending=False, inplace=True)
-        
-        
-        
-        tab1, tab2 = st.tabs([st.session_state.langue['general'], st.session_state.langue['qualité']])
-        
-        with tab1:
-            col1, _, col2 = st.columns([40,5, 60])
-            with col1:
-            
-                st.dataframe(data_detail_filter\
-                            .drop('datetime', axis=1)\
-                            .set_index('date'))
-            
-            with col2:
-                options_date = data_detail_filter['date'].unique().tolist()
-                
-                # pour que les graph soient dans le bon sens
-                data_detail_filter.sort_values('datetime', ascending=True, inplace=True)
-                
-                data_detail_filter = pd.melt(data_detail_filter, id_vars=['date', 'Set'], value_vars=[
-                                    '100', '110', '120', 'points'], var_name='Palier', value_name='Nombre')
-                        
-                if len(options_date) > 30:
-                            list_tail = st.slider(f'{st.session_state.langue["select_last_reporting"]}:', 5, len(options_date), 30, help=st.session_state.langue['select_last_reporting_help'])
-                            options_date = options_date[:list_tail]
-                            
-                with st.popover(st.session_state.langue["select_date_to_show"]):
-                    st.session_state.options_select = st.multiselect(
-                                f'', options_date, options_date, key='evol_date1')
-
-
-                
-                data_detail_filter = filter_data(data_detail_filter, st.session_state.options_select)
-            
-
-            
-            data_100 = data_detail_filter[data_detail_filter['Palier'] == '100']
-            data_110 = data_detail_filter[data_detail_filter['Palier'] == '110']
-            data_120 = data_detail_filter[data_detail_filter['Palier'] == '120']
-            data_points = data_detail_filter[data_detail_filter['Palier'] == 'points']
-            
-            
-            tab1_1, tab1_2, tab1_3, tab1_4 = st.tabs(
-                        ['Points', 'Palier 100', 'Palier 110', 'Palier 120'])
-            
-            with tab1_1:
-                fig_rune_pts = plotline_evol_rune_visu(data_points)
-                fig_rune_pts.update_yaxes(tickmode='linear')
-                st.plotly_chart(fig_rune_pts, use_container_width=True)
-
-            with tab1_2:
-                fig_rune_100 = plotline_evol_rune_visu(data_100)
-                fig_rune_100.update_yaxes(tickmode='linear')
-                st.plotly_chart(fig_rune_100, use_container_width=True)
-
-            with tab1_3:
-                fig_rune_110 = plotline_evol_rune_visu(data_110)
-                fig_rune_110.update_yaxes(tickmode='linear')
-                st.plotly_chart(fig_rune_110, use_container_width=True)
-
-            with tab1_4:
-                fig_rune_120 = plotline_evol_rune_visu(data_120)
-                fig_rune_120.update_yaxes(tickmode='linear')
-                st.plotly_chart(fig_rune_120, use_container_width=True)
-        
-        with tab2:
-            col2_1, _, col2_2 = st.columns([40,5, 60])
-            with col2_1:
-            
-                st.dataframe(data_scoring_filter\
-                            .drop('datetime', axis=1)\
-                            .set_index('date'))
-            
-            with col2_2:
-                options_date = data_scoring_filter['date'].unique().tolist()
-                
-                # pour que les graph soient dans le bon sens
-                data_scoring_filter.sort_values('datetime', ascending=True, inplace=True)
-                        
-                if len(options_date) > 30:
-                            list_tail = st.slider(f'{st.session_state.langue["select_last_reporting"]}', 5, len(options_date), 30, help=st.session_state.langue['select_last_reporting_help'])
-                            options_date = options_date[:list_tail]
-
-                with st.popover(st.session_state.langue["select_date_to_show"]):
-                    options_select_qual = st.multiselect(
-                                f'', options_date, options_date, key='evol_date2')
-
-                
-                data_scoring_filter = filter_data(data_scoring_filter, options_select_qual)
-            
-            
-            
-            fig = go.Figure()
-            
-            for set in data_scoring_filter['Set'].unique():
-                data_scoring_filter_set = data_scoring_filter[data_scoring_filter['Set'] == set]
-                fig.add_trace(go.Scatter(
-                    x=data_scoring_filter_set['date'], y=data_scoring_filter_set['score'], mode='lines+markers', name=f'score {set}'))
-            
-                fig.add_trace(go.Scatter(
-                    x=data_scoring_filter_set['date'], y=data_scoring_filter_set['LGD'], mode='lines+markers', name=f'LGD {set}'))
-                fig.add_trace(go.Scatter(
-                    x=data_scoring_filter_set['date'], y=data_scoring_filter_set['ANTIQUE_LGD'], mode='lines+markers', name=f'ANTIQUE LGD {set}'))
-
-
-            fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
-            fig.update_yaxes(showgrid=False)
-                
-            st.plotly_chart(fig, use_container_width=True)
-            
-
-    else:
-        try:
-            data_detail = transformation_stats_visu(
-                'sw', st.session_state['id_joueur'], distinct=True, ascending=False)
-            data_scoring = transformation_stats_visu(
-                'sw_score', st.session_state['id_joueur'], distinct=True, ascending=False)                
-            
-
-            col1, _, col2 = st.columns([40,5, 60])
-
-            with col2:
-                
-                
-                
-                # if check_detail:
-                    
-                options_date = data_scoring['date'].unique().tolist()
-                
-                if len(options_date) > 30:
-                    list_tail = st.slider(f'{st.session_state.langue["select_last_reporting"]}:', 5, len(options_date), 30, help=st.session_state.langue['select_last_reporting_help'])
-                    options_date = options_date[:list_tail]
-                    
-                @st.fragment  
-                def date():  
-                    with st.popover(st.session_state.langue["select_date_to_show"]):
-                        st.session_state.options_select = st.multiselect(
-                            f'', options_date, options_date, key='evol_date3', help=st.session_state.langue['config_reporting_help'])
-
-                        
-                date()        
-
-                data_detail = filter_data(data_detail, st.session_state.options_select)
-                data_scoring = filter_data(data_scoring, st.session_state.options_select)
-
-            with col1:  # on met la col1 après, pour bien prendre en compte les modifs dans data_scoring
-                st.subheader('Evolution')
-                st.dataframe(data_scoring\
-                    .set_index('date')\
-                    .drop('datetime', axis=1)\
-                    .rename(columns={'score_general' : 'General',
-                                    'score_spd' : 'Speed',
-                                    'score_arte' : 'Artefact',
-                                    'score_qual' : 'Qualité'}),
-                            use_container_width=True)
-                
-                data_detail.sort_values(by='datetime', ascending=True, inplace=True)
-                data_scoring.sort_values(by='datetime', ascending=True, inplace=True)
-                
-
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(
-                    x=data_scoring['date'], y=data_scoring['score_general'], mode='lines+markers'))
-
-                fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
-                fig.update_yaxes(showgrid=False)
-                
-                # sauter des lignes
-                st.text("")
-                st.text("")
-                
-            row_button = row([1,1,1,1], gap="small", vertical_align="center")
-                    
-
-            liste_options = ['General', 'Speed', 'Artefact', 'Qualité']
-
-
-            button_select = button_selector(liste_options)
-                
-
-            if button_select == 0:
-                st.subheader(st.session_state.langue['score_general'])
-                    
-
-                    
-                data_100 = data_detail[data_detail['Palier'] == '100']
-                data_110 = data_detail[data_detail['Palier'] == '110']
-                data_120 = data_detail[data_detail['Palier'] == '120']
-
-                tab1, tab2, tab3, tab4 = st.tabs(
-                        ['General', 'Palier 100', 'Palier 110', 'Palier 120'])
-
-                with tab1:
-                        st.plotly_chart(fig, use_container_width=True)
-
-                with tab2:
-                        try:
-                            fig_rune_100 = plotline_evol_rune_visu(data_100)
-                            st.plotly_chart(fig_rune_100, use_container_width=True)
-                        except:
-                             st.warning('Pas de rune')
-
-                with tab3:
-                        try:
-                            fig_rune_110 = plotline_evol_rune_visu(data_110)
-                            st.plotly_chart(fig_rune_110, use_container_width=True)
-                        except:
-                             st.warning('Pas de rune')
-
-                with tab4:
-                        try:
-                            fig_rune_120 = plotline_evol_rune_visu(data_120)
-                            st.plotly_chart(fig_rune_120, use_container_width=True)
-                        except:
-                             st.warning('Pas de rune')
-                
-
-            elif button_select == 1:
-                    st.subheader('Speed')
-
-                    data_detail_spd = transformation_stats_visu(
-                        'sw_spd', st.session_state['id_joueur'], distinct=True, ascending=True)
-                    data_scoring_spd = transformation_stats_visu(
-                        'sw_score', st.session_state['id_joueur'], distinct=True, score='score_spd', ascending=True)
-                    
-                    data_detail_spd = filter_data(data_detail_spd, st.session_state.options_select)
-                    data_scoring_spd = filter_data(data_scoring_spd, st.session_state.options_select)
-
-                    fig2 = go.Figure()
-                    fig2.add_trace(go.Scatter(
-                        x=data_scoring_spd['date'], y=data_scoring_spd['score_spd'], mode='lines+markers'))
-
-                    fig2.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
-                    fig2.update_yaxes(showgrid=False)
-
-                    data_25 = data_detail_spd[data_detail_spd['Palier'] == '23-25']
-                    data_28 = data_detail_spd[data_detail_spd['Palier'] == '26-28']
-                    data_31 = data_detail_spd[data_detail_spd['Palier'] == '29-31']
-                    data_35 = data_detail_spd[data_detail_spd['Palier'] == '32-35']
-                    data_36 = data_detail_spd[data_detail_spd['Palier'] == '36+']
-
-                    tab_spd_general, tab2325, tab2628, tab2931, tab3235, tab36 = st.tabs(
-                        ['General', '23-25', '26-28', '29-31', '32-35', '36+'])
-
-                    with tab_spd_general:
-                        st.plotly_chart(fig2, use_container_width=True)
-
-                    with tab2325:
-                        fig25 = plotline_evol_rune_visu(data_25)
-                        st.plotly_chart(fig25, use_container_width=True)
-
-                    with tab2628:
-                        fig28 = plotline_evol_rune_visu(data_28)
-                        st.plotly_chart(fig28, use_container_width=True)
-                    with tab2931:
-                        fig31 = plotline_evol_rune_visu(data_31)
-                        st.plotly_chart(fig31, use_container_width=True)
-                    with tab3235:
-                        fig35 = plotline_evol_rune_visu(data_35)
-                        st.plotly_chart(fig35, use_container_width=True)
-                    with tab36:
-                        try:
-                            fig36 = plotline_evol_rune_visu(data_36)
-                            st.plotly_chart(fig36, use_container_width=True)
-                        except:
-                            st.warning('Pas de rune')
-
-    
-            elif button_select == 2:
-                    st.subheader('Artefact')
-                    data_detail_arte = transformation_stats_visu(
-                        'sw_arte', st.session_state['id_joueur'], distinct=True, ascending=True)
-                    data_scoring_arte = transformation_stats_visu(
-                        'sw_score', st.session_state['id_joueur'], distinct=True, score='score_arte', ascending=True)
-                    
-                    data_detail_arte = filter_data(data_detail_arte, st.session_state.options_select)
-                    data_scoring_arte = filter_data(data_scoring_arte, st.session_state.options_select)
-
-                    fig3 = go.Figure()
-                    fig3.add_trace(go.Scatter(
-                        x=data_scoring_arte['date'], y=data_scoring_arte['score_arte'], mode='lines+markers'))
-
-                    tab_arte_general, tab80, tab85, tab90, tab95, tab100 = st.tabs(
-                        ['General', '80', '85', '90', '95', '100+'])
-
-                    data_80 = data_detail_arte[data_detail_arte['Palier'] == '80']
-                    data_85 = data_detail_arte[data_detail_arte['Palier'] == '85']
-                    data_90 = data_detail_arte[data_detail_arte['Palier'] == '90']
-                    data_95 = data_detail_arte[data_detail_arte['Palier'] == '95']
-                    data_100 = data_detail_arte[data_detail_arte['Palier'] == '100+']
-
-                    with tab_arte_general:
-                        st.plotly_chart(fig3, use_container_width=True)
-                    with tab80:
-                        fig80 = px.line(data_80, x="date", y="Nombre",
-                                        color='arte_type', symbol='type')
-                        st.plotly_chart(fig80, use_container_width=True)
-                    with tab85:
-                        fig85 = px.line(data_85, x="date", y="Nombre",
-                                        color='arte_type', symbol='type')
-                        st.plotly_chart(fig85, use_container_width=True)
-                    with tab90:
-                        fig90 = px.line(data_90, x="date", y="Nombre",
-                                        color='arte_type', symbol='type')
-                        st.plotly_chart(fig90, use_container_width=True)
-                    with tab95:
-                        fig95 = px.line(data_95, x="date", y="Nombre",
-                                        color='arte_type', symbol='type')
-                        st.plotly_chart(fig95, use_container_width=True)
-                    with tab100:
-                        fig100 = px.line(data_100, x="date", y="Nombre",
-                                        color='arte_type', symbol='type')
-                        st.plotly_chart(fig100, use_container_width=True)
-                    
-            elif button_select == 3:    
-                    st.subheader(st.session_state.langue['Score_Qualite'])
-                    
-                    
-                    fig = go.Figure()
-                    fig.add_trace(go.Scatter(
-                        x=data_scoring['date'], y=data_scoring['score_qual'], mode='lines+markers'))
-
-                    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='grey')
-                    fig.update_yaxes(showgrid=False)
-                    
-                    st.plotly_chart(fig, use_container_width=True)
-                
-                
-
-        except Exception as e:
-            st.error('Historique indisponible / History unavailable.')
-            st.caption(type(e).__name__)
-
-
-if __name__ == "__main__":
-    palier_page()
+detail=st.checkbox(tr('Détail par set','Details by set'),key='ui_history_detail')
+if detail:
+    runes=lire_bdd_perso('SELECT rune_set AS "Set","100","110","120",points,date FROM sw_detail WHERE id=:id',index_col=None,params={'id':user}).T
+    quality=lire_bdd_perso('SELECT rune_set AS "Set","LGD","ANTIQUE_LGD",score,date FROM sw_score_qual WHERE id=:id',index_col=None,params={'id':user}).T
+    sets=sorted(set(runes.Set.dropna())-{'Total'})
+    if 'ui_history_sets' in st.session_state:
+        st.session_state.ui_history_sets=[s for s in st.session_state.ui_history_sets if s in sets]
+    chosen=st.multiselect(tr('Sets','Sets'),sets,default=sets[:1],key='ui_history_sets')
+    runes=runes[runes.date.isin(dates)&runes.Set.isin(chosen)]
+    quality=quality[quality.date.isin(dates)&quality.Set.isin(chosen)]
+    a,b=st.tabs([tr('Runes','Runes'),tr('Qualité','Quality')])
+    with a:
+        st.dataframe(runes,width='stretch',hide_index=True)
+        for tab,field in zip(st.tabs([tr('Score (points)','Score (points)'),'100 ≤ E < 110','110 ≤ E < 120','E ≥ 120']),['points','100','110','120']):
+            with tab:
+                plot(runes,field,'Set',unit=tr('Points','Points') if field=='points' else None)
+    with b:
+        st.dataframe(quality.rename(columns={'LGD':tr('Légendaires','Legendary'),'ANTIQUE_LGD':tr('Légendaires antiques','Ancient legendary')}),width='stretch',hide_index=True)
+        for tab,field in zip(st.tabs([tr('Score (points)','Score (points)'),tr('Légendaires','Legendary'),tr('Légendaires antiques','Ancient legendary')]),['score','LGD','ANTIQUE_LGD']):
+            with tab:
+                plot(quality,field,'Set',unit=tr('Points','Points') if field=='score' else None)
+else:
+    metric=st.radio(tr('Indicateur','Metric'),list(labels),format_func=labels.get,horizontal=True,key='ui_history_metric')
+    plot(selected,metric,unit=tr('Score (points)','Score (points)'))
+    table={'score_general':'sw','score_spd':'sw_spd','score_arte':'sw_arte'}.get(metric)
+    if table:
+        details=transformation_stats_visu(table,user,distinct=True,ascending=True)
+        details=details[details.date.isin(dates)]
+        tiers={'sw':['100','110','120'],'sw_spd':['23-25','26-28','29-31','32-35','36+'],'sw_arte':['80','85','90','95','100+']}[table]
+        names=[tr('Palier ','Tier ')+value for value in tiers]
+        for tab,tier in zip(st.tabs(names),tiers):
+            with tab:
+                group=details[details.Palier.eq(tier)]
+                plot(group,'Nombre','arte_type' if table=='sw_arte' else 'Set','type' if table=='sw_arte' else None,key=table+tier)

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from fonctions.access import require_saved_page
+require_saved_page()
+
 from collections import Counter, defaultdict
 from typing import Any, Iterable
 
