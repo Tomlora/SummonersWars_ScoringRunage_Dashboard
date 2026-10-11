@@ -67,10 +67,12 @@ with stock_tab:
             order=st.selectbox(tr('Trier le plan par','Sort plan by'),['gain','slot','set'],format_func=lambda key:{'gain':tr('Gain le plus élevé','Highest gain'),'slot':tr('Slot','Slot'),'set':tr('Set','Set')}[key],key='plan_sort')
         with detail_column:
             detailed=st.toggle(tr('Afficher toutes les statistiques','Show all stats'),key='ui_plan_details')
-        shown=pd.DataFrame([{**rune_identity(runes,row.id_rune),**craft_labels(row.craft_type,row.craft_type_id),
+        shown=pd.DataFrame([{**rune_identity(runes,int(row.id_rune)),**craft_labels(row.craft_type,row.craft_type_id),
               tr('Meule actuelle','Current grind'):row.current_grind,
               tr('Meule maximale','Maximum grind'):row.max_grind,
               tr('Gain max.','Max gain'):round(row.max_gain,2)} for row in plan.itertuples()])
+        if shown['Slot'].isna().any():
+            st.warning(tr('Certaines runes du plan ne peuvent pas être identifiées. Réimportez votre fichier pour actualiser leurs informations.', 'Some runes in this plan could not be identified. Import your file again to refresh their details.'))
         gain_column=tr('Gain max.','Max gain')
         keys=[gain_column,'Slot'] if order=='gain' else ['Slot',gain_column] if order=='slot' else ['Set','Slot',gain_column]
         directions=[False,True] if order=='gain' else [True,False] if order=='slot' else [True,True,False]

@@ -2,11 +2,11 @@
 import pandas as pd
 import streamlit as st
 from fonctions.journey import tr
-from fonctions.rune_visual import rune_label, show_rune
+from fonctions.rune_visual import rune_label, show_rune, _rune_row
 
 
 def rune_card(runes, ids, key, gains=None, actions=True, gain_label=None):
-    ids = list(dict.fromkeys(int(value) for value in ids if int(value) in runes.data.index))
+    ids = list(dict.fromkeys(int(value) for value in ids if _rune_row(runes, value) is not None))
     if gains is not None:
         gains = {int(value): gain for value, gain in gains.items()}
     if not ids:
@@ -15,7 +15,7 @@ def rune_card(runes, ids, key, gains=None, actions=True, gain_label=None):
     if st.session_state.get(key) not in ids:
         st.session_state[key] = ids[0]
     selected = st.selectbox(tr('Rune à examiner','Rune to inspect'), ids, format_func=labels.get, key=key)
-    row = runes.data.loc[selected]
+    row = _rune_row(runes, selected)
     picture, information = st.columns([1.1, 1], gap='large')
     with picture:
         show_rune(runes, selected)

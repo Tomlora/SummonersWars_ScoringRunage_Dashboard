@@ -72,9 +72,10 @@ def _rune_row(runes, rune_id):
             return None
     if isinstance(rune_id, bool) or not isinstance(rune_id, Integral):
         return None
-    if rune_id not in runes.data.index:
-        return None
-    return runes.data.loc[rune_id]
+    for key in (rune_id, str(rune_id)):
+        if key in runes.data.index:
+            return runes.data.loc[key]
+    return None
 
 
 def rune_label(runes, rune_id):
@@ -87,7 +88,12 @@ def rune_label(runes, rune_id):
 def rune_identity(runes, rune_id):
     row = _rune_row(runes, rune_id)
     if row is None:
-        return {tr('Rune', 'Rune'): rune_label(runes, rune_id)}
+        # Keep the same columns even when every referenced rune is unavailable.
+        # Sorting and exports must not depend on which lookups succeed.
+        return {'Set': None, 'Slot': None,
+                tr('Équipée sur', 'Equipped on'): rune_label(runes, rune_id),
+                tr('Principale', 'Main stat'): '',
+                tr('Sous-statistiques', 'Substats'): ''}
     return {'Set': str(row.rune_set), 'Slot': int(row.rune_slot),
             tr('Équipée sur', 'Equipped on'): equipped_on(row),
             tr('Principale', 'Main stat'): stat_text(runes, row.main_type, row.main_value),

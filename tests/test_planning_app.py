@@ -114,3 +114,31 @@ def test_account_switch_clears_local_preferences(export):
     result['compteid']=2
     publish_analysis(state,result,metadata)
     assert '_workspace' not in state and 'saved_filter_presets' not in state and 'plan_accuracy' not in state
+
+
+@pytest.mark.parametrize('language', ['Français', 'English'])
+@pytest.mark.parametrize('lookup_case', ['text_index', 'missing'])
+def test_planning_sorts_with_text_ids_or_unavailable_details(export, monkeypatch, language, lookup_case):
+    monkeypatch.chdir(ROOT)
+    monkeypatch.delenv('API_SQL', raising=False)
+    export['rune_craft_item_list'] = [dict(craft_type=2, craft_type_id=30805, amount=2)]
+    result = analyse_export(validate_export(export), pd.DataFrame())
+    if lookup_case == 'text_index':
+        result['data_rune'].data.index = result['data_rune'].data.index.astype(str)
+    else:
+        from fonctions import rune_visual
+        identity = rune_visual.rune_identity
+        monkeypatch.setattr(rune_visual, 'rune_identity', lambda runes, rune_id: identity(runes, None))
+    at = seed(result, dict(id_joueur=None, report_date='06/10/2026'), language)
+    at.switch_page('pages_streamlit/planning.py').run()
+    for order in ('gain', 'slot', 'set'):
+        assert not at.exception
+        at.selectbox(key='plan_sort').set_value(order).run()
+        assert not at.exception
+        shown = at.dataframe[0].value
+        assert not shown.empty and {'Set', 'Slot'} <= set(shown)
+        if lookup_case == 'missing':
+            assert shown.Slot.isna().all() and at.warning
+        else:
+            assert shown.Slot.notna().all()
+            assert at.selectbox(key='ui_plan_rune').options
