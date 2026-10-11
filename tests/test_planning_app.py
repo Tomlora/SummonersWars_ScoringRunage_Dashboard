@@ -19,11 +19,24 @@ def seed(result,metadata,language='Français'):
 @pytest.mark.parametrize('language',['Français','English'])
 def test_plan_search_and_lock_interactions(export,monkeypatch,language):
     monkeypatch.chdir(ROOT);monkeypatch.delenv('API_SQL',raising=False)
+    from fonctions import export as excel
+    from io import BytesIO
+    from openpyxl import load_workbook
+    workbooks=[]
+    original_export=excel.export_workbook
+    def capture(sheets):
+        content=original_export(sheets)
+        workbooks.append(load_workbook(BytesIO(content)))
+        return content
+    monkeypatch.setattr(excel,'export_workbook',capture)
     export['rune_craft_item_list']=[dict(craft_type=2,craft_type_id=30805,amount=1)]
     result=analyse_export(validate_export(export),pd.DataFrame())
     at=seed(result,dict(id_joueur=None,report_date='06/10/2026'),language)
     at.switch_page('pages_streamlit/planning.py').run()
     assert not at.exception
+    assert 'Principale' not in at.dataframe[0].value.columns
+    assert 'Main stat' not in at.dataframe[0].value.columns
+    at.toggle(key='ui_plan_details').set_value(True).run()
     shown=at.dataframe[0].value
     owner='Équipée sur' if language=='Français' else 'Equipped on'
     main='Principale' if language=='Français' else 'Main stat'
@@ -32,11 +45,26 @@ def test_plan_search_and_lock_interactions(export,monkeypatch,language):
     assert 'Rune' not in shown.columns
     assert shown.iloc[0]['Set']=='Swift'
     assert 'SPD +34' in shown.iloc[0][subs]
-    assert any(m.label in ('Gain maximal (points d’efficience)','Maximum gain (efficiency points)') for m in at.metric)
+    assert any(m.label in ('Gain du plan (points)','Plan gain (points)') for m in at.metric)
+    assert any(m.label in ('Max. épique (%)','Max. hero grinds (%)') for m in at.metric)
+    assert any(m.label in ('Max. légendaire (%)','Max. legendary grinds (%)') for m in at.metric)
+    assert not any(m.value.startswith(('Principale :','Innée :','Main stat :','Innate stat :')) for m in at.markdown)
+    at.multiselect(key='plan_slots').set_value([3]).run()
+    assert not at.exception
+    assert set(at.dataframe[0].value.Slot)=={3}
+    sheet=workbooks[-1]['Plan']
+    headers=[cell.value for cell in sheet[1]]
+    assert subs in headers and main in headers
+    assert {row[headers.index('Slot')] for row in sheet.iter_rows(min_row=2,values_only=True)}=={3}
+    assert int(result['data_rune'].data.loc[at.selectbox(key='ui_plan_rune').value,'rune_slot'])==3
+    at.selectbox(key='plan_sort').set_value('slot').run()
+    at.multiselect(key='plan_slots').set_value([]).run()
+    assert not at.exception
     search=next(b for b in at.button if b.label in ['Rechercher le build','Search build'])
     search.click().run()
     assert not at.exception
     assert any('SPD +' in s.value for s in at.success)
+    assert workbooks[-1].sheetnames==['Build'] and workbooks[-1]['Build'].max_row==7
     at.multiselect(key='locks_runes').set_value(list(result['data_rune'].data.index)).run()
     search=next(b for b in at.button if b.label in ['Rechercher le build','Search build'])
     search.click().run()
@@ -56,12 +84,14 @@ def test_preferences_survive_new_session_and_language(engine,export,monkeypatch)
     at.multiselect(key='optimisation_displayed_substats').set_value(['SPD','ACC']).run()
     at.switch_page('pages_streamlit/planning.py').run()
     at.number_input(key='plan_speed').set_value(40).run()
+    at.multiselect(key='plan_slots').set_value([2,4,6]).run()
     at.multiselect(key='locks_runes').set_value([301]).run()
     next(b for b in at.button if b.label=='Enregistrer mes préférences').click().run()
     assert not at.exception
     saved=load_settings(metadata['id_joueur'])
     assert saved['filters']['optimisation_filter_actions']==['gem']
     assert saved['locked_runes']==[301]
+    assert saved['filters']['plan_slots']==[2,4,6]
     fresh=seed(result,metadata,'English').switch_page('pages_streamlit/optimisation.py').run()
     fresh.button[0].click().run()
     assert not fresh.exception
@@ -71,6 +101,7 @@ def test_preferences_survive_new_session_and_language(engine,export,monkeypatch)
     fresh.switch_page('pages_streamlit/planning.py').run()
     assert not fresh.exception
     assert fresh.number_input(key='plan_speed').value==40
+    assert fresh.multiselect(key='plan_slots').value==[2,4,6]
     assert fresh.multiselect(key='locks_runes').value==[301]
 
 

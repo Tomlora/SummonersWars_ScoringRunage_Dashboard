@@ -58,14 +58,24 @@ Référence : [authentification OIDC native de Streamlit](https://docs.streamlit
   sont identifiés par leur ID (deux exemplaires du même monstre restent distincts).
   Leurs runes actuelles sont protégées au prochain import. Un build protégé suit les
   six IDs de sa version enregistrée. Les IDs absents restent dans les préférences.
-- **Stock de meules** : le plan réserve des quantités entières, sans réutiliser une
+- **Plan de meulage** : filtrer par set et slot avant de réserver le stock, puis
+  trier les résultats par gain, slot ou set. Le tableau compact peut afficher toutes
+  les statistiques ; l'export Excel les contient toujours, avec le stock restant
+  dans un deuxième onglet. Les en-têtes sont figés et les tableaux sont filtrables.
+  Le plan réserve des quantités entières, sans réutiliser une
   meule sur plusieurs runes, et respecte les sets, qualités et runes antiques. Il
   privilégie le gain d'efficience maximal, puis les meules ordinaires en cas d'égalité
   avec une meule universelle. Cette allocation gloutonne ne garantit pas l'optimum
   global. Une seule tentative par statistique est planifiée ; le jet réel peut être
   inférieur au maximum, voire n'apporter aucun gain. Aucun objet n'est consommé dans
   le jeu. Les gemmes et réappraisals ne sont pas simulés dans ce plan.
-- **Build sur critères** : choisir les sets, SPD minimale et ACC minimale apportées
+- **Fiche de rune** : l'image conserve la principale et l'innée. À côté figurent
+  l'efficience actuelle, le gain du plan lorsqu'il existe et les maxima avec meules
+  épiques (héroïques) ou légendaires. Les maxima concernent les runes 6★ +12 et plus,
+  à statistiques actuelles, sans gemmes ni montée de niveau et indépendamment du
+  stock. Les meilleurs jets existants sont conservés, y compris s'ils dépassent
+  le maximum épique. Les limites antiques sont appliquées aux runes antiques.
+- **Build sur critères** : choisir les sets et la SPD minimale apportée
   par les runes de niveau ≥12. Les valeurs sont celles du JSON, principales et
   innées comprises. Elles excluent la base du monstre, les bonus de set (y compris
   Focus), bâtiments et leader. La recherche maximise la SPD parmi les builds

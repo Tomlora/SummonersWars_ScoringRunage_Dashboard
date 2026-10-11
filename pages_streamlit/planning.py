@@ -1,5 +1,8 @@
 import json
 import streamlit as st
+import pandas as pd
+from fonctions.export import export_workbook
+from fonctions.visuel import page_header
 from fonctions.workspace import current_settings, save_current, settings, saved_builds, active_locks
 from fonctions.planning import grind_plan, constrained_build, SearchLimit
 from fonctions.rune_visual import rune_label, rune_identity
@@ -15,13 +18,13 @@ def craft_labels(kind,code):
         tr('Qualité','Quality'):{4:tr('Héroïque','Hero'),5:tr('Légendaire','Legendary')}.get(code%100,str(code%100)),
     }
 
-st.title(tr('Planifier mes améliorations','Plan my upgrades'))
+page_header(tr('Planifier mes améliorations','Plan my upgrades'), tr('Choisissez vos runes, préparez vos améliorations et retrouvez le plan dans Excel.', 'Choose your runes, plan upgrades and take the plan with you in Excel.'), icon='🛠️')
 value=current_settings()
 runes=st.session_state.data_rune
 user_id=st.session_state.get('id_joueur')
 builds=saved_builds(user_id) if user_id is not None else []
 
-with st.expander(tr('Protéger mes équipes','Protect my teams'),expanded=True):
+with st.expander(tr('Protéger mes équipes','Protect my teams'),expanded=False):
     st.caption(tr('Protégez les runes que vous souhaitez garder en place. Elles ne seront pas proposées dans les améliorations ni dans les builds. Protéger un monstre protège aussi les runes qu’il portera lors des prochains imports.', 'Locked runes are excluded from recommendations, grind plans and build searches. Monster locks follow their runes on the next import.'))
     ids=sorted(set(int(v) for v in runes.data.index)|set(value['locked_runes']))
     rune_labels={i:rune_label(runes,i) for i in ids}
@@ -36,41 +39,67 @@ with st.expander(tr('Protéger mes équipes','Protect my teams'),expanded=True):
 locks=active_locks()
 st.caption(tr(f'{len(locks)} runes protégées.', f'{len(locks)} protected runes.'))
 
-stock_tab,build_tab,prefs_tab=st.tabs([tr('Stock de meules','Grind stock'),tr('Trouver un build','Build criteria'),tr('Préférences','Preferences')])
+stock_tab,build_tab,prefs_tab=st.tabs([tr('Plan de meulage','Grind plan'),tr('Trouver un build','Build criteria'),tr('Préférences','Preferences')])
 with stock_tab:
-    if 'plan_sets' in st.session_state:
-        st.session_state.plan_sets=[s for s in st.session_state.plan_sets if s in set(runes.data.rune_set)]
-    sets=st.multiselect(tr('Sets à améliorer (tous si aucun choix)','Priority sets (empty = all)'),sorted(runes.data.rune_set.unique()),key='plan_sets')
-    st.caption(tr('Le plan utilise les meules de votre stock en donnant la priorité aux gains d’efficience les plus élevés. Les gains affichés supposent les meilleurs jets possibles ; le résultat peut donc être plus faible. Ce plan ne garantit pas la meilleure combinaison globale et ne consomme rien dans le jeu. Les gemmes ne sont pas prises en compte.', 'Greedy allocation by efficiency gain, one grind per stat. Each item is reserved once. Gains are random-roll maxima, with no guaranteed outcome or global optimum. Gems are excluded. Nothing is consumed in game.'))
-    plan,remaining=grind_plan(runes,st.session_state.data_json['rune_craft_item_list'],locks,sets)
-    a,b=st.columns(2)
-    a.metric(tr('Meules réservées','Reserved grinds'),len(plan))
-    b.metric(tr('Gain total maximal (points d’efficience)','Maximum total efficiency points'),round(plan.max_gain.sum(),2))
+    st.subheader(tr('Quelles runes voulez-vous améliorer ?', 'Which runes would you like to improve?'))
+    with st.container(border=True):
+        if 'plan_sets' in st.session_state:
+            st.session_state.plan_sets=[s for s in st.session_state.plan_sets if s in set(runes.data.rune_set)]
+        set_filter,slot_filter=st.columns(2)
+        with set_filter:
+            sets=st.multiselect(tr('Sets à améliorer','Sets to improve'),sorted(runes.data.rune_set.unique()),key='plan_sets',placeholder=tr('Tous les sets','All sets'))
+        with slot_filter:
+            slots=st.multiselect(tr('Emplacements (slots)','Rune slots'),list(range(1,7)),key='plan_slots',format_func=lambda n:f'Slot {n}',placeholder=tr('Tous les slots','All slots'))
+        st.caption(tr('Sans sélection, tous les sets et slots sont inclus. Les runes protégées sont exclues.', 'Leave filters empty to include all sets and slots. Protected runes are excluded.'))
+    plan,remaining=grind_plan(runes,st.session_state.data_json['rune_craft_item_list'],locks,sets,slots)
+    stock=pd.DataFrame([{**craft_labels(kind,code),tr('Restant','Remaining'):amount} for (kind,code),amount in sorted(remaining.items())])
+    a,b,c=st.columns(3)
+    a.metric(tr('Runes à améliorer','Runes to improve'),plan.id_rune.nunique())
+    b.metric(tr('Meules réservées','Reserved grinds'),len(plan))
+    c.metric(tr('Gain total maximal (points d’efficience)','Maximum total efficiency points'),f'{plan.max_gain.sum():.2f}')
+    st.caption(tr('Chaque meule du stock est réservée une seule fois. Les gains indiquent les meilleurs jets possibles.', 'Each grind in your stock is reserved only once. Gains assume the best possible rolls.'))
     if plan.empty:
-        st.info(tr('Aucune amélioration possible avec vos meules et les runes non protégées.', 'No upgrade matches your stock and locks.'))
+        st.info(tr('Aucune amélioration avec ces filtres et votre stock. Essayez d’autres slots ou sets, ou vérifiez les runes protégées.', 'No upgrades match these filters and your stock. Try other slots or sets, or check protected runes.'))
     else:
-        import pandas as pd
+        st.subheader(tr('Votre plan de meulage','Your grind plan'))
+        order_column,detail_column=st.columns(2)
+        with order_column:
+            order=st.selectbox(tr('Trier le plan par','Sort plan by'),['gain','slot','set'],format_func=lambda key:{'gain':tr('Gain le plus élevé','Highest gain'),'slot':tr('Slot','Slot'),'set':tr('Set','Set')}[key],key='plan_sort')
+        with detail_column:
+            detailed=st.toggle(tr('Afficher toutes les statistiques','Show all stats'),key='ui_plan_details')
         shown=pd.DataFrame([{**rune_identity(runes,row.id_rune),**craft_labels(row.craft_type,row.craft_type_id),
               tr('Meule actuelle','Current grind'):row.current_grind,
               tr('Meule maximale','Maximum grind'):row.max_grind,
               tr('Gain max.','Max gain'):round(row.max_gain,2)} for row in plan.itertuples()])
-        st.dataframe(shown,hide_index=True,width='stretch')
-        st.download_button(tr('Exporter le plan','Export plan'),shown.to_csv(index=False).encode('utf-8-sig'),'grind-plan.csv','text/csv',on_click='ignore')
-        with st.expander(tr('Fiche d’une rune','Rune details')):
+        gain_column=tr('Gain max.','Max gain')
+        keys=[gain_column,'Slot'] if order=='gain' else ['Slot',gain_column] if order=='slot' else ['Set','Slot',gain_column]
+        directions=[False,True] if order=='gain' else [True,False] if order=='slot' else [True,True,False]
+        shown=shown.sort_values(keys,ascending=directions,kind='stable')
+        compact=['Set','Slot',tr('Équipée sur','Equipped on'),'Stat',tr('Qualité','Quality'),tr('Meule actuelle','Current grind'),tr('Meule maximale','Maximum grind'),gain_column]
+        st.dataframe(shown if detailed else shown[compact],hide_index=True,width='stretch',height='content',
+                     column_config={gain_column:st.column_config.NumberColumn(format='%.2f')})
+        notes=tr('Le plan privilégie les gains d’efficience les plus élevés. Les résultats des meules sont aléatoires : les gains indiqués sont des maxima. Les gemmes sont exclues. Ce plan ne modifie rien dans le jeu et ne garantit pas la meilleure combinaison globale.', 'The plan prioritizes the highest efficiency gains. Grind rolls are random: displayed gains are maxima. Gems are excluded. This plan does not change anything in the game and does not guarantee a globally optimal allocation.')
+        st.download_button(tr('Télécharger le plan Excel','Download Excel plan'),export_workbook({tr('Plan','Plan'):shown,tr('Stock restant','Remaining stock'):stock,tr('À lire','Read me'):pd.DataFrame({tr('Informations','Information'):[notes]})}),
+                           'plan-meulage.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',on_click='ignore',icon='📥')
+        with st.expander(tr('Fiche d’une rune','Rune details'),expanded=True):
             from fonctions.rune_card import rune_card
-            rune_card(runes,plan.id_rune,'ui_plan_rune',plan.groupby('id_rune').max_gain.sum().to_dict())
+            rune_card(runes,plan.loc[shown.index,'id_rune'],'ui_plan_rune',plan.groupby('id_rune').max_gain.sum().to_dict(),gain_label=tr('Gain du plan (points)','Plan gain (points)'))
+        with st.expander(tr('Comment lire ce plan ?','How to read this plan')):
+            st.write(notes)
     if remaining:
-        import pandas as pd
         with st.expander(tr('Stock restant après réservation','Stock after reservation')):
-            st.dataframe(pd.DataFrame([{**craft_labels(kind,code),tr('Restant','Remaining'):amount} for (kind,code),amount in sorted(remaining.items())]),hide_index=True,width='stretch')
+            st.dataframe(stock,hide_index=True,width='stretch',height='content')
 
 with build_tab:
     st.caption(tr('Trouvez les six runes les plus rapides pour les sets choisis, parmi vos runes +12 et plus. La vitesse inclut les statistiques principales et innées, mais pas la vitesse du monstre ni les bonus de set, bâtiments ou leader.', 'Find your fastest six runes for the selected sets, using runes at +12 or higher. Speed includes main and innate stats, but excludes monster speed and set, building or leader bonuses.'))
-    primary=st.selectbox(tr('Set de 4','Four-piece set'),['Swift','Violent','Despair','Fatal','Rage','Vampire'],key='plan_primary')
-    secondary=st.selectbox(tr('Set de 2','Two-piece set'),['any','Will','Focus','Energy','Guard','Blade','Endure','Nemesis','Shield','Revenge','Destroy','Tolerance'],format_func=lambda x:tr('Libre','Any') if x=='any' else x,key='plan_secondary')
-    speed=st.number_input(tr('Vitesse minimale apportée par les runes','Minimum speed from runes'),min_value=0,max_value=400,step=1,key='plan_speed')
+    st.subheader(tr('Les critères de votre build','Your build criteria'))
+    first_set,second_set=st.columns(2)
+    primary=first_set.selectbox(tr('Set de 4','Four-piece set'),['Swift','Violent','Despair','Fatal','Rage','Vampire'],key='plan_primary')
+    secondary=second_set.selectbox(tr('Set de 2','Two-piece set'),['any','Will','Focus','Energy','Guard','Blade','Endure','Nemesis','Shield','Revenge','Destroy','Tolerance'],format_func=lambda x:tr('Libre','Any') if x=='any' else x,key='plan_secondary')
+    speed_column,slot_column=st.columns(2)
+    speed=speed_column.number_input(tr('Vitesse minimale apportée par les runes','Minimum speed from runes'),min_value=0,max_value=400,step=1,key='plan_speed')
     accuracy=0
-    slot2=st.checkbox(tr('Principale SPD en slot 2','SPD main in slot 2'),value=True,key='plan_slot2')
+    slot2=slot_column.checkbox(tr('Principale SPD en slot 2','SPD main in slot 2'),value=True,key='plan_slot2')
     signature=(st.session_state.import_hash,primary,secondary,speed,accuracy,slot2,tuple(sorted(locks)))
     if st.button(tr('Rechercher le build','Search build'),type='primary'):
         st.session_state.pop('_build_result',None)
@@ -90,7 +119,9 @@ with build_tab:
             st.info(tr('Aucun build ne correspond à vos critères parmi les runes non protégées.', 'No build satisfies these criteria and locks.'))
         else:
             import pandas as pd
-            st.dataframe(pd.DataFrame([{**rune_identity(runes,row.id_rune),'SPD':row.spd,'ACC (%)':row.acc} for row in build.itertuples()]),hide_index=True,width='stretch')
+            build_table=pd.DataFrame([{**rune_identity(runes,row.id_rune),'SPD':row.spd,'ACC (%)':row.acc} for row in build.itertuples()])
+            st.dataframe(build_table,hide_index=True,width='stretch',height='content')
+            st.download_button(tr('Télécharger le build Excel','Download Excel build'),export_workbook({'Build':build_table}),'build.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',on_click='ignore',icon='📥')
             st.success(f"SPD +{build.spd.sum():g} · ACC +{build.acc.sum():g}%")
             with st.expander(tr('Examiner les runes du build','Inspect build runes')):
                 from fonctions.rune_card import rune_card

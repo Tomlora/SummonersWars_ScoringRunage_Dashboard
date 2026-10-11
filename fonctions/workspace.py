@@ -30,6 +30,7 @@ def settings(value=None):
         enums={'optimisation_filter_priority':{'all','high','medium','low'},
                'optimisation_substat_display_mode':{'total','with_grind'},
                'optimisation_display_limit':{50,100,200,400},
+               'plan_sort':{'gain','slot','set'},
                'plan_primary':{'Swift','Violent','Despair','Fatal','Rage','Vampire'},
                'plan_secondary':{'any','Will','Focus','Energy','Guard','Blade','Endure','Nemesis','Shield','Revenge','Destroy','Tolerance'}}
         lists={'optimisation_filter_sets','optimisation_filter_actions','optimisation_displayed_substats','optimisation_filtered_substats','plan_sets'}
@@ -38,6 +39,8 @@ def settings(value=None):
         for k,v in filters.items():
             if k in enums:
                 valid=isinstance(v,(str,int)) and v in enums[k]
+            elif k == 'plan_slots':
+                valid=isinstance(v,list) and len(v)<=6 and all(type(x) is int and 1<=x<=6 for x in v)
             elif k in lists:
                 valid=isinstance(v,list) and len(v)<=100 and all(isinstance(x,str) and len(x)<80 for x in v)
                 if valid and k=='optimisation_filter_actions':
