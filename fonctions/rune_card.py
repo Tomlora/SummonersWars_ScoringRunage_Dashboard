@@ -7,6 +7,8 @@ from fonctions.rune_visual import rune_label, show_rune
 
 def rune_card(runes, ids, key, gains=None, actions=True):
     ids = list(dict.fromkeys(int(value) for value in ids if int(value) in runes.data.index))
+    if gains is not None:
+        gains = {int(value): gain for value, gain in gains.items()}
     if not ids:
         return
     labels = {value: rune_label(runes, value) for value in ids}

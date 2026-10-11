@@ -24,6 +24,15 @@ def test_plan_search_and_lock_interactions(export,monkeypatch,language):
     at=seed(result,dict(id_joueur=None,report_date='06/10/2026'),language)
     at.switch_page('pages_streamlit/planning.py').run()
     assert not at.exception
+    shown=at.dataframe[0].value
+    owner='Équipée sur' if language=='Français' else 'Equipped on'
+    main='Principale' if language=='Français' else 'Main stat'
+    subs='Sous-statistiques' if language=='Français' else 'Substats'
+    assert {'Set','Slot',owner,main,subs} <= set(shown.columns)
+    assert 'Rune' not in shown.columns
+    assert shown.iloc[0]['Set']=='Swift'
+    assert 'SPD +34' in shown.iloc[0][subs]
+    assert any(m.label in ('Gain maximal (points d’efficience)','Maximum gain (efficiency points)') for m in at.metric)
     search=next(b for b in at.button if b.label in ['Rechercher le build','Search build'])
     search.click().run()
     assert not at.exception

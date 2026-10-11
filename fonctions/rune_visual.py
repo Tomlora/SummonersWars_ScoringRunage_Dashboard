@@ -1,5 +1,6 @@
 """Readable rune identities and data-driven SVG cards; no external image required."""
 from html import escape
+from numbers import Integral
 from textwrap import wrap
 import pandas as pd
 import streamlit as st
@@ -62,17 +63,31 @@ def substats(runes, row):
     return ' · '.join(filter(None, (stat_text(runes, row[sub], row[f'{sub}_value_total']) for sub in SUBS)))
 
 
-def rune_label(runes, rune_id):
+def _rune_row(runes, rune_id):
+    """Resolve serialized IDs without rounding large game identifiers."""
+    if isinstance(rune_id, str):
+        try:
+            rune_id = int(rune_id)
+        except ValueError:
+            return None
+    if isinstance(rune_id, bool) or not isinstance(rune_id, Integral):
+        return None
     if rune_id not in runes.data.index:
-        return tr('Rune absente du dernier import', 'Rune missing from the latest import') + f' (#{rune_id})'
-    row = runes.data.loc[rune_id]
+        return None
+    return runes.data.loc[rune_id]
+
+
+def rune_label(runes, rune_id):
+    row = _rune_row(runes, rune_id)
+    if row is None:
+        return tr('Rune introuvable dans le fichier importé', 'Rune not found in the imported file')
     return f'{row.rune_set} · Slot {row.rune_slot} · {equipped_on(row)} · {stat_text(runes, row.main_type, row.main_value)} · {substats(runes, row)}'
 
 
 def rune_identity(runes, rune_id):
-    if rune_id not in runes.data.index:
+    row = _rune_row(runes, rune_id)
+    if row is None:
         return {tr('Rune', 'Rune'): rune_label(runes, rune_id)}
-    row = runes.data.loc[rune_id]
     return {'Set': str(row.rune_set), 'Slot': int(row.rune_slot),
             tr('Équipée sur', 'Equipped on'): equipped_on(row),
             tr('Principale', 'Main stat'): stat_text(runes, row.main_type, row.main_value),
@@ -80,7 +95,9 @@ def rune_identity(runes, rune_id):
 
 
 def rune_svg(runes, rune_id):
-    row = runes.data.loc[rune_id]
+    row = _rune_row(runes, rune_id)
+    if row is None:
+        raise KeyError(rune_id)
     quality = str(row.get('qualité_original', row.get('qualité', '')))
     names = {'1': tr('Normale','Normal'), '2': tr('Magique','Magic'), '3': tr('Rare','Rare'),
              '4': tr('Héroïque','Hero'), '5': tr('Légendaire','Legend')}
