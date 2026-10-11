@@ -4,7 +4,7 @@ import pandas as pd
 from fonctions.analysis import rune_speed, SUBS
 
 
-def grind_plan(runes, items, locked=(), sets=()):
+def grind_plan(runes, items, locked=(), sets=(), slots=()):
     stock=Counter()
     for item in items:
         if type(item.get('amount')) is not int or item['amount'] < 0:
@@ -13,7 +13,8 @@ def grind_plan(runes, items, locked=(), sets=()):
             stock[(item['craft_type'],int(item['craft_type_id']))] += item['amount']
     candidates=[]
     for rune_id,row in runes.data.iterrows():
-        if rune_id in locked or (sets and row['rune_set'] not in sets):
+        rune_id = int(rune_id)
+        if rune_id in locked or (sets and row['rune_set'] not in sets) or (slots and int(row['rune_slot']) not in slots):
             continue
         ancient=str(row['qualité_original']).startswith('ANTIQUE')
         for sub in ('first','second','third','fourth'):

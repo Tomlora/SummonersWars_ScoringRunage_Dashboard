@@ -1,4 +1,5 @@
 import streamlit as st
+from fonctions.export import export_workbook
 from fonctions.access import require_saved_page
 from fonctions.snapshots import list_snapshots, load_snapshot, compare_snapshots
 require_saved_page()
@@ -39,4 +40,4 @@ shown=shown.rename(columns={'id_rune':'Rune','status':tr('État','Status'),'chan
      'efficiency_before':tr('Efficience avant','Efficiency before'),'efficiency_after':tr('Efficience après','Efficiency after'),
      'score_delta':tr('Écart de score','Score change')})
 st.dataframe(shown,hide_index=True,width='stretch')
-st.download_button(tr('Exporter les différences','Export changes'),shown.to_csv(index=False).encode('utf-8-sig'),'rune-changes.csv','text/csv',on_click='ignore')
+st.download_button(tr('Exporter les différences en Excel','Export changes to Excel'),export_workbook({tr('Différences','Changes'):shown}),'rune-changes.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',on_click='ignore')
