@@ -58,6 +58,6 @@ if ready:
         pages[tr('Paramètres','Settings')]=[page('visibility','Visibilité','Visibility','👀'),page('options','Mes données','My data','📱')]
     st.sidebar.caption(f"{st.session_state.pseudo} · {st.session_state.get('report_date','')}\n\n{tr('Calcul','Scoring')} {st.session_state.get('scoring_version','')}")
 pages[tr('Calculateurs','Calculators')]=[page('calculator','Efficience des runes','Rune efficiency','🔢'),page('calculator_arte','Efficience des artéfacts','Artifact efficiency','💎'),page('dmg_add','Dégâts additionnels','Additional damage','💥'),page('use_arte','Utilisation des artéfacts','Artifact usage','🧠')]
-with st.sidebar.expander(tr('Apparence','Appearance')):
-    st.caption(tr('Le thème sombre du dashboard est utilisé par défaut. Pour changer d’apparence, ouvrez ⋮ en haut à droite, puis Theme : Custom Theme reprend ce thème sombre, Light propose un fond blanc. Votre choix reste mémorisé dans ce navigateur.', 'The dashboard’s dark theme is the default. To change appearance, open ⋮ at the top right, then Theme: Custom Theme restores this dark theme, while Light uses a white background. Your choice is remembered in this browser.'))
+from fonctions.appearance import appearance_menu
+appearance_menu()
 st.navigation(pages,position='sidebar',expanded=True).run()
