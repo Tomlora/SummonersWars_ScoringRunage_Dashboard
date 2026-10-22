@@ -30,3 +30,7 @@ jobs:
       - run: python -m pip check
       - run: python -m compileall -q fonctions pages_streamlit scoring_runage.py
       - run: python -m pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/appearance.test.mjs

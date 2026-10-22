@@ -80,13 +80,14 @@ def comparaison_rune_graph(
         )
     )
 
+    from fonctions.journey import tr
     percentile = score_percentile(df, score, player_score)
     fig.add_annotation(
         x=0.02,
         y=0.98,
         xref="paper",
         yref="paper",
-        text=f"Meilleur que {percentile:.0f} % des joueurs",
+        text=tr(f'Score supérieur à {percentile:.0f} % des scores',f'Score higher than {percentile:.0f} % of scores'),
         showarrow=False,
         align="left",
         font={"color": THEME["muted"], "size": 13},
@@ -96,5 +97,5 @@ def comparaison_rune_graph(
     )
 
     fig.update_xaxes(title=None, showgrid=False)
-    fig.update_yaxes(title="Score", rangemode="tozero")
+    fig.update_yaxes(title=tr('Score (points)','Score (points)'), rangemode="tozero")
     return apply_plotly_theme(fig, height=430)

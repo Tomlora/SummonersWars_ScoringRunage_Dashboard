@@ -16,6 +16,9 @@ from fonctions import gestion_bdd as db
 @pytest.fixture(params=['sqlite'] + (['postgresql'] if os.environ.get('TEST_DATABASE_URL') else []))
 def engine(tmp_path,monkeypatch,request):
     import streamlit as st
+    from fonctions import access
+    monkeypatch.setattr(access, "identity", lambda: ("https://test.invalid", "owner"))
+    monkeypatch.setattr(access, "access_config", lambda: {"require_oidc":True,"accounts":[{"wizard_id":1,"issuer":"https://test.invalid","subject":"owner"}]})
     st.cache_data.clear()
     admin = None
     if request.param == 'postgresql':

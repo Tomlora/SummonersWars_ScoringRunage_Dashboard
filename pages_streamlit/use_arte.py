@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from streamlit_extras.add_vertical_space import add_vertical_space
 from fonctions.widgets import selectbox
 from fonctions.visualisation import filter_dataframe
 from fonctions.gestion_bdd import lire_bdd
@@ -22,7 +21,7 @@ if not environ.get('API_SQL'):
 st.title(st.session_state.langue['where_to_use'])
 st.info(st.session_state.langue['where_to_use_description'], icon="ℹ️")
 
-add_vertical_space(1)
+st.space(28)
 
 @st.cache_data(show_spinner=st.session_state.langue['loading_data'])
 def charger_data_artefact():
@@ -71,7 +70,7 @@ df_where_to_use = charger_data_artefact()
 
 tab1, tab2 = st.tabs([st.session_state.langue['search_artefact'], st.session_state.langue['search_monster']])
 
-stats = df_where_to_use.columns.drop(['Family', 'Element', 'Awakened', 'Attribute', 'Preferred stats', 'Include', 'name', 'url', 'natural_stars'])
+stats = df_where_to_use.columns.drop(['Family', 'Element', 'Awakened', 'Attribute', 'Preferred stats', 'Stats préférées', 'Include', 'name', 'url', 'natural_stars'])
 
 with tab1:
     col1, col2, col3, col4 = st.columns(4)
@@ -81,7 +80,7 @@ with tab1:
     with col2:
         stat2, priority2 = choose_stats(stats, 'stats2')
 
-    add_vertical_space(1)    
+    st.space(28)
 
     # col3, col4 = st.columns(2)
     with col3:

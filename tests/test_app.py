@@ -5,7 +5,7 @@ from fonctions.import_service import analyse_export, publish_analysis, validate_
 import pandas as pd
 
 ROOT=Path(__file__).resolve().parents[1]
-PAGES=['general','optimisation','stats_runes','inventaire_artefact','top_artefact','stats_artefact','upgrade_runes','upgrade_artefact','calculator','calculator_arte','dmg_add','use_arte']
+PAGES=['general','optimisation','stats_runes','inventaire_artefact','top_artefact','stats_artefact','upgrade_runes','upgrade_artefact','calculator','calculator_arte','dmg_add','use_arte','planning']
 
 def check(at):
     assert not at.exception, [error.message for error in at.exception]

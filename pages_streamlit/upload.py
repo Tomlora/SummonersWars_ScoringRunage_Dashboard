@@ -1,5 +1,7 @@
 import json
 import logging
+import traceback
+from uuid import uuid4
 from pathlib import Path
 from os import environ
 
@@ -18,6 +20,9 @@ def tr(fr, en):
     return en if english else fr
 st.session_state.langue = json.loads(Path('langue/en.json' if english else 'langue/fr.json').read_text(encoding='utf-8'))
 page_header(tr('Analyser mon compte', 'Analyse my account'), tr('Importez votre export Summoners War pour identifier les améliorations utiles.', 'Import your Summoners War export to find useful upgrades.'), icon='📁')
+community_stats = st.empty()
+if st.session_state.get('_deleted_report'):
+    st.success(tr('Relevé supprimé : ','Deleted report: ')+st.session_state.pop('_deleted_report'))
 with st.expander(tr('Comment obtenir le JSON ?', 'How do I get the JSON?')):
     st.markdown(tr('Exportez votre compte avec [SW Exporter](https://github.com/Xzandro/sw-exporter), puis déposez le fichier JSON ci-dessous. Vérifiez le compte dans l’aperçu avant de lancer l’analyse.', 'Export your account with [SW Exporter](https://github.com/Xzandro/sw-exporter), then upload the JSON below. Check the account preview before analysing.'))
     st.caption(tr('Le fichier sert à calculer vos statistiques. La sauvegarde de l’historique est optionnelle. La visibilité d’un nouveau compte est privée.', 'The file is used to calculate your statistics. Saving history is optional. New accounts are private.'))
@@ -26,6 +31,18 @@ with st.expander(tr('Comment obtenir le JSON ?', 'How do I get the JSON?')):
 
 uploaded = st.file_uploader(tr('Export JSON', 'JSON export'), type=['json'], key='upload_file')
 use_demo = st.checkbox(tr('Essayer avec le compte fictif', 'Try the fictional account'), key='demo_mode')
+if environ.get('API_SQL') and not use_demo:
+    from fonctions.community import community_counts
+    try:
+        nb_user, nb_guilde, nb_score, heure = community_counts()
+    except (SQLAlchemyError, pd.errors.DatabaseError, ValueError, KeyError, IndexError, RuntimeError):
+        community_stats.caption(tr('Statistiques de la communauté temporairement indisponibles.', 'Community statistics temporarily unavailable.'))
+    else:
+        community_stats.markdown(
+            f':blue[{heure}] : :green[{nb_user}] {st.session_state.langue["utilisateurs"]} | '
+            f':violet[{nb_guilde}] {st.session_state.langue["guildes"]} | '
+            f':orange[{nb_score}] {st.session_state.langue["scores"]}'
+        )
 raw = demo if use_demo else uploaded.getvalue() if uploaded is not None else None
 if st.session_state.get('analysis_ready'):
     st.success(tr('Dernière analyse disponible : ', 'Last analysis available: ') + st.session_state.pseudo)
@@ -33,6 +50,9 @@ if st.session_state.get('analysis_ready'):
         st.switch_page('pages_streamlit/general.py')
     if st.session_state.get('import_notice'):
         st.caption(st.session_state.import_notice)
+    if st.session_state.get('import_summary'):
+        from fonctions.journey import show_import_summary
+        show_import_summary(st.session_state.import_summary)
 if raw is not None:
     try:
         data = validate_export(raw)
@@ -47,32 +67,60 @@ if raw is not None:
     b.metric(tr('Runes', 'Runes'), rune_count)
     c.metric(tr('Artéfacts', 'Artifacts'), artifact_count)
     configured = bool(environ.get('API_SQL'))
-    save = st.checkbox(tr('Sauvegarder dans mon historique', 'Save to my history'), value=configured and not use_demo, disabled=not configured or use_demo, key='save_import')
+    from fonctions.access import can_access
+    authorized = configured and not use_demo and can_access(data['wizard_info']['wizard_id'])
+    save = st.checkbox(tr('Sauvegarder dans mon historique', 'Save to my history'), value=authorized, disabled=not authorized, key='save_import') and authorized
+    if configured and not use_demo and not authorized:
+        st.info(tr('L’analyse locale reste disponible. Pour enregistrer, connectez-vous et demandez à l’administrateur de rattacher ce compte à votre identité.', 'Local analysis is available. To save, sign in and ask the administrator to link this account to your identity.'))
     if not configured:
         st.caption(tr('Mode local : l’analyse fonctionne sans base de données.', 'Local mode: analysis works without a database.'))
     if st.button(tr('Analyser ce fichier', 'Analyse this file'), key='upload_submit', type='primary'):
         with st.status(tr('Analyse en cours…', 'Analysing…'), expanded=True) as status:
+            stage = tr('Chargement des noms de monstres', 'Loading monster names')
+            def report(message):
+                global stage
+                if ' / ' in message:
+                    message=message.split(' / ',1)[1 if english else 0]
+                stage = message
+                status.write(message)
             try:
-                reference = lire_bdd('sw_ref_monsters').T if configured and not use_demo and save else pd.DataFrame()
-                result = analyse_export(data, reference, progress=status.write)
+                # Names are reference data, independent of saving or account authentication.
+                reference = lire_bdd('sw_ref_monsters').T if configured and not use_demo else pd.DataFrame()
+                result = analyse_export(data, reference, progress=report)
                 if save and configured and not use_demo:
-                    status.write(tr('Sauvegarde de l’historique', 'Saving history'))
-                    metadata, inserted = persist_analysis(result)
+                    report(tr('Sauvegarde de l’historique', 'Saving history'))
+                    metadata, inserted = persist_analysis(result, progress=report)
                     notice = tr('Historique sauvegardé.', 'History saved.') if inserted else tr('Ce fichier avait déjà été enregistré : aucun doublon créé.', 'This file was already saved: no duplicate created.')
                 else:
+                    from fonctions.journey import import_summary, SCORES
+                    from fonctions.snapshots import snapshot
+                    previous = None
+                    if st.session_state.get('compteid') == result['compteid'] and st.session_state.get('analysis_ready'):
+                        previous = {column:st.session_state[key] for column,key in SCORES.items()}
+                        previous.update(date=st.session_state.report_date, scoring_version=st.session_state.scoring_version, snapshot=snapshot(st.session_state))
+                    result['import_summary'] = import_summary(result, previous)
                     from datetime import datetime
                     from zoneinfo import ZoneInfo
                     metadata = dict(id_joueur=None, visibility=0, rank=0, report_date=datetime.now(ZoneInfo('Europe/Paris')).strftime('%d/%m/%Y'))
                     notice = tr('Analyse locale, sans enregistrement.', 'Local analysis, not saved.')
+                report(tr('Affichage des résultats', 'Displaying results'))
                 publish_analysis(st.session_state, result, metadata)
                 st.session_state.import_notice = notice
                 if save and configured and not use_demo:
                     st.cache_data.clear()
                 status.update(label=tr('Analyse terminée', 'Analysis complete'), state='complete', expanded=False)
-            except (SQLAlchemyError, ValueError, KeyError, TypeError, IndexError, RuntimeError) as error:
-                logging.getLogger(__name__).error('Import failed (%s)', type(error).__name__)
+            except (SQLAlchemyError, ValueError, KeyError, TypeError, IndexError, RuntimeError, PermissionError) as error:
+                reference_id = uuid4().hex[:12]
+                # SQL exceptions may contain the export or credentials. Keep
+                # only code locations, without exception messages or locals.
+                locations = ' -> '.join(f'{Path(frame.filename).name}:{frame.lineno} ({frame.name})'
+                                        for frame in traceback.extract_tb(error.__traceback__))
+                logging.getLogger(__name__).error('Import %s failed at %s (%s): %s',
+                                                 reference_id, stage, type(error).__name__, locations)
                 status.update(label=tr('Analyse interrompue', 'Analysis interrupted'), state='error')
                 st.error(tr('L’import n’a pas pu aboutir. Votre dernière analyse est conservée. Vérifiez le fichier et la connexion à la base avant de réessayer.', 'Import failed. Your last successful analysis is preserved. Check the file and database connection before retrying.'))
                 st.caption(tr('Type d’erreur : ', 'Error type: ') + type(error).__name__)
+                st.caption(tr('Étape : ', 'Step: ') + stage)
+                st.caption(tr('Référence à transmettre : ', 'Reference to share: ') + reference_id)
             else:
                 st.rerun()

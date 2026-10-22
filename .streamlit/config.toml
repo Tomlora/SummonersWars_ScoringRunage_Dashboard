@@ -2,7 +2,13 @@
 headless = true
 port = 8501
 
+[client]
+# Same-window theme messages from our deployed site and local development only.
+# Add the exact origin here if the application is hosted on another domain.
+allowedOrigins = ['https://scoringsw.eu', 'http://localhost', 'http://127.0.0.1:*']
+
 [theme]
+# Default palette; the Appearance menu adds browser-local white and black choices.
 base = 'dark'
 primaryColor = '#49a4ff'
 backgroundColor = '#07111f'
