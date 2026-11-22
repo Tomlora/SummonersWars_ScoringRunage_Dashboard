@@ -67,7 +67,7 @@ def upgrade_a():
     # on fusionne anciennes/nouvelles stats
     
     if st.session_state.translations_selected == 'English':
-        df_arte['arte_attribut'] = df_arte['arte_attribut'].replace(dataframe_replace_to_english)
+        df_arte['arte_attribut'] = df_arte['arte_attribut'].cat.rename_categories(dataframe_replace_to_english)
         
         for column in ['first_sub', 'second_sub', 'third_sub', 'fourth_sub']:
             df_arte[column] = df_arte[column].replace(dict_arte_effect_english)

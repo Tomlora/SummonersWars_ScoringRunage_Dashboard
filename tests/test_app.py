@@ -30,6 +30,22 @@ def test_local_navigation(export,monkeypatch,language,count):
         check(at)
         assert at.session_state['translations_selected']==language
 
+@pytest.mark.parametrize(('language', 'attribute'), [('Français', 'EAU'), ('English', 'WATER')])
+def test_water_artifact_display(export, language, attribute):
+    export['artifacts'] = [{
+        'rid': 7001, 'type': 1, 'attribute': 1, 'occupied_id': 0, 'unit_style': 0,
+        'level': 15, 'pri_effect': [100, 1500], 'sec_effects': [[218, 1], [400, 12], [404, 10], [206, 11]],
+    }]
+    at = seeded(export, language)
+    at.switch_page('pages_streamlit/inventaire_artefact.py').run()
+    check(at)
+    assert at.dataframe[0].value['Attribut'].tolist() == [attribute]
+    for page, key in [('stats_artefact', 'attribut_arte'), ('upgrade_artefact', 'attribut_arte_upgrade')]:
+        at.switch_page(f'pages_streamlit/{page}.py').run()
+        check(at)
+        assert at.selectbox(key=key).options == [attribute]
+    assert at.session_state['data_arte'].data_a['arte_attribut'].tolist() == ['EAU']
+
 def test_demo_import_ignores_configured_database(monkeypatch):
     monkeypatch.chdir(ROOT)
     monkeypatch.setenv('API_SQL','postgresql://invalid.invalid/not-used')
