@@ -31,7 +31,7 @@ def inventaire_arte():
     }, inplace=True)
     
     if st.session_state.translations_selected == 'English':
-        data_inventaire['Attribut'] = data_inventaire['Attribut'].replace(dataframe_replace_to_english)
+        data_inventaire['Attribut'] = data_inventaire['Attribut'].cat.rename_categories(dataframe_replace_to_english)
         
         for column in ['first_sub', 'second_sub', 'third_sub', 'fourth_sub']:
             data_inventaire[column] = data_inventaire[column].replace(dict_arte_effect_english)

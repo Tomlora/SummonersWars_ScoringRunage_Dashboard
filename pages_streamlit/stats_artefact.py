@@ -18,7 +18,7 @@ def grind_arte():
     df_efficience : pd.DataFrame = st.session_state.data_arte.data_a.copy()
     
     if st.session_state.translations_selected == 'English':
-        df_efficience['arte_attribut'] = df_efficience['arte_attribut'].replace(dataframe_replace_to_english)
+        df_efficience['arte_attribut'] = df_efficience['arte_attribut'].cat.rename_categories(dataframe_replace_to_english)
     list_type = df_efficience['arte_type'].unique().tolist()
     list_attribut = df_efficience['arte_attribut'].unique().tolist()
         
